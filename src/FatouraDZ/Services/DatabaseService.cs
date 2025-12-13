@@ -111,6 +111,120 @@ public class DatabaseService : IDatabaseService
         }
     }
 
+    public async Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche)
+    {
+        await using var context = new AppDbContext();
+        var query = context.Factures.Include(f => f.Lignes).AsQueryable();
+
+        if (dateDebut.HasValue)
+            query = query.Where(f => f.DateFacture >= dateDebut.Value);
+
+        if (dateFin.HasValue)
+            query = query.Where(f => f.DateFacture <= dateFin.Value);
+
+        if (type.HasValue)
+            query = query.Where(f => f.TypeFacture == type.Value);
+
+        if (statut.HasValue)
+            query = query.Where(f => f.Statut == statut.Value);
+
+        if (!string.IsNullOrWhiteSpace(recherche))
+        {
+            var searchLower = recherche.ToLower();
+            query = query.Where(f => 
+                f.NumeroFacture.ToLower().Contains(searchLower) ||
+                f.ClientNom.ToLower().Contains(searchLower));
+        }
+
+        return await query.OrderByDescending(f => f.DateCreation).ToListAsync();
+    }
+
+    public async Task<Facture> DupliquerFactureAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var original = await context.Factures
+            .Include(f => f.Lignes)
+            .FirstOrDefaultAsync(f => f.Id == id);
+
+        if (original == null)
+            throw new InvalidOperationException($"Facture avec Id {id} non trouvée");
+
+        var copie = new Facture
+        {
+            DateFacture = DateTime.Today,
+            DateEcheance = DateTime.Today.AddDays(30),
+            TypeFacture = original.TypeFacture,
+            ModePaiement = original.ModePaiement,
+            ClientNom = original.ClientNom,
+            ClientAdresse = original.ClientAdresse,
+            ClientTelephone = original.ClientTelephone,
+            ClientEmail = original.ClientEmail,
+            ClientRC = original.ClientRC,
+            ClientNIS = original.ClientNIS,
+            ClientAI = original.ClientAI,
+            ClientNumeroImmatriculation = original.ClientNumeroImmatriculation,
+            TotalHT = original.TotalHT,
+            TotalTVA19 = original.TotalTVA19,
+            TotalTVA9 = original.TotalTVA9,
+            TotalTTC = original.TotalTTC,
+            TimbreFiscal = original.TimbreFiscal,
+            EstTimbreApplique = original.EstTimbreApplique,
+            MontantTotal = original.MontantTotal,
+            MontantEnLettres = original.MontantEnLettres,
+            Statut = StatutFacture.EnAttente
+        };
+
+        foreach (var ligne in original.Lignes)
+        {
+            copie.Lignes.Add(new LigneFacture
+            {
+                NumeroLigne = ligne.NumeroLigne,
+                Designation = ligne.Designation,
+                Quantite = ligne.Quantite,
+                PrixUnitaire = ligne.PrixUnitaire,
+                TauxTVA = ligne.TauxTVA,
+                TotalHT = ligne.TotalHT
+            });
+        }
+
+        return copie;
+    }
+
+    // Statistiques
+    public async Task<int> GetNombreFacturesAsync()
+    {
+        await using var context = new AppDbContext();
+        return await context.Factures.CountAsync();
+    }
+
+    public async Task<decimal> GetChiffreAffairesTotalAsync()
+    {
+        await using var context = new AppDbContext();
+        var total = await context.Factures
+            .Where(f => f.Statut != StatutFacture.Annulee)
+            .SumAsync(f => (decimal?)f.MontantTotal) ?? 0m;
+        return total;
+    }
+
+    public async Task<decimal> GetMontantMoyenAsync()
+    {
+        await using var context = new AppDbContext();
+        var moyenne = await context.Factures
+            .Where(f => f.Statut != StatutFacture.Annulee)
+            .AverageAsync(f => (decimal?)f.MontantTotal) ?? 0m;
+        return moyenne;
+    }
+
+    public async Task<List<Facture>> GetDernieresFacturesAsync(int nombre)
+    {
+        await using var context = new AppDbContext();
+        return await context.Factures
+            .Include(f => f.Lignes)
+            .OrderByDescending(f => f.DateCreation)
+            .Take(nombre)
+            .ToListAsync();
+    }
+
     // Configuration
     public async Task<string?> GetConfigurationAsync(string cle)
     {

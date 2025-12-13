@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FatouraDZ.Models;
@@ -12,10 +13,18 @@ public interface IDatabaseService
     
     // Factures
     Task<List<Facture>> GetFacturesAsync();
+    Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche);
     Task<Facture?> GetFactureByIdAsync(int id);
     Task<Facture?> GetFactureByNumeroAsync(string numero);
     Task SaveFactureAsync(Facture facture);
     Task DeleteFactureAsync(int id);
+    Task<Facture> DupliquerFactureAsync(int id);
+    
+    // Statistiques
+    Task<int> GetNombreFacturesAsync();
+    Task<decimal> GetChiffreAffairesTotalAsync();
+    Task<decimal> GetMontantMoyenAsync();
+    Task<List<Facture>> GetDernieresFacturesAsync(int nombre);
     
     // Configuration
     Task<string?> GetConfigurationAsync(string cle);

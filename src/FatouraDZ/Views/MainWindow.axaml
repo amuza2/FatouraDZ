@@ -1,20 +1,81 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:FatouraDZ.ViewModels"
+        xmlns:views="using:FatouraDZ.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="FatouraDZ.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="FatouraDZ">
+        Title="FatouraDZ - Application de Facturation"
+        MinWidth="900" MinHeight="600">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Grid ColumnDefinitions="220,*">
+        <!-- Menu latéral -->
+        <Border Grid.Column="0" Background="#1E293B">
+            <StackPanel Spacing="5" Margin="0,20,0,0">
+                <!-- Logo / Titre -->
+                <TextBlock Text="FatouraDZ" 
+                           FontSize="24" FontWeight="Bold" 
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,30"/>
+
+                <!-- Navigation -->
+                <Button Content="🏠 Accueil" 
+                        Command="{Binding AfficherAccueilCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Background="Transparent"
+                        Foreground="White"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
+                <Button Content="➕ Nouvelle facture" 
+                        Command="{Binding AfficherNouvelleFactureCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Background="Transparent"
+                        Foreground="White"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
+                <Button Content="📋 Historique" 
+                        Command="{Binding AfficherHistoriqueCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Background="Transparent"
+                        Foreground="White"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
+                <Separator Background="#334155" Margin="10,20"/>
+
+                <Button Content="⚙️ Mes informations" 
+                        Command="{Binding AfficherConfigurationCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        Padding="20,12"
+                        Background="Transparent"
+                        Foreground="White"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Contenu principal -->
+        <Border Grid.Column="1" Background="#F1F5F9">
+            <ContentControl Content="{Binding ContenuActuel}">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="vm:EntrepreneurConfigViewModel">
+                        <views:EntrepreneurConfigView/>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+        </Border>
+    </Grid>
 
 </Window>
