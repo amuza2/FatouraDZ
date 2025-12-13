@@ -35,7 +35,7 @@
             </Border>
 
             <!-- Section: Informations personnelles -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations personnelles" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
@@ -56,7 +56,7 @@
             </Border>
 
             <!-- Section: Adresse -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Adresse" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
@@ -93,7 +93,7 @@
             </Border>
 
             <!-- Section: Contact -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Contact" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
@@ -118,7 +118,7 @@
             </Border>
 
             <!-- Section: Informations fiscales -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations fiscales et légales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
@@ -167,7 +167,7 @@
             </Border>
 
             <!-- Section: Capital social -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Capital social (optionnel)" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
@@ -181,7 +181,7 @@
             </Border>
 
             <!-- Section: Logo -->
-            <Border Background="#F8FAFC" CornerRadius="8" Padding="20">
+            <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Logo de l'entreprise (optionnel)" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     <TextBlock Text="Format: PNG ou JPG, max 2 Mo" Foreground="#64748B" FontSize="12"/>
@@ -206,13 +206,11 @@
 
             <!-- Bouton Sauvegarder -->
             <Button Content="💾 Sauvegarder mes informations" 
+                    Classes="primary"
                     Command="{Binding SauvegarderCommand}"
                     HorizontalAlignment="Center"
                     Padding="30,15"
-                    FontSize="16"
-                    FontWeight="SemiBold"
-                    Background="#2563EB"
-                    Foreground="White"/>
+                    FontSize="16"/>
 
             <TextBlock Text="* Champs obligatoires" 
                        Foreground="#64748B" FontSize="12" 

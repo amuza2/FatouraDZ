@@ -66,7 +66,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private void AfficherNouvelleFacture()
     {
         PageActuelle = "Nouvelle facture";
-        // ContenuActuel = new NouvelleFactureViewModel(); // À implémenter
+        var vm = new NouvelleFactureViewModel();
+        vm.FactureSauvegardee += async () =>
+        {
+            await Task.Delay(1500);
+            AfficherNouvelleFacture(); // Réinitialiser pour une nouvelle facture
+        };
+        ContenuActuel = vm;
     }
 
     [RelayCommand]

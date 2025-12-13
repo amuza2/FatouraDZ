@@ -25,7 +25,7 @@ public class ValidationService : IValidationService
         if (string.IsNullOrWhiteSpace(entrepreneur.Telephone))
             result.AjouterErreur("Le téléphone est obligatoire");
         else if (!EstTelephoneValide(entrepreneur.Telephone))
-            result.AjouterErreur("Le numéro de téléphone doit commencer par 05 ou 07 (format: 05XX XX XX XX)");
+            result.AjouterErreur("Le numéro de téléphone est invalide (mobile: 05/06/07XX XX XX XX, fixe: 0XX XX XX XX)");
 
         if (string.IsNullOrWhiteSpace(entrepreneur.RC))
             result.AjouterErreur("Le numéro RC est obligatoire");
@@ -63,7 +63,7 @@ public class ValidationService : IValidationService
         if (string.IsNullOrWhiteSpace(facture.ClientTelephone))
             result.AjouterErreur("Le téléphone du client est obligatoire");
         else if (!EstTelephoneValide(facture.ClientTelephone))
-            result.AjouterErreur("Le numéro de téléphone du client doit commencer par 05 ou 07");
+            result.AjouterErreur("Le numéro de téléphone du client est invalide (mobile: 05/06/07XX XX XX XX, fixe: 0XX XX XX XX)");
 
         if (string.IsNullOrWhiteSpace(facture.ModePaiement))
             result.AjouterErreur("Le mode de paiement est obligatoire");
@@ -102,7 +102,17 @@ public class ValidationService : IValidationService
             return false;
 
         var cleaned = Regex.Replace(telephone, @"[\s\-\.]", "");
-        return Regex.IsMatch(cleaned, @"^0[567]\d{8}$");
+        
+        // Mobile: 05, 06, 07 suivi de 8 chiffres (10 chiffres au total)
+        if (Regex.IsMatch(cleaned, @"^0[567]\d{8}$"))
+            return true;
+        
+        // Fixe: 0 + indicatif wilaya (2 chiffres) + 6 chiffres (9 chiffres au total)
+        // Ex: 024 45 65 21 -> 024456521
+        if (Regex.IsMatch(cleaned, @"^0[1-4]\d{7}$"))
+            return true;
+        
+        return false;
     }
 
     public bool EstNISValide(string nis)

@@ -28,41 +28,25 @@
 
                 <!-- Navigation -->
                 <Button Content="🏠 Accueil" 
+                        Classes="nav-button"
                         Command="{Binding AfficherAccueilCommand}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Padding="20,12"
-                        Background="Transparent"
-                        Foreground="White"
                         IsVisible="{Binding EstEntrepreneurConfigure}"/>
 
                 <Button Content="➕ Nouvelle facture" 
+                        Classes="nav-button"
                         Command="{Binding AfficherNouvelleFactureCommand}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Padding="20,12"
-                        Background="Transparent"
-                        Foreground="White"
                         IsVisible="{Binding EstEntrepreneurConfigure}"/>
 
                 <Button Content="📋 Historique" 
+                        Classes="nav-button"
                         Command="{Binding AfficherHistoriqueCommand}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Padding="20,12"
-                        Background="Transparent"
-                        Foreground="White"
                         IsVisible="{Binding EstEntrepreneurConfigure}"/>
 
                 <Separator Background="#334155" Margin="10,20"/>
 
                 <Button Content="⚙️ Mes informations" 
-                        Command="{Binding AfficherConfigurationCommand}"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Padding="20,12"
-                        Background="Transparent"
-                        Foreground="White"/>
+                        Classes="nav-button"
+                        Command="{Binding AfficherConfigurationCommand}"/>
             </StackPanel>
         </Border>
 
@@ -72,6 +56,9 @@
                 <ContentControl.DataTemplates>
                     <DataTemplate DataType="vm:EntrepreneurConfigViewModel">
                         <views:EntrepreneurConfigView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:NouvelleFactureViewModel">
+                        <views:NouvelleFactureView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>
