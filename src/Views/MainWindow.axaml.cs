@@ -15,7 +15,15 @@ public partial class MainWindow : Window
         base.OnOpened(e);
         if (DataContext is MainWindowViewModel vm)
         {
+            vm.DemanderPrevisualisation += OuvrirPrevisualisation;
             await vm.InitialiserAsync();
         }
+    }
+
+    private void OuvrirPrevisualisation(FatouraDZ.Models.Facture facture, FatouraDZ.Models.Entrepreneur entrepreneur)
+    {
+        var previewVm = new PreviewFactureViewModel(facture, entrepreneur);
+        var previewWindow = new PreviewFactureWindow(previewVm);
+        previewWindow.ShowDialog(this);
     }
 }

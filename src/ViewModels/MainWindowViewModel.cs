@@ -1,6 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FatouraDZ.Models;
 using FatouraDZ.Services;
 
 namespace FatouraDZ.ViewModels;
@@ -17,6 +19,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _estEntrepreneurConfigure;
 
     private readonly IDatabaseService _databaseService;
+
+    public event Action<Facture, Entrepreneur>? DemanderPrevisualisation;
 
     public MainWindowViewModel()
     {
@@ -71,6 +75,14 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await Task.Delay(1500);
             AfficherNouvelleFacture(); // Réinitialiser pour une nouvelle facture
+        };
+        vm.DemanderPrevisualisation += async (facture) =>
+        {
+            var entrepreneur = await _databaseService.GetEntrepreneurAsync();
+            if (entrepreneur != null)
+            {
+                DemanderPrevisualisation?.Invoke(facture, entrepreneur);
+            }
         };
         ContenuActuel = vm;
     }

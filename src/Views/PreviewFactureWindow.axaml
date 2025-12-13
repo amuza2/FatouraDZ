@@ -1,0 +1,98 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:FatouraDZ.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+        x:Class="FatouraDZ.Views.PreviewFactureWindow"
+        x:DataType="vm:PreviewFactureViewModel"
+        Title="Prévisualisation de la facture"
+        Width="900" Height="750"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- En-tête -->
+        <Border Grid.Row="0" Background="#2563EB" Padding="20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                    <TextBlock Text="Prévisualisation de la facture" 
+                               FontSize="20" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding Facture.NumeroFacture, StringFormat='N° {0}'}" 
+                               Foreground="#BFDBFE" FontSize="14"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Facture.MontantTotal, StringFormat='{}{0:N2} DZD'}" 
+                               FontSize="18" FontWeight="Bold" Foreground="White"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Contenu - Aperçu -->
+        <Border Grid.Row="1" Background="#E5E7EB" Padding="20">
+            <Grid>
+                <!-- Message de chargement -->
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                            IsVisible="{Binding IsLoading}">
+                    <TextBlock Text="Génération de l'aperçu..." FontSize="16" 
+                               HorizontalAlignment="Center" Foreground="#64748B"/>
+                </StackPanel>
+
+                <!-- Message d'erreur -->
+                <Border Background="#FFEBEE" BorderBrush="#EF4444" BorderThickness="1" 
+                        CornerRadius="4" Padding="15" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        IsVisible="{Binding ErreurMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding ErreurMessage}" Foreground="#EF4444" TextWrapping="Wrap"/>
+                </Border>
+
+                <!-- Message de succès -->
+                <Border Background="#E8F5E9" BorderBrush="#10B981" BorderThickness="1" 
+                        CornerRadius="4" Padding="15" VerticalAlignment="Top" HorizontalAlignment="Center"
+                        Margin="0,0,0,10"
+                        IsVisible="{Binding EstSauvegarde}">
+                    <TextBlock Text="✓ Facture enregistrée avec succès" Foreground="#10B981"/>
+                </Border>
+
+                <!-- Image de prévisualisation -->
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" 
+                              VerticalScrollBarVisibility="Auto"
+                              IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <Border Background="White" 
+                            BoxShadow="0 4 12 0 #40000000"
+                            HorizontalAlignment="Center"
+                            Margin="20">
+                        <Image Source="{Binding PreviewImage}" 
+                               Stretch="Uniform"
+                               MaxWidth="800"/>
+                    </Border>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Boutons d'action -->
+        <Border Grid.Row="2" Background="#F8FAFC" Padding="20" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Bouton Modifier (gauche) -->
+                <Button Grid.Column="0" Content="✏️ Modifier" 
+                        Command="{Binding ModifierCommand}"
+                        Padding="20,12"/>
+
+                <!-- Boutons principaux (droite) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <Button Content="🖨️ Imprimer" 
+                            Command="{Binding ImprimerCommand}"
+                            Padding="20,12"/>
+                    <Button Content="💾 Enregistrer en PDF" 
+                            Classes="primary"
+                            Command="{Binding EnregistrerPdfCommand}"
+                            CommandParameter="{Binding $parent[Window].StorageProvider}"
+                            Padding="20,12"/>
+                    <Button Content="Annuler" 
+                            Command="{Binding AnnulerCommand}"
+                            Padding="20,12"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
