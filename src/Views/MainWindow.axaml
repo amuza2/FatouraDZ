@@ -42,6 +42,11 @@
                         Command="{Binding AfficherHistoriqueCommand}"
                         IsVisible="{Binding EstEntrepreneurConfigure}"/>
 
+                <Button Content="📦 Archives" 
+                        Classes="nav-button"
+                        Command="{Binding AfficherArchivesCommand}"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
                 <Separator Background="#334155" Margin="10,20"/>
 
                 <Button Content="⚙️ Mes informations" 
@@ -59,6 +64,12 @@
                     </DataTemplate>
                     <DataTemplate DataType="vm:NouvelleFactureViewModel">
                         <views:NouvelleFactureView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:HistoriqueFacturesViewModel">
+                        <views:HistoriqueFacturesView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:ArchiveFacturesViewModel">
+                        <views:ArchiveFacturesView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>

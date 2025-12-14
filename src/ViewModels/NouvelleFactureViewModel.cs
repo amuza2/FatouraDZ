@@ -100,6 +100,15 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [ObservableProperty]
     private bool _estSauvegarde;
 
+    [ObservableProperty]
+    private bool _estModeEdition;
+
+    [ObservableProperty]
+    private string _titreFormulaire = "Nouvelle facture";
+
+    // ID de la facture en cours d'édition (0 = nouvelle facture)
+    private int _factureId;
+
     // Modes de paiement disponibles
     public string[] ModesPaiement { get; } = new[]
     {
@@ -224,6 +233,9 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [RelayCommand]
     private void Reinitialiser()
     {
+        _factureId = 0;
+        EstModeEdition = false;
+        TitreFormulaire = "Nouvelle facture";
         TypeFactureIndex = 0;
         DateFacture = DateTimeOffset.Now.Date;
         DateEcheance = DateTimeOffset.Now.Date.AddDays(30);
@@ -246,12 +258,75 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         RecalculerTotaux();
     }
 
+    public void ChargerFacture(Facture facture, bool estDuplication = false)
+    {
+        if (estDuplication)
+        {
+            // Duplication: nouvelle facture avec données copiées
+            _factureId = 0;
+            EstModeEdition = false;
+            TitreFormulaire = "Dupliquer la facture";
+            // Le numéro sera généré automatiquement via InitialiserAsync
+        }
+        else
+        {
+            // Édition: modifier la facture existante
+            _factureId = facture.Id;
+            EstModeEdition = true;
+            TitreFormulaire = $"Modifier la facture {facture.NumeroFacture}";
+            NumeroFacture = facture.NumeroFacture;
+        }
+
+        // Charger les données de la facture
+        TypeFactureIndex = (int)facture.TypeFacture;
+        DateFacture = new DateTimeOffset(facture.DateFacture);
+        DateEcheance = new DateTimeOffset(facture.DateEcheance);
+        ModePaiement = facture.ModePaiement;
+        ClientNom = facture.ClientNom;
+        ClientAdresse = facture.ClientAdresse;
+        ClientTelephone = facture.ClientTelephone;
+        ClientEmail = facture.ClientEmail;
+        ClientRc = facture.ClientRC;
+        ClientNis = facture.ClientNIS;
+        ClientAi = facture.ClientAI;
+        ClientNumeroImmatriculation = facture.ClientNumeroImmatriculation;
+        ClientActivite = facture.ClientActivite;
+        AppliquerTimbre = facture.EstTimbreApplique;
+
+        // Charger les lignes
+        Lignes.Clear();
+        foreach (var ligne in facture.Lignes.OrderBy(l => l.NumeroLigne))
+        {
+            var ligneVm = LigneFactureViewModel.FromModel(ligne);
+            ligneVm.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(LigneFactureViewModel.TotalHT) ||
+                    e.PropertyName == nameof(LigneFactureViewModel.TauxTVA))
+                {
+                    RecalculerTotaux();
+                }
+            };
+            Lignes.Add(ligneVm);
+        }
+
+        // S'assurer qu'il y a au moins une ligne
+        if (Lignes.Count == 0)
+        {
+            AjouterLigne();
+        }
+
+        RecalculerTotaux();
+        ErreurMessage = null;
+        EstSauvegarde = false;
+    }
+
     private Facture CreerFacture()
     {
         RecalculerTotaux();
 
         var facture = new Facture
         {
+            Id = _factureId,
             NumeroFacture = NumeroFacture,
             DateFacture = DateFacture.DateTime,
             DateEcheance = DateEcheance.DateTime,

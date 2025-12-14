@@ -91,6 +91,80 @@ public partial class MainWindowViewModel : ViewModelBase
     private void AfficherHistorique()
     {
         PageActuelle = "Historique";
-        // ContenuActuel = new HistoriqueViewModel(); // À implémenter
+        var vm = new HistoriqueFacturesViewModel();
+        vm.DemanderModification += (facture) =>
+        {
+            AfficherEditionFacture(facture, estDuplication: false);
+        };
+        vm.DemanderDuplication += (facture) =>
+        {
+            AfficherEditionFacture(facture, estDuplication: true);
+        };
+        vm.DemanderPrevisualisation += (facture, entrepreneur) =>
+        {
+            DemanderPrevisualisation?.Invoke(facture, entrepreneur);
+        };
+        vm.DemanderCheminSauvegarde += DemanderCheminSauvegardePdf;
+        vm.DemanderConfirmation += DemanderConfirmationAsync;
+        _ = vm.ChargerDonneesAsync();
+        ContenuActuel = vm;
+    }
+
+    [RelayCommand]
+    private void AfficherArchives()
+    {
+        PageActuelle = "Archives";
+        var vm = new ArchiveFacturesViewModel();
+        vm.DemanderConfirmation += DemanderConfirmationAsync;
+        vm.DemanderPrevisualisation += (facture, entrepreneur) =>
+        {
+            DemanderPrevisualisation?.Invoke(facture, entrepreneur);
+        };
+        _ = vm.ChargerDonneesAsync();
+        ContenuActuel = vm;
+    }
+
+    public event Func<string, string, Task<bool>>? DemanderConfirmationDialog;
+
+    private async Task<bool> DemanderConfirmationAsync(string titre, string message)
+    {
+        return DemanderConfirmationDialog != null 
+            ? await DemanderConfirmationDialog.Invoke(titre, message) 
+            : true;
+    }
+
+    public void AfficherEditionFacture(Facture facture, bool estDuplication)
+    {
+        PageActuelle = estDuplication ? "Dupliquer facture" : "Modifier facture";
+        var vm = new NouvelleFactureViewModel();
+        vm.ChargerFacture(facture, estDuplication);
+        
+        if (estDuplication)
+        {
+            // Générer un nouveau numéro pour la duplication
+            _ = vm.InitialiserAsync();
+        }
+        
+        vm.FactureSauvegardee += () =>
+        {
+            // Retourner à l'historique après sauvegarde
+            AfficherHistorique();
+        };
+        vm.DemanderPrevisualisation += async (f) =>
+        {
+            var entrepreneur = await _databaseService.GetEntrepreneurAsync();
+            if (entrepreneur != null)
+            {
+                DemanderPrevisualisation?.Invoke(f, entrepreneur);
+            }
+        };
+        ContenuActuel = vm;
+    }
+
+    public event Func<string, Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderSauvegardeFichier;
+
+    private async Task<Avalonia.Platform.Storage.IStorageFile?> DemanderCheminSauvegardePdf(string nomFichier)
+    {
+        return DemanderSauvegardeFichier != null ? await DemanderSauvegardeFichier.Invoke(nomFichier) : null;
     }
 }

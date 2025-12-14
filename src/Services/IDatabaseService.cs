@@ -18,6 +18,7 @@ public interface IDatabaseService
     Task<Facture?> GetFactureByNumeroAsync(string numero);
     Task SaveFactureAsync(Facture facture);
     Task DeleteFactureAsync(int id);
+    Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut);
     Task<Facture> DupliquerFactureAsync(int id);
     
     // Statistiques

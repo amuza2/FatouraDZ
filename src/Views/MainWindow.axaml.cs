@@ -1,4 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using FatouraDZ.ViewModels;
 
 namespace FatouraDZ.Views;
@@ -16,6 +21,8 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel vm)
         {
             vm.DemanderPrevisualisation += OuvrirPrevisualisation;
+            vm.DemanderSauvegardeFichier += OuvrirDialogueSauvegardePdf;
+            vm.DemanderConfirmationDialog += AfficherConfirmationAsync;
             await vm.InitialiserAsync();
         }
     }
@@ -25,5 +32,35 @@ public partial class MainWindow : Window
         var previewVm = new PreviewFactureViewModel(facture, entrepreneur);
         var previewWindow = new PreviewFactureWindow(previewVm);
         previewWindow.ShowDialog(this);
+    }
+
+    private async Task<IStorageFile?> OuvrirDialogueSauvegardePdf(string nomSuggere)
+    {
+        var dossierFactures = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "Factures"
+        );
+        Directory.CreateDirectory(dossierFactures);
+
+        var options = new FilePickerSaveOptions
+        {
+            Title = "Enregistrer la facture PDF",
+            SuggestedFileName = nomSuggere,
+            DefaultExtension = "pdf",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("Fichier PDF") { Patterns = new[] { "*.pdf" } }
+            },
+            SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(dossierFactures)
+        };
+
+        return await StorageProvider.SaveFilePickerAsync(options);
+    }
+
+    private async Task<bool> AfficherConfirmationAsync(string titre, string message)
+    {
+        var dialog = new ConfirmationDialog(titre, message);
+        var result = await dialog.ShowDialog<bool?>(this);
+        return result == true;
     }
 }

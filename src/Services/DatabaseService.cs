@@ -111,6 +111,18 @@ public class DatabaseService : IDatabaseService
         }
     }
 
+    public async Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut)
+    {
+        await using var context = new AppDbContext();
+        var facture = await context.Factures.FindAsync(id);
+        if (facture != null)
+        {
+            facture.Statut = nouveauStatut;
+            facture.DateModification = DateTime.Now;
+            await context.SaveChangesAsync();
+        }
+    }
+
     public async Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche)
     {
         await using var context = new AppDbContext();

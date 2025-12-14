@@ -16,7 +16,7 @@
         <StackPanel Spacing="20" MaxWidth="1000" HorizontalAlignment="Center">
             
             <!-- Titre -->
-            <TextBlock Text="Nouvelle facture" 
+            <TextBlock Text="{Binding TitreFormulaire}" 
                        FontSize="24" FontWeight="Bold" 
                        HorizontalAlignment="Center"
                        Margin="0,0,0,10"/>

@@ -54,5 +54,6 @@ public enum StatutFacture
 {
     EnAttente,
     Payee,
-    Annulee
+    Annulee,
+    Archivee
 }

@@ -1,0 +1,243 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:models="using:FatouraDZ.Models"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="FatouraDZ.Views.HistoriqueFacturesView"
+             x:DataType="vm:HistoriqueFacturesViewModel">
+
+    <Design.DataContext>
+        <vm:HistoriqueFacturesViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        
+        <!-- Titre et Statistiques -->
+        <StackPanel Grid.Row="0" Margin="20,20,20,10">
+            <TextBlock Text="Historique des factures" 
+                       FontSize="24" FontWeight="Bold" 
+                       Margin="0,0,0,15"/>
+            
+            <!-- Statistiques -->
+            <Border Classes="card" Padding="15" Margin="0,0,0,10">
+                <Grid ColumnDefinitions="*,*,*">
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock Text="Nombre de factures" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding NombreTotalFactures}" FontSize="24" FontWeight="Bold" Foreground="#2563EB" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Chiffre d'affaires total" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding ChiffreAffairesTotal, StringFormat={}{0:N2} DA}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock Text="Montant moyen" FontSize="12" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding MontantMoyen, StringFormat={}{0:N2} DA}" FontSize="24" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Filtres -->
+        <Border Grid.Row="1" Classes="card" Margin="20,0,20,10" Padding="15">
+            <StackPanel Spacing="10">
+                <TextBlock Text="Filtres" FontWeight="SemiBold" Foreground="#2563EB"/>
+                
+                <Grid ColumnDefinitions="*,20,*,20,*,20,*,20,Auto">
+                    <!-- Recherche -->
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <TextBlock Text="Recherche" FontSize="12"/>
+                        <TextBox Text="{Binding Recherche}" Watermark="N° facture ou nom client..."
+                                 KeyDown="OnRechercheKeyDown"/>
+                    </StackPanel>
+                    
+                    <!-- Date début -->
+                    <StackPanel Grid.Column="2" Spacing="4">
+                        <TextBlock Text="Date début" FontSize="12"/>
+                        <DatePicker SelectedDate="{Binding DateDebut}" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    
+                    <!-- Date fin -->
+                    <StackPanel Grid.Column="4" Spacing="4">
+                        <TextBlock Text="Date fin" FontSize="12"/>
+                        <DatePicker SelectedDate="{Binding DateFin}" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    
+                    <!-- Type -->
+                    <StackPanel Grid.Column="6" Spacing="4">
+                        <TextBlock Text="Type" FontSize="12"/>
+                        <ComboBox ItemsSource="{Binding TypesFacture}" 
+                                  SelectedIndex="{Binding TypeFactureIndex}"
+                                  HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    
+                    <!-- Statut -->
+                    <StackPanel Grid.Column="8" Spacing="4">
+                        <TextBlock Text="Statut" FontSize="12"/>
+                        <ComboBox ItemsSource="{Binding Statuts}" 
+                                  SelectedIndex="{Binding StatutIndex}"
+                                  HorizontalAlignment="Stretch" MinWidth="120"/>
+                    </StackPanel>
+                </Grid>
+                
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                    <Button Content="🔍 Rechercher" Command="{Binding RechercherCommand}" Padding="15,8"/>
+                    <Button Content="🔄 Réinitialiser" Command="{Binding ReinitialiserFiltresCommand}" Padding="15,8"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Message info -->
+        <Border Grid.Row="2" Background="#FEF3C7" BorderBrush="#F59E0B" BorderThickness="1" 
+                CornerRadius="4" Padding="10" Margin="20,0,20,10"
+                IsVisible="{Binding MessageInfo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding MessageInfo}" Foreground="#92400E"/>
+        </Border>
+
+        <!-- Tableau des factures -->
+        <Border Grid.Row="2" Classes="card" Margin="20,0,20,10" Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <!-- En-tête du tableau -->
+                <Grid Grid.Row="0" ColumnDefinitions="120,120,*,140,100,100,200" Background="#F1F5F9">
+                    <Button Grid.Column="0" Content="N° Facture ↕" Command="{Binding TrierParCommand}" CommandParameter="NumeroFacture"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="10,12"/>
+                    <Button Grid.Column="1" Content="Date ↕" Command="{Binding TrierParCommand}" CommandParameter="DateFacture"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="10,12"/>
+                    <Button Grid.Column="2" Content="Client ↕" Command="{Binding TrierParCommand}" CommandParameter="ClientNom"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="10,12"/>
+                    <Button Grid.Column="3" Content="Montant ↕" Command="{Binding TrierParCommand}" CommandParameter="MontantTotal"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Right" Padding="10,12"/>
+                    <Button Grid.Column="4" Content="Type ↕" Command="{Binding TrierParCommand}" CommandParameter="TypeFacture"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="10,12"/>
+                    <Button Grid.Column="5" Content="Statut ↕" Command="{Binding TrierParCommand}" CommandParameter="Statut"
+                            Background="Transparent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="10,12"/>
+                    <TextBlock Grid.Column="6" Text="Actions" FontWeight="SemiBold" Padding="10,12" HorizontalAlignment="Center"/>
+                </Grid>
+
+                <!-- Liste des factures -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Factures}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:Facture">
+                                <Border BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="0">
+                                    <Grid ColumnDefinitions="120,120,*,140,100,100,200" Background="White">
+                                        <Grid.Styles>
+                                            <Style Selector="Grid:pointerover">
+                                                <Setter Property="Background" Value="#F8FAFC"/>
+                                            </Style>
+                                        </Grid.Styles>
+                                        
+                                        <TextBlock Grid.Column="0" Text="{Binding NumeroFacture}" 
+                                                   VerticalAlignment="Center" Padding="10,12" FontWeight="Medium"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}" 
+                                                   VerticalAlignment="Center" Padding="10,12"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding ClientNom}" 
+                                                   VerticalAlignment="Center" Padding="10,12" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
+                                                   VerticalAlignment="Center" Padding="10,12" HorizontalAlignment="Right" FontWeight="Medium"/>
+                                        
+                                        <!-- Type avec badge -->
+                                        <Border Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                CornerRadius="4" Padding="8,4" Margin="5">
+                                            <Border.Styles>
+                                                <Style Selector="Border">
+                                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                                </Style>
+                                            </Border.Styles>
+                                            <TextBlock Text="{Binding TypeFacture}" FontSize="11" Foreground="#1E40AF"/>
+                                        </Border>
+                                        
+                                        <!-- Statut avec badge cliquable -->
+                                        <Button Grid.Column="5" 
+                                                Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ChangerStatutCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" Padding="0" Margin="5"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Border CornerRadius="4" Padding="8,4">
+                                                <Border.Styles>
+                                                    <Style Selector="Border">
+                                                        <Setter Property="Background" Value="#FEF3C7"/>
+                                                    </Style>
+                                                </Border.Styles>
+                                                <TextBlock Text="{Binding Statut}" FontSize="11" Foreground="#92400E"/>
+                                            </Border>
+                                        </Button>
+                                        
+                                        <!-- Actions -->
+                                        <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="5" 
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5">
+                                            <Button Content="👁️" ToolTip.Tip="Voir PDF"
+                                                    Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).VoirPdfCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,6" FontSize="12"/>
+                                            <Button Content="✏️" ToolTip.Tip="Modifier"
+                                                    Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ModifierCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,6" FontSize="12"/>
+                                            <Button Content="📋" ToolTip.Tip="Dupliquer"
+                                                    Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).DupliquerCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,6" FontSize="12"/>
+                                            <Button Content="📄" ToolTip.Tip="Exporter PDF"
+                                                    Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ExporterPdfCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,6" FontSize="12"/>
+                                            <Button Content="📦" ToolTip.Tip="Archiver"
+                                                    Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ArchiverCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,6" FontSize="12" Foreground="#F59E0B"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Message si aucune facture -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            IsVisible="{Binding !Factures.Count}">
+                    <TextBlock Text="📋" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                    <TextBlock Text="Aucune facture trouvée" FontSize="16" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+                </StackPanel>
+
+                <!-- Indicateur de chargement -->
+                <Border Grid.Row="1" Background="#80FFFFFF" IsVisible="{Binding EstChargement}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="Chargement..." FontSize="16" Foreground="#64748B"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Pagination -->
+        <Border Grid.Row="3" Margin="20,0,20,20">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                    <Run Text="Affichage de "/>
+                    <Run Text="{Binding Factures.Count}"/>
+                    <Run Text=" sur "/>
+                    <Run Text="{Binding TotalFactures}"/>
+                    <Run Text=" factures"/>
+                </TextBlock>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <Button Content="◀ Précédent" 
+                            Command="{Binding PagePrecedenteCommand}"
+                            IsEnabled="{Binding PageActuelle, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Padding="15,8"/>
+                    <TextBlock VerticalAlignment="Center">
+                        <Run Text="Page "/>
+                        <Run Text="{Binding PageActuelle}"/>
+                        <Run Text=" / "/>
+                        <Run Text="{Binding TotalPages}"/>
+                    </TextBlock>
+                    <Button Content="Suivant ▶" 
+                            Command="{Binding PageSuivanteCommand}"
+                            Padding="15,8"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
