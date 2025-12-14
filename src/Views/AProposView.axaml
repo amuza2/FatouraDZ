@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FatouraDZ.Views.AProposView"
+             x:DataType="vm:AProposViewModel">
+
+    <Design.DataContext>
+        <vm:AProposViewModel/>
+    </Design.DataContext>
+
+    <Border Background="#F1F5F9" Padding="50">
+        <Border Background="White" CornerRadius="16" Padding="50" 
+                BoxShadow="0 4 16 0 #20000000"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                MaxWidth="600">
+            <StackPanel Spacing="25" HorizontalAlignment="Center">
+                
+                <!-- Logo / Titre -->
+                <StackPanel Spacing="10" HorizontalAlignment="Center">
+                    <TextBlock Text="📄" FontSize="64" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding NomApplication}" 
+                               FontSize="36" FontWeight="Bold" 
+                               Foreground="#2563EB" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Version, StringFormat='Version {0}'}" 
+                               FontSize="16" Foreground="#64748B" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <Separator Background="#E2E8F0"/>
+
+                <!-- Description -->
+                <TextBlock Text="{Binding Description}" 
+                           TextWrapping="Wrap" TextAlignment="Center"
+                           FontSize="14" Foreground="#475569"
+                           MaxWidth="500"/>
+
+                <Separator Background="#E2E8F0"/>
+
+                <!-- Informations -->
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock HorizontalAlignment="Center">
+                        <Run Text="Développé par " Foreground="#64748B"/>
+                        <Run Text="{Binding Auteur}" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    </TextBlock>
+                    <TextBlock Text="{Binding Annee, StringFormat='© {0} - Tous droits réservés'}" 
+                               Foreground="#94A3B8" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <Separator Background="#E2E8F0"/>
+
+                <!-- Technologies -->
+                <StackPanel Spacing="5" HorizontalAlignment="Center">
+                    <TextBlock Text="Technologies utilisées" 
+                               FontWeight="SemiBold" Foreground="#1E293B" 
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Technologies}" 
+                               Foreground="#64748B" FontSize="13" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Conformité -->
+                <Border Background="#DBEAFE" CornerRadius="8" Padding="15">
+                    <TextBlock Text="✅ Conforme aux exigences légales algériennes (TVA, timbre fiscal, mentions obligatoires)" 
+                               TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="12" Foreground="#1E40AF"/>
+                </Border>
+
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>

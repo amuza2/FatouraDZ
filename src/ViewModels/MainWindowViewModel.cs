@@ -50,7 +50,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private void AfficherAccueil()
     {
         PageActuelle = "Accueil";
-        ContenuActuel = null; // Sera remplacé par AccueilViewModel plus tard
+        var vm = new AccueilViewModel();
+        vm.DemanderNouvelleFacture += () => AfficherNouvelleFacture();
+        vm.DemanderHistorique += () => AfficherHistorique();
+        _ = vm.ChargerDonneesAsync();
+        ContenuActuel = vm;
     }
 
     [RelayCommand]
@@ -123,6 +127,13 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         _ = vm.ChargerDonneesAsync();
         ContenuActuel = vm;
+    }
+
+    [RelayCommand]
+    private void AfficherAPropos()
+    {
+        PageActuelle = "À propos";
+        ContenuActuel = new AProposViewModel();
     }
 
     public event Func<string, string, Task<bool>>? DemanderConfirmationDialog;

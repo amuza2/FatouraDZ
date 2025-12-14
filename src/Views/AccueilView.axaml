@@ -1,0 +1,143 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="FatouraDZ.Views.AccueilView"
+             x:DataType="vm:AccueilViewModel">
+
+    <Design.DataContext>
+        <vm:AccueilViewModel/>
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Margin="30" Spacing="25">
+            
+            <!-- Message de bienvenue -->
+            <Border Background="White" CornerRadius="12" Padding="30" BoxShadow="0 2 8 0 #20000000">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="👋 Bienvenue sur FatouraDZ" 
+                               FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="{Binding NomEntrepreneur, StringFormat='Connecté en tant que : {0}'}" 
+                               FontSize="16" Foreground="#64748B"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Statistiques rapides -->
+            <Grid ColumnDefinitions="*,20,*,20,*,20,*">
+                <!-- Total factures -->
+                <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="📄" FontSize="24"/>
+                        <TextBlock Text="{Binding NombreFactures}" FontSize="32" FontWeight="Bold" Foreground="#2563EB"/>
+                        <TextBlock Text="Factures totales" Foreground="#64748B" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- CA Total -->
+                <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="💰" FontSize="24"/>
+                        <TextBlock Text="{Binding ChiffreAffairesTotal, StringFormat={}{0:N0} DA}" 
+                                   FontSize="24" FontWeight="Bold" Foreground="#16A34A"/>
+                        <TextBlock Text="Chiffre d'affaires total" Foreground="#64748B" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Factures ce mois -->
+                <Border Grid.Column="4" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="📅" FontSize="24"/>
+                        <TextBlock Text="{Binding NombreFacturesMois}" FontSize="32" FontWeight="Bold" Foreground="#F59E0B"/>
+                        <TextBlock Text="Factures ce mois" Foreground="#64748B" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- CA ce mois -->
+                <Border Grid.Column="6" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="📈" FontSize="24"/>
+                        <TextBlock Text="{Binding ChiffreAffairesMois, StringFormat={}{0:N0} DA}" 
+                                   FontSize="24" FontWeight="Bold" Foreground="#8B5CF6"/>
+                        <TextBlock Text="CA ce mois" Foreground="#64748B" FontSize="13"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Boutons d'action rapide -->
+            <Border Background="White" CornerRadius="12" Padding="25" BoxShadow="0 2 8 0 #20000000">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Actions rapides" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    <StackPanel Orientation="Horizontal" Spacing="15">
+                        <Button Command="{Binding NouvelleFactureCommand}"
+                                Background="#2563EB" Foreground="White"
+                                Padding="25,15" CornerRadius="8"
+                                FontSize="15" FontWeight="Medium">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="➕" FontSize="18"/>
+                                <TextBlock Text="Créer une nouvelle facture" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding VoirHistoriqueCommand}"
+                                Background="#64748B" Foreground="White"
+                                Padding="25,15" CornerRadius="8"
+                                FontSize="15" FontWeight="Medium">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="📋" FontSize="18"/>
+                                <TextBlock Text="Voir mes factures" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Dernières factures -->
+            <Border Background="White" CornerRadius="12" Padding="25" BoxShadow="0 2 8 0 #20000000">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="📋 Dernières factures" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+                    
+                    <!-- Message si aucune facture -->
+                    <TextBlock Text="Aucune facture créée pour le moment."
+                               Foreground="#94A3B8" FontStyle="Italic"
+                               IsVisible="{Binding !DernieresFactures.Count}"/>
+
+                    <!-- Liste des dernières factures -->
+                    <ItemsControl ItemsSource="{Binding DernieresFactures}"
+                                  IsVisible="{Binding DernieresFactures.Count}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#F8FAFC" CornerRadius="8" Padding="15" Margin="0,0,0,8">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,20,0">
+                                            <TextBlock Text="{Binding NumeroFacture}" 
+                                                       FontWeight="SemiBold" Foreground="#1E293B"/>
+                                            <TextBlock Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}" 
+                                                       FontSize="12" Foreground="#94A3B8"/>
+                                        </StackPanel>
+                                        
+                                        <TextBlock Grid.Column="1" Text="{Binding ClientNom}" 
+                                                   VerticalAlignment="Center" Foreground="#475569"/>
+                                        
+                                        <TextBlock Grid.Column="2" 
+                                                   Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
+                                                   FontWeight="SemiBold" Foreground="#16A34A"
+                                                   VerticalAlignment="Center" Margin="20,0"/>
+                                        
+                                        <Border Grid.Column="3" 
+                                                Background="{Binding Statut, Converter={x:Static vm:StatutToColorConverter.Instance}}"
+                                                CornerRadius="4" Padding="8,4">
+                                            <TextBlock Text="{Binding Statut}" 
+                                                       FontSize="11" Foreground="White"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

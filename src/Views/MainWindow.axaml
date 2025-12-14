@@ -76,6 +76,12 @@
                            TextWrapping="Wrap"
                            Margin="15,10"
                            IsVisible="{Binding MessageGestionDonnees, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                <Separator Background="#334155" Margin="10,10"/>
+
+                <Button Content="ℹ️ À propos" 
+                        Classes="nav-button"
+                        Command="{Binding AfficherAProposCommand}"/>
             </StackPanel>
         </Border>
 
@@ -83,6 +89,9 @@
         <Border Grid.Column="1" Background="#F1F5F9">
             <ContentControl Content="{Binding ContenuActuel}">
                 <ContentControl.DataTemplates>
+                    <DataTemplate DataType="vm:AccueilViewModel">
+                        <views:AccueilView/>
+                    </DataTemplate>
                     <DataTemplate DataType="vm:EntrepreneurConfigViewModel">
                         <views:EntrepreneurConfigView/>
                     </DataTemplate>
@@ -94,6 +103,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="vm:ArchiveFacturesViewModel">
                         <views:ArchiveFacturesView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:AProposViewModel">
+                        <views:AProposView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>
