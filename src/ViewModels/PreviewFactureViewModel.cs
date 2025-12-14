@@ -316,12 +316,26 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
         try
         {
-            var suggestedFileName = $"{Facture.NumeroFacture}_{Facture.ClientNom.Replace(" ", "_")}.pdf";
+            // Créer le dossier Factures par défaut s'il n'existe pas
+            var dossierFactures = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FatouraDZ",
+                "Factures"
+            );
+            Directory.CreateDirectory(dossierFactures);
+
+            // Nom suggéré au format FAC-YYYY-NNN_NomClient.pdf
+            var clientNomNettoye = string.Join("_", Facture.ClientNom.Split(Path.GetInvalidFileNameChars()));
+            var suggestedFileName = $"{Facture.NumeroFacture}_{clientNomNettoye}.pdf";
+            
+            // Obtenir le dossier par défaut
+            var defaultFolder = await storageProvider.TryGetFolderFromPathAsync(dossierFactures);
             
             var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Enregistrer la facture en PDF",
                 SuggestedFileName = suggestedFileName,
+                SuggestedStartLocation = defaultFolder,
                 DefaultExtension = "pdf",
                 FileTypeChoices = new[]
                 {
