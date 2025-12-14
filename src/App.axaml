@@ -51,6 +51,35 @@
         <Style Selector="TextBox:focus">
             <Setter Property="BorderBrush" Value="#2563EB"/>
         </Style>
+        <Style Selector="TextBox.error">
+            <Setter Property="BorderBrush" Value="#EF4444"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="TextBox.error:focus">
+            <Setter Property="BorderBrush" Value="#DC2626"/>
+        </Style>
+        
+        <Style Selector="TextBlock.error-message">
+            <Setter Property="Foreground" Value="#EF4444"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+        
+        <Style Selector="TextBlock.success-message">
+            <Setter Property="Foreground" Value="#10B981"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+        
+        <Style Selector="ComboBox.error">
+            <Setter Property="BorderBrush" Value="#EF4444"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        
+        <Style Selector="DatePicker.error">
+            <Setter Property="BorderBrush" Value="#EF4444"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
         
         <Style Selector="Border.card">
             <Setter Property="Background" Value="White"/>

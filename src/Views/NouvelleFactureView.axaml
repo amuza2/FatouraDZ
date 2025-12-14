@@ -80,6 +80,8 @@
                             <TextBlock Text="Date d'échéance" FontWeight="Medium"/>
                             <DatePicker SelectedDate="{Binding DateEcheance}"
                                         HorizontalAlignment="Stretch"/>
+                            <TextBlock Text="{Binding ErreurDateEcheance}" Classes="error-message"
+                                       IsVisible="{Binding ErreurDateEcheance, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
                     </Grid>
 
@@ -107,24 +109,36 @@
                     <Grid ColumnDefinitions="*,20,*">
                         <StackPanel Grid.Column="0" Spacing="4">
                             <TextBlock Text="Nom du client *" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNom}" Watermark="Nom complet ou raison sociale"/>
+                            <TextBox Text="{Binding ClientNom}" Watermark="Nom complet ou raison sociale"
+                                     Classes.error="{Binding ErreurClientNom, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding ErreurClientNom}" Classes="error-message"
+                                       IsVisible="{Binding ErreurClientNom, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Spacing="4">
                             <TextBlock Text="Téléphone *" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientTelephone}" Watermark="05XX XX XX XX"/>
+                            <TextBox Text="{Binding ClientTelephone}" Watermark="05XX XX XX XX"
+                                     Classes.error="{Binding ErreurClientTelephone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding ErreurClientTelephone}" Classes="error-message"
+                                       IsVisible="{Binding ErreurClientTelephone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- Adresse -->
                     <StackPanel Spacing="4">
                         <TextBlock Text="Adresse *" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientAdresse}" Watermark="Adresse complète"/>
+                        <TextBox Text="{Binding ClientAdresse}" Watermark="Adresse complète"
+                                 Classes.error="{Binding ErreurClientAdresse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <TextBlock Text="{Binding ErreurClientAdresse}" Classes="error-message"
+                                   IsVisible="{Binding ErreurClientAdresse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
 
                     <!-- Email -->
                     <StackPanel Spacing="4" MaxWidth="400" HorizontalAlignment="Left">
                         <TextBlock Text="Email (optionnel)" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientEmail}" Watermark="email@exemple.com"/>
+                        <TextBox Text="{Binding ClientEmail}" Watermark="email@exemple.com"
+                                 Classes.error="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <TextBlock Text="{Binding ErreurClientEmail}" Classes="error-message"
+                                   IsVisible="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -167,7 +181,11 @@
             <Border Classes="card">
                 <StackPanel Spacing="15">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="Services / Produits" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                        <StackPanel>
+                            <TextBlock Text="Services / Produits" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                            <TextBlock Text="{Binding ErreurLignes}" Classes="error-message"
+                                       IsVisible="{Binding ErreurLignes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
                         <Button Grid.Column="1" Content="➕ Ajouter une ligne" 
                                 Command="{Binding AjouterLigneCommand}"
                                 Padding="15,8"/>

@@ -100,6 +100,25 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [ObservableProperty]
     private bool _estSauvegarde;
 
+    // Erreurs de validation par champ
+    [ObservableProperty]
+    private string? _erreurClientNom;
+
+    [ObservableProperty]
+    private string? _erreurClientAdresse;
+
+    [ObservableProperty]
+    private string? _erreurClientTelephone;
+
+    [ObservableProperty]
+    private string? _erreurClientEmail;
+
+    [ObservableProperty]
+    private string? _erreurDateEcheance;
+
+    [ObservableProperty]
+    private string? _erreurLignes;
+
     [ObservableProperty]
     private bool _estModeEdition;
 
@@ -209,18 +228,83 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         RecalculerTotaux();
     }
 
+    private void EffacerErreursValidation()
+    {
+        ErreurClientNom = null;
+        ErreurClientAdresse = null;
+        ErreurClientTelephone = null;
+        ErreurClientEmail = null;
+        ErreurDateEcheance = null;
+        ErreurLignes = null;
+        ErreurMessage = null;
+    }
+
+    private bool ValiderChamps()
+    {
+        EffacerErreursValidation();
+        bool estValide = true;
+
+        // Validation du nom client
+        if (string.IsNullOrWhiteSpace(ClientNom))
+        {
+            ErreurClientNom = "Le nom du client est obligatoire";
+            estValide = false;
+        }
+
+        // Validation de l'adresse client
+        if (string.IsNullOrWhiteSpace(ClientAdresse))
+        {
+            ErreurClientAdresse = "L'adresse du client est obligatoire";
+            estValide = false;
+        }
+
+        // Validation du téléphone client
+        if (string.IsNullOrWhiteSpace(ClientTelephone))
+        {
+            ErreurClientTelephone = "Le téléphone du client est obligatoire";
+            estValide = false;
+        }
+        else if (!_validationService.EstTelephoneValide(ClientTelephone))
+        {
+            ErreurClientTelephone = "Format invalide (mobile: 05/06/07XX XX XX XX)";
+            estValide = false;
+        }
+
+        // Validation de l'email (optionnel mais doit être valide si renseigné)
+        if (!string.IsNullOrWhiteSpace(ClientEmail) && !ClientEmail.Contains("@"))
+        {
+            ErreurClientEmail = "Format d'email invalide";
+            estValide = false;
+        }
+
+        // Validation de la date d'échéance
+        if (DateEcheance < DateFacture)
+        {
+            ErreurDateEcheance = "La date d'échéance doit être postérieure à la date de facture";
+            estValide = false;
+        }
+
+        // Validation des lignes
+        var lignesValides = Lignes.Any(l => !string.IsNullOrWhiteSpace(l.Designation) && l.Quantite > 0);
+        if (!lignesValides)
+        {
+            ErreurLignes = "Au moins une ligne avec désignation et quantité est requise";
+            estValide = false;
+        }
+
+        return estValide;
+    }
+
     [RelayCommand]
     private async Task PrevisualiserAsync()
     {
-        var facture = CreerFacture();
-        var validation = _validationService.ValiderFacture(facture);
-
-        if (!validation.EstValide)
+        if (!ValiderChamps())
         {
-            ErreurMessage = string.Join("\n", validation.Erreurs);
+            ErreurMessage = "Veuillez corriger les erreurs avant de prévisualiser";
             return;
         }
 
+        var facture = CreerFacture();
         ErreurMessage = null;
         DemanderPrevisualisation?.Invoke(facture);
     }
@@ -228,17 +312,15 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [RelayCommand]
     private async Task SauvegarderAsync()
     {
-        ErreurMessage = null;
         EstSauvegarde = false;
 
-        var facture = CreerFacture();
-        var validation = _validationService.ValiderFacture(facture);
-
-        if (!validation.EstValide)
+        if (!ValiderChamps())
         {
-            ErreurMessage = string.Join("\n", validation.Erreurs);
+            ErreurMessage = "Veuillez corriger les erreurs avant de sauvegarder";
             return;
         }
+
+        var facture = CreerFacture();
 
         try
         {
