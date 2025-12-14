@@ -52,6 +52,30 @@
                 <Button Content="⚙️ Mes informations" 
                         Classes="nav-button"
                         Command="{Binding AfficherConfigurationCommand}"/>
+
+                <Separator Background="#334155" Margin="10,10"/>
+
+                <!-- Gestion des données -->
+                <TextBlock Text="Données" 
+                           Foreground="#94A3B8" FontSize="11" 
+                           Margin="15,10,0,5"/>
+
+                <Button Content="📤 Exporter données" 
+                        Classes="nav-button"
+                        Command="{Binding ExporterBaseDeDonneesCommand}"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
+                <Button Content="📥 Importer données" 
+                        Classes="nav-button"
+                        Command="{Binding ImporterBaseDeDonneesCommand}"
+                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
+
+                <!-- Message de gestion des données -->
+                <TextBlock Text="{Binding MessageGestionDonnees}" 
+                           Foreground="#22C55E" FontSize="10"
+                           TextWrapping="Wrap"
+                           Margin="15,10"
+                           IsVisible="{Binding MessageGestionDonnees, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
             </StackPanel>
         </Border>
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -166,5 +167,88 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task<Avalonia.Platform.Storage.IStorageFile?> DemanderCheminSauvegardePdf(string nomFichier)
     {
         return DemanderSauvegardeFichier != null ? await DemanderSauvegardeFichier.Invoke(nomFichier) : null;
+    }
+
+    // Gestion des données - Export/Import
+    [ObservableProperty]
+    private string? _messageGestionDonnees;
+
+    public event Func<string, string, Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderExportFichier;
+    public event Func<Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderImportFichier;
+
+    [RelayCommand]
+    private async Task ExporterBaseDeDonneesAsync()
+    {
+        try
+        {
+            var dbPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "FatouraDZ", "fatouradz.db");
+
+            if (!File.Exists(dbPath))
+            {
+                MessageGestionDonnees = "Aucune base de données à exporter.";
+                return;
+            }
+
+            var nomFichier = $"fatouradz_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+            var fichier = DemanderExportFichier != null 
+                ? await DemanderExportFichier.Invoke(nomFichier, "Base de données SQLite") 
+                : null;
+
+            if (fichier != null)
+            {
+                var destPath = fichier.Path.LocalPath;
+                File.Copy(dbPath, destPath, overwrite: true);
+                MessageGestionDonnees = $"Base de données exportée avec succès vers {destPath}";
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageGestionDonnees = $"Erreur lors de l'export : {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImporterBaseDeDonneesAsync()
+    {
+        try
+        {
+            // Demander confirmation avant import
+            var confirme = await DemanderConfirmationAsync(
+                "Importer une base de données",
+                "Attention : cette opération remplacera toutes vos données actuelles.\n\nÊtes-vous sûr de vouloir continuer ?");
+
+            if (!confirme) return;
+
+            var fichier = DemanderImportFichier != null 
+                ? await DemanderImportFichier.Invoke() 
+                : null;
+
+            if (fichier != null)
+            {
+                var sourcePath = fichier.Path.LocalPath;
+                var dbPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "FatouraDZ", "fatouradz.db");
+
+                // Créer une sauvegarde avant import
+                var backupPath = dbPath + ".backup";
+                if (File.Exists(dbPath))
+                {
+                    File.Copy(dbPath, backupPath, overwrite: true);
+                }
+
+                File.Copy(sourcePath, dbPath, overwrite: true);
+                MessageGestionDonnees = "Base de données importée avec succès. Redémarrez l'application pour appliquer les changements.";
+                
+                // Recharger les données
+                await InitialiserAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageGestionDonnees = $"Erreur lors de l'import : {ex.Message}";
+        }
     }
 }

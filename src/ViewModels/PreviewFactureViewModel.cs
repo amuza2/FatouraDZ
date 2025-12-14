@@ -291,6 +291,12 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 row.RelativeItem().Text($"Mode de paiement : {Facture.ModePaiement}");
                 row.RelativeItem().AlignRight().Text($"Date d'échéance : {Facture.DateEcheance:dd/MM/yyyy}");
             });
+            
+            // Afficher les détails du paiement si présents
+            if (!string.IsNullOrEmpty(Facture.PaiementReference))
+            {
+                column.Item().PaddingTop(5).Text($"Référence : {Facture.PaiementReference}");
+            }
             column.Item().PaddingTop(10).AlignCenter()
                 .Text($"Facture générée le {DateTime.Now:dd/MM/yyyy à HH:mm} par FatouraDZ")
                 .FontSize(8).FontColor(Colors.Grey.Medium);

@@ -11,6 +11,9 @@ public class Facture
     public DateTime DateEcheance { get; set; } = DateTime.Today;
     public TypeFacture TypeFacture { get; set; } = TypeFacture.Normale;
     public string ModePaiement { get; set; } = string.Empty;
+    
+    // Détails du paiement (pour chèque, virement, carte, CCP, BaridiMob)
+    public string? PaiementReference { get; set; }
 
     // Informations client
     public string ClientNom { get; set; } = string.Empty;

@@ -115,8 +115,30 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         "Espèces",
         "Chèque",
         "Virement bancaire",
-        "Carte bancaire"
+        "Carte bancaire",
+        "CCP",
+        "BaridiMob",
+        "À terme"
     };
+
+    // Détails du paiement
+    [ObservableProperty]
+    private string? _paiementReference;
+
+    // Indique si les détails de paiement sont requis pour le mode sélectionné
+    public bool RequiertDetailsPaiement => ModePaiement != "Espèces" && ModePaiement != "À terme";
+
+    partial void OnModePaiementChanged(string value)
+    {
+        OnPropertyChanged(nameof(RequiertDetailsPaiement));
+        if (!RequiertDetailsPaiement)
+        {
+            PaiementReference = null;
+        }
+        
+        // Timbre fiscal uniquement pour paiement en espèces
+        AppliquerTimbre = value == "Espèces";
+    }
 
     public event Action? FactureSauvegardee;
     public event Action<Facture>? DemanderPrevisualisation;
@@ -250,6 +272,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientNumeroImmatriculation = null;
         ClientActivite = null;
         AppliquerTimbre = true;
+        PaiementReference = null;
         ErreurMessage = null;
         EstSauvegarde = false;
 
@@ -282,6 +305,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         DateFacture = new DateTimeOffset(facture.DateFacture);
         DateEcheance = new DateTimeOffset(facture.DateEcheance);
         ModePaiement = facture.ModePaiement;
+        PaiementReference = facture.PaiementReference;
         ClientNom = facture.ClientNom;
         ClientAdresse = facture.ClientAdresse;
         ClientTelephone = facture.ClientTelephone;
@@ -332,6 +356,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             DateEcheance = DateEcheance.DateTime,
             TypeFacture = (TypeFacture)TypeFactureIndex,
             ModePaiement = ModePaiement,
+            PaiementReference = RequiertDetailsPaiement ? PaiementReference : null,
             ClientNom = ClientNom,
             ClientAdresse = ClientAdresse,
             ClientTelephone = ClientTelephone,

@@ -82,6 +82,19 @@
                                         HorizontalAlignment="Stretch"/>
                         </StackPanel>
                     </Grid>
+
+                    <!-- Détails du paiement (visible selon le mode) -->
+                    <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 
+                            IsVisible="{Binding RequiertDetailsPaiement}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="💳 Détails du paiement" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Numéro de référence (chèque, virement, etc.)" FontWeight="Medium"/>
+                                <TextBox Text="{Binding PaiementReference}" 
+                                         Watermark="N° chèque, N° virement, N° transaction..."/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -207,10 +220,8 @@
             <!-- Section: Récapitulatif -->
             <Border Classes="card">
                 <Grid ColumnDefinitions="*,350">
-                    <!-- Options -->
+                    <!-- Espace réservé -->
                     <StackPanel Grid.Column="0" Spacing="15">
-                        <TextBlock Text="Options" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
-                        <CheckBox Content="Appliquer le timbre fiscal" IsChecked="{Binding AppliquerTimbre}"/>
                     </StackPanel>
 
                     <!-- Totaux -->
@@ -231,17 +242,17 @@
                                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalTVA9, StringFormat={}{0:N2} DA}" 
                                            HorizontalAlignment="Right" Margin="0,5,0,0"/>
                                 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Total TTC" Margin="0,5,0,0"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TotalTTC, StringFormat={}{0:N2} DA}" 
-                                           FontWeight="Medium" HorizontalAlignment="Right" Margin="0,5,0,0"/>
-                                
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Timbre fiscal" Margin="0,5,0,0"
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Timbre fiscal" Margin="0,5,0,0"
                                            IsVisible="{Binding AppliquerTimbre}"/>
-                                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding TimbreFiscal, StringFormat={}{0:N2} DA}" 
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TimbreFiscal, StringFormat={}{0:N2} DA}" 
                                            HorizontalAlignment="Right" Margin="0,5,0,0"
                                            IsVisible="{Binding AppliquerTimbre}"/>
                                 
-                                <Separator Grid.Row="5" Grid.ColumnSpan="2" Margin="0,10"/>
+                                <Separator Grid.Row="4" Grid.ColumnSpan="2" Margin="0,10"/>
+                                
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Total TTC" Margin="0,5,0,0"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding TotalTTC, StringFormat={}{0:N2} DA}" 
+                                           FontWeight="Medium" HorizontalAlignment="Right" Margin="0,5,0,0"/>
                                 
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="MONTANT TOTAL" 
                                            FontWeight="Bold" FontSize="16"/>

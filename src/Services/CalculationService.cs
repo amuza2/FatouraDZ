@@ -24,14 +24,26 @@ public class CalculationService : ICalculationService
 
     public decimal CalculerTimbreFiscal(decimal montantTTC)
     {
-        // Grille timbre fiscal 2025 (Loi de finances algérienne)
-        return montantTTC switch
+        // Droit de timbre algérien - calcul par tranches
+        // Montants jusqu'à 30 000 DA → 1%
+        // Montants entre 30 000 et 100 000 DA → 1,5%
+        // Montants supérieurs à 100 000 DA → 2%
+        // Minimum légal : 5 DA
+        
+        if (montantTTC <= 0)
+            return 0m;
+
+        decimal taux = montantTTC switch
         {
-            <= 300m => 0m,
-            <= 30000m => 1m,
-            <= 100000m => 1.5m,
-            _ => 2m
+            <= 30000m => 0.01m,      // 1%
+            <= 100000m => 0.015m,    // 1.5%
+            _ => 0.02m               // 2%
         };
+
+        var timbre = Math.Round(montantTTC * taux, 2);
+        
+        // Minimum légal de 5 DA
+        return Math.Max(timbre, 5m);
     }
 
     public (decimal TotalHT, decimal TVA19, decimal TVA9, decimal TotalTTC, decimal TimbreFiscal, decimal MontantTotal) 

@@ -23,6 +23,8 @@ public partial class MainWindow : Window
             vm.DemanderPrevisualisation += OuvrirPrevisualisation;
             vm.DemanderSauvegardeFichier += OuvrirDialogueSauvegardePdf;
             vm.DemanderConfirmationDialog += AfficherConfirmationAsync;
+            vm.DemanderExportFichier += OuvrirDialogueExportDb;
+            vm.DemanderImportFichier += OuvrirDialogueImportDb;
             await vm.InitialiserAsync();
         }
     }
@@ -62,5 +64,37 @@ public partial class MainWindow : Window
         var dialog = new ConfirmationDialog(titre, message);
         var result = await dialog.ShowDialog<bool?>(this);
         return result == true;
+    }
+
+    private async Task<IStorageFile?> OuvrirDialogueExportDb(string nomSuggere, string description)
+    {
+        var options = new FilePickerSaveOptions
+        {
+            Title = "Exporter la base de données",
+            SuggestedFileName = nomSuggere,
+            DefaultExtension = "db",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new FilePickerFileType(description) { Patterns = new[] { "*.db" } }
+            }
+        };
+
+        return await StorageProvider.SaveFilePickerAsync(options);
+    }
+
+    private async Task<IStorageFile?> OuvrirDialogueImportDb()
+    {
+        var options = new FilePickerOpenOptions
+        {
+            Title = "Importer une base de données",
+            AllowMultiple = false,
+            FileTypeFilter = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("Base de données SQLite") { Patterns = new[] { "*.db" } }
+            }
+        };
+
+        var files = await StorageProvider.OpenFilePickerAsync(options);
+        return files.Count > 0 ? files[0] : null;
     }
 }
