@@ -87,7 +87,15 @@ public class PdfService : IPdfService
                 {
                     col.Item().Text("VENDEUR / ÉMETTEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
-                    col.Item().Text(entrepreneur.RaisonSociale ?? entrepreneur.NomComplet);
+                    if (!string.IsNullOrEmpty(entrepreneur.RaisonSociale))
+                    {
+                        col.Item().Text(entrepreneur.RaisonSociale).Bold();
+                        col.Item().Text($"Représenté par : {entrepreneur.NomComplet}");
+                    }
+                    else
+                    {
+                        col.Item().Text(entrepreneur.NomComplet).Bold();
+                    }
                     col.Item().Text(entrepreneur.Adresse);
                     col.Item().Text($"{entrepreneur.CodePostal} {entrepreneur.Ville}, {entrepreneur.Wilaya}");
                     col.Item().Text($"Tél : {entrepreneur.Telephone}");
@@ -122,6 +130,8 @@ public class PdfService : IPdfService
                         col.Item().Text($"AI : {facture.ClientAI}");
                     if (!string.IsNullOrEmpty(facture.ClientNumeroImmatriculation))
                         col.Item().Text($"N° Immatriculation : {facture.ClientNumeroImmatriculation}");
+                    if (!string.IsNullOrEmpty(facture.ClientActivite))
+                        col.Item().Text($"Activité : {facture.ClientActivite}");
                 });
             });
 

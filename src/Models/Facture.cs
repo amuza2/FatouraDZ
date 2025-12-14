@@ -21,6 +21,7 @@ public class Facture
     public string? ClientNIS { get; set; }
     public string? ClientAI { get; set; }
     public string? ClientNumeroImmatriculation { get; set; }
+    public string? ClientActivite { get; set; }
 
     // Montants
     public decimal TotalHT { get; set; }

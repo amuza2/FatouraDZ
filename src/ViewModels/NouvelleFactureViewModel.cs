@@ -61,6 +61,9 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [ObservableProperty]
     private string? _clientNumeroImmatriculation;
 
+    [ObservableProperty]
+    private string? _clientActivite;
+
     // Lignes de facture
     public ObservableCollection<LigneFactureViewModel> Lignes { get; } = new();
 
@@ -233,6 +236,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientNis = null;
         ClientAi = null;
         ClientNumeroImmatriculation = null;
+        ClientActivite = null;
         AppliquerTimbre = true;
         ErreurMessage = null;
         EstSauvegarde = false;
@@ -261,6 +265,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             ClientNIS = ClientNis,
             ClientAI = ClientAi,
             ClientNumeroImmatriculation = ClientNumeroImmatriculation,
+            ClientActivite = ClientActivite,
             TotalHT = TotalHT,
             TotalTVA19 = TotalTVA19,
             TotalTVA9 = TotalTVA9,

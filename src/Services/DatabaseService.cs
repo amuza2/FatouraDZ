@@ -163,6 +163,7 @@ public class DatabaseService : IDatabaseService
             ClientNIS = original.ClientNIS,
             ClientAI = original.ClientAI,
             ClientNumeroImmatriculation = original.ClientNumeroImmatriculation,
+            ClientActivite = original.ClientActivite,
             TotalHT = original.TotalHT,
             TotalTVA19 = original.TotalTVA19,
             TotalTVA9 = original.TotalTVA9,

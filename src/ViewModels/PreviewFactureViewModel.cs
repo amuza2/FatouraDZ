@@ -141,7 +141,15 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 {
                     col.Item().Text("VENDEUR / ÉMETTEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
-                    col.Item().Text(Entrepreneur.RaisonSociale ?? Entrepreneur.NomComplet);
+                    if (!string.IsNullOrEmpty(Entrepreneur.RaisonSociale))
+                    {
+                        col.Item().Text(Entrepreneur.RaisonSociale).Bold();
+                        col.Item().Text($"Représenté par : {Entrepreneur.NomComplet}");
+                    }
+                    else
+                    {
+                        col.Item().Text(Entrepreneur.NomComplet).Bold();
+                    }
                     col.Item().Text(Entrepreneur.Adresse);
                     col.Item().Text($"{Entrepreneur.CodePostal} {Entrepreneur.Ville}, {Entrepreneur.Wilaya}");
                     col.Item().Text($"Tél : {Entrepreneur.Telephone}");
@@ -176,6 +184,8 @@ public partial class PreviewFactureViewModel : ViewModelBase
                         col.Item().Text($"AI : {Facture.ClientAI}");
                     if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
                         col.Item().Text($"N° Immatriculation : {Facture.ClientNumeroImmatriculation}");
+                    if (!string.IsNullOrEmpty(Facture.ClientActivite))
+                        col.Item().Text($"Activité : {Facture.ClientActivite}");
                 });
             });
 
