@@ -31,12 +31,19 @@ public class InvoiceNumberService : IInvoiceNumberService
             prochainNumero = int.TryParse(prochainNumeroStr, out var num) ? num : 1;
         }
 
-        // Formater le numéro : FAC-YYYY-NNN
+        // Formater le numéro : FAC-YYYY-NNN (sans incrémenter)
         var numeroFacture = $"FAC-{anneeActuelle}-{prochainNumero:D3}";
+
+        return numeroFacture;
+    }
+
+    public async Task ConfirmerNumeroFactureAsync()
+    {
+        var anneeActuelle = DateTime.Now.Year.ToString();
+        var prochainNumeroStr = await _databaseService.GetConfigurationAsync("prochain_numero");
+        var prochainNumero = int.TryParse(prochainNumeroStr, out var num) ? num : 1;
 
         // Incrémenter pour la prochaine facture
         await _databaseService.SetConfigurationAsync("prochain_numero", (prochainNumero + 1).ToString());
-
-        return numeroFacture;
     }
 }

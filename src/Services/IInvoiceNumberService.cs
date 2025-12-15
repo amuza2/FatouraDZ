@@ -5,4 +5,5 @@ namespace FatouraDZ.Services;
 public interface IInvoiceNumberService
 {
     Task<string> GenererProchainNumeroAsync();
+    Task ConfirmerNumeroFactureAsync();
 }

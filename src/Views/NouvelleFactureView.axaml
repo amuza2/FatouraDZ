@@ -54,8 +54,7 @@
                         <!-- Numéro de facture -->
                         <StackPanel Grid.Column="2" Spacing="4">
                             <TextBlock Text="Numéro de facture" FontWeight="Medium"/>
-                            <TextBox Text="{Binding NumeroFacture}" IsReadOnly="True" 
-                                     Background="#F1F5F9"/>
+                            <TextBox Text="{Binding NumeroFacture}"/>
                         </StackPanel>
                         
                         <!-- Mode de paiement -->
@@ -66,6 +65,19 @@
                                       HorizontalAlignment="Stretch"/>
                         </StackPanel>
                     </Grid>
+
+                    <!-- Référence facture originale (pour avoir/annulation) -->
+                    <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 
+                            IsVisible="{Binding TypeFactureIndex}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="📋 Référence à la facture originale" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="N° de la facture à corriger/annuler" FontWeight="Medium"/>
+                                <TextBox Text="{Binding NumeroFactureOrigine}" 
+                                         Watermark="FAC-2025-XXX" MaxWidth="300" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                     <Grid ColumnDefinitions="*,20,*">
                         <!-- Date de facture -->
@@ -150,30 +162,44 @@
                     <TextBlock Text="Ces informations sont obligatoires pour la validité légale de la facture" 
                                Foreground="#64748B" FontSize="12"/>
                     
+                    <!-- Forme juridique et Activité -->
                     <Grid ColumnDefinitions="*,20,*">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Registre du Commerce (RC) *" FontWeight="Medium"/>
+                            <TextBlock Text="Forme juridique" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientFormeJuridique}" Watermark="Ex: EURL, SARL"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Activité" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientActivite}" Watermark="Activité commerciale"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Registre du Commerce (RC)" FontWeight="Medium"/>
                             <TextBox Text="{Binding ClientRc}" Watermark="Numéro RC"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="NIS (15 chiffres) *" FontWeight="Medium"/>
+                            <TextBlock Text="NIS (15 chiffres)" FontWeight="Medium"/>
                             <TextBox Text="{Binding ClientNis}" Watermark="000000000000000"/>
                         </StackPanel>
                     </Grid>
                     <Grid ColumnDefinitions="*,20,*">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Article d'Imposition (AI) *" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientAi}" Watermark="Numéro AI"/>
+                            <TextBlock Text="NIF" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientNif}" Watermark="Numéro NIF"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="N° Immatriculation *" FontWeight="Medium"/>
+                            <TextBlock Text="Article d'Imposition (AI)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientAi}" Watermark="Numéro AI"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="N° Immatriculation" FontWeight="Medium"/>
                             <TextBox Text="{Binding ClientNumeroImmatriculation}" Watermark="Numéro d'immatriculation"/>
                         </StackPanel>
                     </Grid>
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Activité *" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientActivite}" Watermark="Activité commerciale du client"/>
-                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -213,8 +239,8 @@
                                              Watermark="Description du service/produit" Margin="5,0"/>
                                     <NumericUpDown Grid.Column="2" Value="{Binding Quantite}" 
                                                    Minimum="0.01" Increment="1" FormatString="0.##" Margin="5,0"/>
-                                    <NumericUpDown Grid.Column="3" Value="{Binding PrixUnitaire}" 
-                                                   Minimum="0" Increment="100" FormatString="0.00" Margin="5,0"/>
+                                    <TextBox Grid.Column="3" Text="{Binding PrixUnitaire}" 
+                                             Watermark="0.00" Margin="5,0"/>
                                     <ComboBox Grid.Column="4" SelectedIndex="{Binding TauxTVAIndex}" Margin="5,0"
                                               HorizontalAlignment="Stretch">
                                         <ComboBoxItem Content="19%"/>
@@ -235,6 +261,32 @@
                 </StackPanel>
             </Border>
 
+            <!-- Section: Options fiscales -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Options fiscales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <!-- Retenue à la source -->
+                    <Border Background="#F0F9FF" CornerRadius="4" Padding="15">
+                        <StackPanel Spacing="10">
+                            <CheckBox Content="Appliquer une retenue à la source" 
+                                      IsChecked="{Binding AppliquerRetenueSource}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10" 
+                                        IsVisible="{Binding AppliquerRetenueSource}">
+                                <TextBlock Text="Taux de retenue :" VerticalAlignment="Center"/>
+                                <NumericUpDown Value="{Binding TauxRetenueSource}" 
+                                               Minimum="0" Maximum="100" Increment="5" 
+                                               FormatString="0" Width="100"/>
+                                <TextBlock Text="%" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="La retenue à la source est un prélèvement fiscal effectué par le client sur le montant brut."
+                                       Foreground="#64748B" FontSize="11" TextWrapping="Wrap"
+                                       IsVisible="{Binding AppliquerRetenueSource}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
             <!-- Section: Récapitulatif -->
             <Border Classes="card">
                 <Grid ColumnDefinitions="*,350">
@@ -247,36 +299,52 @@
                         <StackPanel Spacing="10">
                             <TextBlock Text="Récapitulatif" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                             
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Total HT"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalHT, StringFormat={}{0:N2} DA}" 
-                                           FontWeight="Medium" HorizontalAlignment="Right"/>
+                            <StackPanel Spacing="5">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Total HT"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalHT, StringFormat={}{0:N2} DA}" 
+                                               FontWeight="Medium" HorizontalAlignment="Right"/>
+                                </Grid>
                                 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="TVA 19%" Margin="0,5,0,0"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TotalTVA19, StringFormat={}{0:N2} DA}" 
-                                           HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding TotalTVA19}">
+                                    <TextBlock Text="TVA 19%"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalTVA19, StringFormat={}{0:N2} DA}" 
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
                                 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="TVA 9%" Margin="0,5,0,0"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding TotalTVA9, StringFormat={}{0:N2} DA}" 
-                                           HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding TotalTVA9}">
+                                    <TextBlock Text="TVA 9%"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalTVA9, StringFormat={}{0:N2} DA}" 
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
                                 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Timbre fiscal" Margin="0,5,0,0"
-                                           IsVisible="{Binding AppliquerTimbre}"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TimbreFiscal, StringFormat={}{0:N2} DA}" 
-                                           HorizontalAlignment="Right" Margin="0,5,0,0"
-                                           IsVisible="{Binding AppliquerTimbre}"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Total TTC"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalTTC, StringFormat={}{0:N2} DA}" 
+                                               FontWeight="Medium" HorizontalAlignment="Right"/>
+                                </Grid>
                                 
-                                <Separator Grid.Row="4" Grid.ColumnSpan="2" Margin="0,10"/>
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding AppliquerTimbre}">
+                                    <TextBlock Text="Timbre fiscal"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding TimbreFiscal, StringFormat={}{0:N2} DA}" 
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
                                 
-                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Total TTC" Margin="0,5,0,0"/>
-                                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding TotalTTC, StringFormat={}{0:N2} DA}" 
-                                           FontWeight="Medium" HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding AppliquerRetenueSource}">
+                                    <TextBlock Text="{Binding TauxRetenueSource, StringFormat='Retenue source ({0}% du HT)'}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding RetenueSource, StringFormat='-{0:N2} DA'}" 
+                                               HorizontalAlignment="Right" Foreground="#EF4444"/>
+                                </Grid>
                                 
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="MONTANT TOTAL" 
-                                           FontWeight="Bold" FontSize="16"/>
-                                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
-                                           FontWeight="Bold" FontSize="16" Foreground="#2563EB" HorizontalAlignment="Right"/>
-                            </Grid>
+                                <Separator Margin="0,5"/>
+                                
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{Binding TypeFactureIndex, Converter={x:Static vm:TypeFactureToLabelConverter.Instance}}" 
+                                               FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
+                                               FontWeight="Bold" FontSize="16" Foreground="#2563EB" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>

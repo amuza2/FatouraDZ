@@ -52,6 +52,18 @@
                         <TextBlock Text="Dénomination / Raison sociale (optionnel)" FontWeight="Medium"/>
                         <TextBox Text="{Binding RaisonSociale}" Watermark="Si applicable"/>
                     </StackPanel>
+
+                    <!-- Forme juridique et Activité -->
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Forme juridique" FontWeight="Medium"/>
+                            <TextBox Text="{Binding FormeJuridique}" Watermark="Ex: EURL, SARL, Auto-entrepreneur"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Activité" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Activite}" Watermark="Ex: Services informatiques"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 

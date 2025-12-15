@@ -58,10 +58,16 @@ public class PdfService : IPdfService
 
                 row.RelativeItem(2).AlignCenter().Column(col =>
                 {
-                    col.Item().Text("FACTURE").Bold().FontSize(24);
-                    if (facture.TypeFacture != TypeFacture.Normale)
+                    var titreFacture = facture.TypeFacture switch
                     {
-                        col.Item().Text($"({facture.TypeFacture})").FontSize(12).Italic();
+                        TypeFacture.Avoir => "FACTURE D'AVOIR",
+                        TypeFacture.Annulation => "FACTURE D'ANNULATION",
+                        _ => "FACTURE"
+                    };
+                    col.Item().Text(titreFacture).Bold().FontSize(24);
+                    if (!string.IsNullOrEmpty(facture.NumeroFactureOrigine))
+                    {
+                        col.Item().Text($"Réf. facture originale : {facture.NumeroFactureOrigine}").FontSize(10).Italic();
                     }
                 });
 
@@ -96,6 +102,10 @@ public class PdfService : IPdfService
                     {
                         col.Item().Text(entrepreneur.NomComplet).Bold();
                     }
+                    if (!string.IsNullOrEmpty(entrepreneur.FormeJuridique))
+                        col.Item().Text($"Forme juridique : {entrepreneur.FormeJuridique}");
+                    if (!string.IsNullOrEmpty(entrepreneur.Activite))
+                        col.Item().Text($"Activité : {entrepreneur.Activite}");
                     col.Item().Text(entrepreneur.Adresse);
                     col.Item().Text($"{entrepreneur.CodePostal} {entrepreneur.Ville}, {entrepreneur.Wilaya}");
                     col.Item().Text($"Tél : {entrepreneur.Telephone}");
@@ -118,6 +128,8 @@ public class PdfService : IPdfService
                     col.Item().Text("CLIENT / DESTINATAIRE").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     col.Item().Text(facture.ClientNom);
+                    if (!string.IsNullOrEmpty(facture.ClientFormeJuridique))
+                        col.Item().Text($"Forme juridique : {facture.ClientFormeJuridique}");
                     col.Item().Text(facture.ClientAdresse);
                     col.Item().Text($"Tél : {facture.ClientTelephone}");
                     if (!string.IsNullOrEmpty(facture.ClientEmail))
@@ -126,6 +138,8 @@ public class PdfService : IPdfService
                         col.Item().Text($"RC : {facture.ClientRC}");
                     if (!string.IsNullOrEmpty(facture.ClientNIS))
                         col.Item().Text($"NIS : {facture.ClientNIS}");
+                    if (!string.IsNullOrEmpty(facture.ClientNIF))
+                        col.Item().Text($"NIF : {facture.ClientNIF}");
                     if (!string.IsNullOrEmpty(facture.ClientAI))
                         col.Item().Text($"AI : {facture.ClientAI}");
                     if (!string.IsNullOrEmpty(facture.ClientNumeroImmatriculation))
@@ -214,10 +228,24 @@ public class PdfService : IPdfService
                         row.RelativeItem().AlignRight().Text($"{facture.TimbreFiscal:N2} DZD");
                     });
                 }
+                if (facture.TauxRetenueSource.HasValue && facture.RetenueSource > 0)
+                {
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Text($"Retenue source ({facture.TauxRetenueSource}% du HT) :");
+                        row.RelativeItem().AlignRight().Text($"-{facture.RetenueSource:N2} DZD");
+                    });
+                }
                 col.Item().PaddingTop(5).LineHorizontal(1);
+                var labelTotal = facture.TypeFacture switch
+                {
+                    TypeFacture.Avoir => "NET À DÉDUIRE :",
+                    TypeFacture.Annulation => "MONTANT ANNULÉ :",
+                    _ => "NET À PAYER :"
+                };
                 col.Item().PaddingTop(5).Row(row =>
                 {
-                    row.RelativeItem().Text("MONTANT TOTAL :").Bold();
+                    row.RelativeItem().Text(labelTotal).Bold();
                     row.RelativeItem().AlignRight().Text($"{facture.MontantTotal:N2} DZD").Bold();
                 });
             });

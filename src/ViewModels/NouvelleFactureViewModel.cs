@@ -50,10 +50,16 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private string? _clientEmail;
 
     [ObservableProperty]
+    private string? _clientFormeJuridique;
+
+    [ObservableProperty]
     private string? _clientRc;
 
     [ObservableProperty]
     private string? _clientNis;
+
+    [ObservableProperty]
+    private string? _clientNif;
 
     [ObservableProperty]
     private string? _clientAi;
@@ -92,6 +98,20 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     // Options
     [ObservableProperty]
     private bool _appliquerTimbre = true;
+
+    // Retenue à la source (optionnel)
+    [ObservableProperty]
+    private bool _appliquerRetenueSource;
+
+    [ObservableProperty]
+    private decimal _tauxRetenueSource = 30m;
+
+    [ObservableProperty]
+    private decimal _retenueSource;
+
+    // Référence facture originale (pour avoir/annulation)
+    [ObservableProperty]
+    private string? _numeroFactureOrigine;
 
     // États
     [ObservableProperty]
@@ -219,11 +239,33 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         TotalTVA9 = totaux.TVA9;
         TotalTTC = totaux.TotalTTC;
         TimbreFiscal = totaux.TimbreFiscal;
-        MontantTotal = totaux.MontantTotal;
+
+        // Calculer la retenue à la source si applicable (sur le Total HT, pas sur le TTC)
+        if (AppliquerRetenueSource && TauxRetenueSource > 0)
+        {
+            RetenueSource = Math.Round(totaux.TotalHT * TauxRetenueSource / 100m, 2);
+        }
+        else
+        {
+            RetenueSource = 0;
+        }
+
+        // Net à payer = Total TTC + Timbre - Retenue source
+        MontantTotal = totaux.MontantTotal - RetenueSource;
         MontantEnLettres = _numberToWordsService.ConvertirEnLettres(MontantTotal);
     }
 
     partial void OnAppliquerTimbreChanged(bool value)
+    {
+        RecalculerTotaux();
+    }
+
+    partial void OnAppliquerRetenueSourceChanged(bool value)
+    {
+        RecalculerTotaux();
+    }
+
+    partial void OnTauxRetenueSourceChanged(decimal value)
     {
         RecalculerTotaux();
     }
@@ -325,6 +367,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         try
         {
             await _databaseService.SaveFactureAsync(facture);
+            
+            // Incrémenter le numéro de facture seulement après sauvegarde réussie
+            if (!EstModeEdition)
+            {
+                await _invoiceNumberService.ConfirmerNumeroFactureAsync();
+            }
+            
             EstSauvegarde = true;
             FactureSauvegardee?.Invoke();
         }
@@ -348,12 +397,17 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientAdresse = string.Empty;
         ClientTelephone = string.Empty;
         ClientEmail = null;
+        ClientFormeJuridique = null;
         ClientRc = null;
         ClientNis = null;
+        ClientNif = null;
         ClientAi = null;
         ClientNumeroImmatriculation = null;
         ClientActivite = null;
         AppliquerTimbre = true;
+        AppliquerRetenueSource = false;
+        TauxRetenueSource = 30m;
+        NumeroFactureOrigine = null;
         PaiementReference = null;
         ErreurMessage = null;
         EstSauvegarde = false;
@@ -392,12 +446,17 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientAdresse = facture.ClientAdresse;
         ClientTelephone = facture.ClientTelephone;
         ClientEmail = facture.ClientEmail;
+        ClientFormeJuridique = facture.ClientFormeJuridique;
         ClientRc = facture.ClientRC;
         ClientNis = facture.ClientNIS;
+        ClientNif = facture.ClientNIF;
         ClientAi = facture.ClientAI;
         ClientNumeroImmatriculation = facture.ClientNumeroImmatriculation;
         ClientActivite = facture.ClientActivite;
+        NumeroFactureOrigine = facture.NumeroFactureOrigine;
         AppliquerTimbre = facture.EstTimbreApplique;
+        AppliquerRetenueSource = facture.TauxRetenueSource.HasValue;
+        TauxRetenueSource = facture.TauxRetenueSource ?? 30m;
 
         // Charger les lignes
         Lignes.Clear();
@@ -439,15 +498,20 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             TypeFacture = (TypeFacture)TypeFactureIndex,
             ModePaiement = ModePaiement,
             PaiementReference = RequiertDetailsPaiement ? PaiementReference : null,
+            NumeroFactureOrigine = NumeroFactureOrigine,
             ClientNom = ClientNom,
             ClientAdresse = ClientAdresse,
             ClientTelephone = ClientTelephone,
             ClientEmail = ClientEmail,
+            ClientFormeJuridique = ClientFormeJuridique,
             ClientRC = ClientRc,
             ClientNIS = ClientNis,
+            ClientNIF = ClientNif,
             ClientAI = ClientAi,
             ClientNumeroImmatriculation = ClientNumeroImmatriculation,
             ClientActivite = ClientActivite,
+            TauxRetenueSource = AppliquerRetenueSource ? TauxRetenueSource : null,
+            RetenueSource = RetenueSource,
             TotalHT = TotalHT,
             TotalTVA19 = TotalTVA19,
             TotalTVA9 = TotalTVA9,

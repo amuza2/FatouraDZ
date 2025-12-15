@@ -20,11 +20,20 @@ public class Facture
     public string ClientAdresse { get; set; } = string.Empty;
     public string ClientTelephone { get; set; } = string.Empty;
     public string? ClientEmail { get; set; }
+    public string? ClientFormeJuridique { get; set; }
     public string? ClientRC { get; set; }
     public string? ClientNIS { get; set; }
+    public string? ClientNIF { get; set; }
     public string? ClientAI { get; set; }
     public string? ClientNumeroImmatriculation { get; set; }
     public string? ClientActivite { get; set; }
+
+    // Référence à la facture originale (pour avoir/annulation)
+    public string? NumeroFactureOrigine { get; set; }
+
+    // Retenue à la source (optionnel)
+    public decimal? TauxRetenueSource { get; set; }
+    public decimal RetenueSource { get; set; }
 
     // Montants
     public decimal TotalHT { get; set; }

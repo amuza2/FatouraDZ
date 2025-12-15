@@ -9,6 +9,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="FatouraDZ - Application de Facturation"
+        WindowState="Maximized"
         MinWidth="900" MinHeight="600">
 
     <Design.DataContext>

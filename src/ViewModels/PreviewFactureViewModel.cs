@@ -112,10 +112,16 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
                 row.RelativeItem(2).AlignCenter().Column(col =>
                 {
-                    col.Item().Text("FACTURE").Bold().FontSize(24);
-                    if (Facture.TypeFacture != TypeFacture.Normale)
+                    var titreFacture = Facture.TypeFacture switch
                     {
-                        col.Item().Text($"({Facture.TypeFacture})").FontSize(12).Italic();
+                        TypeFacture.Avoir => "FACTURE D'AVOIR",
+                        TypeFacture.Annulation => "FACTURE D'ANNULATION",
+                        _ => "FACTURE"
+                    };
+                    col.Item().Text(titreFacture).Bold().FontSize(24);
+                    if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
+                    {
+                        col.Item().Text($"Réf. facture originale : {Facture.NumeroFactureOrigine}").FontSize(10).Italic();
                     }
                 });
 
@@ -150,6 +156,10 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     {
                         col.Item().Text(Entrepreneur.NomComplet).Bold();
                     }
+                    if (!string.IsNullOrEmpty(Entrepreneur.FormeJuridique))
+                        col.Item().Text($"Forme juridique : {Entrepreneur.FormeJuridique}");
+                    if (!string.IsNullOrEmpty(Entrepreneur.Activite))
+                        col.Item().Text($"Activité : {Entrepreneur.Activite}");
                     col.Item().Text(Entrepreneur.Adresse);
                     col.Item().Text($"{Entrepreneur.CodePostal} {Entrepreneur.Ville}, {Entrepreneur.Wilaya}");
                     col.Item().Text($"Tél : {Entrepreneur.Telephone}");
@@ -172,6 +182,8 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     col.Item().Text("CLIENT / DESTINATAIRE").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     col.Item().Text(Facture.ClientNom);
+                    if (!string.IsNullOrEmpty(Facture.ClientFormeJuridique))
+                        col.Item().Text($"Forme juridique : {Facture.ClientFormeJuridique}");
                     col.Item().Text(Facture.ClientAdresse);
                     col.Item().Text($"Tél : {Facture.ClientTelephone}");
                     if (!string.IsNullOrEmpty(Facture.ClientEmail))
@@ -180,6 +192,8 @@ public partial class PreviewFactureViewModel : ViewModelBase
                         col.Item().Text($"RC : {Facture.ClientRC}");
                     if (!string.IsNullOrEmpty(Facture.ClientNIS))
                         col.Item().Text($"NIS : {Facture.ClientNIS}");
+                    if (!string.IsNullOrEmpty(Facture.ClientNIF))
+                        col.Item().Text($"NIF : {Facture.ClientNIF}");
                     if (!string.IsNullOrEmpty(Facture.ClientAI))
                         col.Item().Text($"AI : {Facture.ClientAI}");
                     if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
@@ -268,10 +282,24 @@ public partial class PreviewFactureViewModel : ViewModelBase
                         row.RelativeItem().AlignRight().Text($"{Facture.TimbreFiscal:N2} DZD");
                     });
                 }
+                if (Facture.TauxRetenueSource.HasValue && Facture.RetenueSource > 0)
+                {
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem().Text($"Retenue source ({Facture.TauxRetenueSource}% du HT) :");
+                        row.RelativeItem().AlignRight().Text($"-{Facture.RetenueSource:N2} DZD");
+                    });
+                }
                 col.Item().PaddingTop(5).LineHorizontal(1);
+                var labelTotal = Facture.TypeFacture switch
+                {
+                    TypeFacture.Avoir => "NET À DÉDUIRE :",
+                    TypeFacture.Annulation => "MONTANT ANNULÉ :",
+                    _ => "NET À PAYER :"
+                };
                 col.Item().PaddingTop(5).Row(row =>
                 {
-                    row.RelativeItem().Text("MONTANT TOTAL :").Bold();
+                    row.RelativeItem().Text(labelTotal).Bold();
                     row.RelativeItem().AlignRight().Text($"{Facture.MontantTotal:N2} DZD").Bold();
                 });
             });

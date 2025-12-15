@@ -7,6 +7,8 @@ public class Entrepreneur
     public int Id { get; set; }
     public string NomComplet { get; set; } = string.Empty;
     public string? RaisonSociale { get; set; }
+    public string? FormeJuridique { get; set; }
+    public string? Activite { get; set; }
     public string Adresse { get; set; } = string.Empty;
     public string Ville { get; set; } = string.Empty;
     public string Wilaya { get; set; } = string.Empty;

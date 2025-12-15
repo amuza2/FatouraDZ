@@ -21,6 +21,12 @@ public partial class EntrepreneurConfigViewModel : ViewModelBase
     private string? _raisonSociale;
 
     [ObservableProperty]
+    private string? _formeJuridique;
+
+    [ObservableProperty]
+    private string? _activite;
+
+    [ObservableProperty]
     private string _adresse = string.Empty;
 
     [ObservableProperty]
@@ -123,6 +129,8 @@ public partial class EntrepreneurConfigViewModel : ViewModelBase
             {
                 NomComplet = entrepreneur.NomComplet;
                 RaisonSociale = entrepreneur.RaisonSociale;
+                FormeJuridique = entrepreneur.FormeJuridique;
+                Activite = entrepreneur.Activite;
                 Adresse = entrepreneur.Adresse;
                 Ville = entrepreneur.Ville;
                 Wilaya = entrepreneur.Wilaya;
@@ -156,6 +164,8 @@ public partial class EntrepreneurConfigViewModel : ViewModelBase
         {
             NomComplet = NomComplet,
             RaisonSociale = RaisonSociale,
+            FormeJuridique = FormeJuridique,
+            Activite = Activite,
             Adresse = Adresse,
             Ville = Ville,
             Wilaya = Wilaya,
