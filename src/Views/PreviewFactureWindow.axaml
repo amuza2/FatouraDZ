@@ -74,16 +74,16 @@
         <Border Grid.Row="2" Background="#F8FAFC" Padding="20" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Bouton Modifier (gauche) -->
-                <Button Grid.Column="0" Content="✏️ Modifier" 
+                <Button Grid.Column="0" Content="Modifier" 
                         Command="{Binding ModifierCommand}"
                         Padding="20,12"/>
 
                 <!-- Boutons principaux (droite) -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
-                    <Button Content="🖨️ Imprimer" 
+                    <Button Content="Imprimer" 
                             Command="{Binding ImprimerCommand}"
                             Padding="20,12"/>
-                    <Button Content="💾 Enregistrer en PDF" 
+                    <Button Content="Enregistrer en PDF" 
                             Classes="primary"
                             Command="{Binding EnregistrerPdfCommand}"
                             CommandParameter="{Binding $parent[Window].StorageProvider}"

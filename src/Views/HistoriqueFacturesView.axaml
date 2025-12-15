@@ -82,8 +82,8 @@
                 </Grid>
                 
                 <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                    <Button Content="🔍 Rechercher" Command="{Binding RechercherCommand}" Padding="15,8"/>
-                    <Button Content="🔄 Réinitialiser" Command="{Binding ReinitialiserFiltresCommand}" Padding="15,8"/>
+                    <Button Content="Rechercher" Command="{Binding RechercherCommand}" Padding="15,8"/>
+                    <Button Content="Réinitialiser" Command="{Binding ReinitialiserFiltresCommand}" Padding="15,8"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -175,7 +175,7 @@
                                                     Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ModifierCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="8,6" FontSize="12"/>
-                                            <Button Content="📋" ToolTip.Tip="Dupliquer"
+                                            <Button Content="🗐" ToolTip.Tip="Dupliquer"
                                                     Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).DupliquerCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="8,6" FontSize="12"/>
@@ -183,7 +183,7 @@
                                                     Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ExporterPdfCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="8,6" FontSize="12"/>
-                                            <Button Content="📦" ToolTip.Tip="Archiver"
+                                            <Button Content="🗃️" ToolTip.Tip="Archiver"
                                                     Command="{Binding $parent[ItemsControl].((vm:HistoriqueFacturesViewModel)DataContext).ArchiverCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="8,6" FontSize="12" Foreground="#F59E0B"/>
@@ -198,7 +198,7 @@
                 <!-- Message si aucune facture -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
                             IsVisible="{Binding !Factures.Count}">
-                    <TextBlock Text="📋" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                    <TextBlock Text="∅" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
                     <TextBlock Text="Aucune facture trouvée" FontSize="16" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,10,0,0"/>
                 </StackPanel>
 

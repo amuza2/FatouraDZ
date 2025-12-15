@@ -70,7 +70,7 @@
                     <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 
                             IsVisible="{Binding TypeFactureIndex}">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="📋 Référence à la facture originale" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <TextBlock Text="Référence à la facture originale" FontWeight="SemiBold" Foreground="#92400E"/>
                             <StackPanel Spacing="4">
                                 <TextBlock Text="N° de la facture à corriger/annuler" FontWeight="Medium"/>
                                 <TextBox Text="{Binding NumeroFactureOrigine}" 
@@ -212,7 +212,7 @@
                             <TextBlock Text="{Binding ErreurLignes}" Classes="error-message"
                                        IsVisible="{Binding ErreurLignes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Content="➕ Ajouter une ligne" 
+                        <Button Grid.Column="1" Content="Ajouter une ligne" 
                                 Command="{Binding AjouterLigneCommand}"
                                 Padding="15,8"/>
                     </Grid>
@@ -360,13 +360,13 @@
 
             <!-- Boutons d'action -->
             <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" Margin="0,20,0,60">
-                <Button Content="🔄 Réinitialiser" 
+                <Button Content="Réinitialiser" 
                         Command="{Binding ReinitialiserCommand}"
                         Padding="20,12"/>
-                <Button Content="👁️ Prévisualiser" 
+                <Button Content="Prévisualiser" 
                         Command="{Binding PrevisualiserCommand}"
                         Padding="20,12"/>
-                <Button Content="💾 Enregistrer la facture" 
+                <Button Content="Enregistrer la facture" 
                         Classes="primary"
                         Command="{Binding SauvegarderCommand}"
                         Padding="30,12"

@@ -199,10 +199,10 @@
                     <TextBlock Text="Format: PNG ou JPG, max 2 Mo" Foreground="#64748B" FontSize="12"/>
                     
                     <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button Content="📁 Sélectionner un logo" 
+                        <Button Content="Sélectionner un logo" 
                                 Command="{Binding SelectionnerLogoCommand}"
                                 CommandParameter="{Binding $parent[Window].StorageProvider}"/>
-                        <Button Content="🗑️ Supprimer" 
+                        <Button Content="Supprimer" 
                                 Command="{Binding SupprimerLogoCommand}"
                                 IsVisible="{Binding CheminLogo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
@@ -217,7 +217,7 @@
             </Border>
 
             <!-- Bouton Sauvegarder -->
-            <Button Content="💾 Sauvegarder mes informations" 
+            <Button Content="Sauvegarder mes informations" 
                     Classes="primary"
                     Command="{Binding SauvegarderCommand}"
                     HorizontalAlignment="Center"

@@ -16,78 +16,106 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="220,*">
+    <Grid ColumnDefinitions="240,*">
         <!-- Menu latéral -->
-        <Border Grid.Column="0" Background="#1E293B">
-            <StackPanel Spacing="5" Margin="0,20,0,0">
-                <!-- Logo / Titre -->
-                <TextBlock Text="FatouraDZ" 
-                           FontSize="24" FontWeight="Bold" 
-                           Foreground="White"
+        <Border Grid.Column="0" 
+                Background="{StaticResource CardBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Logo et titre -->
+                <Border Grid.Row="0" Padding="20" Background="{StaticResource PrimaryBrush}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="FatouraDZ" 
+                                   FontSize="24" FontWeight="Bold"
+                                   Foreground="White"/>
+                        <TextBlock Text="Facturation Simplifiée" 
+                                   FontSize="12" Foreground="#DBEAFE"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Menu de navigation -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Margin="12,20">
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherAccueilCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Tableau de bord" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherNouvelleFactureCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Nouvelle facture" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherHistoriqueCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Historique" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherArchivesCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Archives" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherConfigurationCommand}">
+                            <TextBlock Text="Mes informations" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
+
+                        <!-- Gestion des données -->
+                        <TextBlock Text="DONNÉES" 
+                                   Foreground="{StaticResource TextSecondaryBrush}" 
+                                   FontSize="11" FontWeight="SemiBold"
+                                   Margin="16,8,0,8"/>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding ExporterBaseDeDonneesCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Exporter données" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding ImporterBaseDeDonneesCommand}"
+                                IsVisible="{Binding EstEntrepreneurConfigure}">
+                            <TextBlock Text="Importer données" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+
+                        <!-- Message de gestion des données -->
+                        <TextBlock Text="{Binding MessageGestionDonnees}" 
+                                   Foreground="{StaticResource SuccessBrush}" FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Margin="16,8"
+                                   IsVisible="{Binding MessageGestionDonnees, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
+
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherAProposCommand}">
+                            <TextBlock Text="À propos" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Version en bas -->
+                <TextBlock Grid.Row="2" 
+                           Text="Version 1.0.0" 
+                           FontSize="11" 
+                           Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center"
-                           Margin="0,0,0,30"/>
-
-                <!-- Navigation -->
-                <Button Content="🏠 Accueil" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherAccueilCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <Button Content="➕ Nouvelle facture" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherNouvelleFactureCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <Button Content="📋 Historique" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherHistoriqueCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <Button Content="📦 Archives" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherArchivesCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <Separator Background="#334155" Margin="10,20"/>
-
-                <Button Content="⚙️ Mes informations" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherConfigurationCommand}"/>
-
-                <Separator Background="#334155" Margin="10,10"/>
-
-                <!-- Gestion des données -->
-                <TextBlock Text="Données" 
-                           Foreground="#94A3B8" FontSize="11" 
-                           Margin="15,10,0,5"/>
-
-                <Button Content="📤 Exporter données" 
-                        Classes="nav-button"
-                        Command="{Binding ExporterBaseDeDonneesCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <Button Content="📥 Importer données" 
-                        Classes="nav-button"
-                        Command="{Binding ImporterBaseDeDonneesCommand}"
-                        IsVisible="{Binding EstEntrepreneurConfigure}"/>
-
-                <!-- Message de gestion des données -->
-                <TextBlock Text="{Binding MessageGestionDonnees}" 
-                           Foreground="#22C55E" FontSize="10"
-                           TextWrapping="Wrap"
-                           Margin="15,10"
-                           IsVisible="{Binding MessageGestionDonnees, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-
-                <Separator Background="#334155" Margin="10,10"/>
-
-                <Button Content="ℹ️ À propos" 
-                        Classes="nav-button"
-                        Command="{Binding AfficherAProposCommand}"/>
-            </StackPanel>
+                           Margin="0,0,0,16"/>
+            </Grid>
         </Border>
 
         <!-- Contenu principal -->
-        <Border Grid.Column="1" Background="#F1F5F9">
+        <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
             <ContentControl Content="{Binding ContenuActuel}">
                 <ContentControl.DataTemplates>
                     <DataTemplate DataType="vm:AccueilViewModel">

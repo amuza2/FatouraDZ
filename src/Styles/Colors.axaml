@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Couleurs principales -->
+    <SolidColorBrush x:Key="PrimaryBrush">#2563EB</SolidColorBrush>
+    <SolidColorBrush x:Key="PrimaryHoverBrush">#1E40AF</SolidColorBrush>
+    <SolidColorBrush x:Key="PrimaryPressedBrush">#1E3A8A</SolidColorBrush>
+    <SolidColorBrush x:Key="PrimaryDisabledBrush">#93C5FD</SolidColorBrush>
+    
+    <!-- Couleurs secondaires -->
+    <SolidColorBrush x:Key="SecondaryBrush">#64748B</SolidColorBrush>
+    <SolidColorBrush x:Key="SecondaryHoverBrush">#475569</SolidColorBrush>
+    
+    <!-- Couleurs de statut -->
+    <SolidColorBrush x:Key="SuccessBrush">#10B981</SolidColorBrush>
+    <SolidColorBrush x:Key="SuccessHoverBrush">#059669</SolidColorBrush>
+    <SolidColorBrush x:Key="ErrorBrush">#EF4444</SolidColorBrush>
+    <SolidColorBrush x:Key="ErrorHoverBrush">#DC2626</SolidColorBrush>
+    <SolidColorBrush x:Key="WarningBrush">#F59E0B</SolidColorBrush>
+    
+    <!-- Couleurs de fond -->
+    <SolidColorBrush x:Key="BackgroundBrush">#F8FAFC</SolidColorBrush>
+    <SolidColorBrush x:Key="CardBrush">#FFFFFF</SolidColorBrush>
+    <SolidColorBrush x:Key="SidebarBrush">#1E293B</SolidColorBrush>
+    
+    <!-- Couleurs de bordure -->
+    <SolidColorBrush x:Key="BorderBrush">#E2E8F0</SolidColorBrush>
+    <SolidColorBrush x:Key="BorderHoverBrush">#94A3B8</SolidColorBrush>
+    <SolidColorBrush x:Key="BorderFocusBrush">#2563EB</SolidColorBrush>
+    
+    <!-- Couleurs de texte -->
+    <SolidColorBrush x:Key="TextPrimaryBrush">#1E293B</SolidColorBrush>
+    <SolidColorBrush x:Key="TextSecondaryBrush">#64748B</SolidColorBrush>
+    <SolidColorBrush x:Key="TextDisabledBrush">#94A3B8</SolidColorBrush>
+    <SolidColorBrush x:Key="TextOnPrimaryBrush">#FFFFFF</SolidColorBrush>
+    
+    <!-- Couleurs de bouton par défaut -->
+    <SolidColorBrush x:Key="ButtonBackgroundBrush">#F1F5F9</SolidColorBrush>
+    <SolidColorBrush x:Key="ButtonHoverBrush">#E2E8F0</SolidColorBrush>
+    <SolidColorBrush x:Key="ButtonPressedBrush">#CBD5E1</SolidColorBrush>
+    <SolidColorBrush x:Key="ButtonBorderBrush">#CBD5E1</SolidColorBrush>
+    
+</ResourceDictionary>

@@ -12,94 +12,128 @@
     </Design.DataContext>
 
     <ScrollViewer>
-        <StackPanel Margin="30" Spacing="25">
+        <StackPanel Margin="40" Spacing="24">
             
-            <!-- Message de bienvenue -->
-            <Border Background="White" CornerRadius="12" Padding="30" BoxShadow="0 2 8 0 #20000000">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="👋 Bienvenue sur FatouraDZ" 
-                               FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock Text="{Binding NomEntrepreneur, StringFormat='Connecté en tant que : {0}'}" 
-                               FontSize="16" Foreground="#64748B"/>
-                </StackPanel>
-            </Border>
+            <!-- En-tête -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Tableau de bord" 
+                           FontSize="28" FontWeight="Bold" 
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{Binding NomEntrepreneur, StringFormat='Bienvenue, {0}'}" 
+                           FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"/>
+            </StackPanel>
 
-            <!-- Statistiques rapides -->
-            <Grid ColumnDefinitions="*,20,*,20,*,20,*">
-                <!-- Total factures -->
-                <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="📄" FontSize="24"/>
-                        <TextBlock Text="{Binding NombreFactures}" FontSize="32" FontWeight="Bold" Foreground="#2563EB"/>
-                        <TextBlock Text="Factures totales" Foreground="#64748B" FontSize="13"/>
+            <!-- Cartes statistiques -->
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto" ColumnSpacing="20">
+                <!-- Carte 1 - Total factures -->
+                <Border Grid.Column="0" 
+                        Background="{StaticResource CardBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Total factures" 
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding NombreFactures}" 
+                                   FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding NombreFacturesMois, StringFormat='+{0} ce mois'}" 
+                                   FontSize="12"
+                                   Foreground="{StaticResource SuccessBrush}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- CA Total -->
-                <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="💰" FontSize="24"/>
+                <!-- Carte 2 - Chiffre d'affaires -->
+                <Border Grid.Column="1" 
+                        Background="{StaticResource CardBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Chiffre d'affaires" 
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
                         <TextBlock Text="{Binding ChiffreAffairesTotal, StringFormat={}{0:N0} DA}" 
-                                   FontSize="24" FontWeight="Bold" Foreground="#16A34A"/>
-                        <TextBlock Text="Chiffre d'affaires total" Foreground="#64748B" FontSize="13"/>
+                                   FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Total" 
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Factures ce mois -->
-                <Border Grid.Column="4" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="📅" FontSize="24"/>
-                        <TextBlock Text="{Binding NombreFacturesMois}" FontSize="32" FontWeight="Bold" Foreground="#F59E0B"/>
-                        <TextBlock Text="Factures ce mois" Foreground="#64748B" FontSize="13"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- CA ce mois -->
-                <Border Grid.Column="6" Background="White" CornerRadius="12" Padding="20" BoxShadow="0 2 8 0 #20000000">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="📈" FontSize="24"/>
+                <!-- Carte 3 - CA ce mois -->
+                <Border Grid.Column="2" 
+                        Background="{StaticResource CardBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="CA ce mois" 
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
                         <TextBlock Text="{Binding ChiffreAffairesMois, StringFormat={}{0:N0} DA}" 
-                                   FontSize="24" FontWeight="Bold" Foreground="#8B5CF6"/>
-                        <TextBlock Text="CA ce mois" Foreground="#64748B" FontSize="13"/>
+                                   FontSize="32" FontWeight="Bold"
+                                   Foreground="{StaticResource WarningBrush}"/>
+                        <TextBlock Text="En cours" 
+                                   FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- Boutons d'action rapide -->
-            <Border Background="White" CornerRadius="12" Padding="25" BoxShadow="0 2 8 0 #20000000">
-                <StackPanel Spacing="15">
-                    <TextBlock Text="Actions rapides" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
-                    <StackPanel Orientation="Horizontal" Spacing="15">
-                        <Button Command="{Binding NouvelleFactureCommand}"
-                                Background="#2563EB" Foreground="White"
-                                Padding="25,15" CornerRadius="8"
-                                FontSize="15" FontWeight="Medium">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock Text="➕" FontSize="18"/>
-                                <TextBlock Text="Créer une nouvelle facture" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
+            <!-- Actions rapides -->
+            <Border Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Actions rapides" 
+                               FontSize="18" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"/>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button Classes="primary"
+                                Command="{Binding NouvelleFactureCommand}"
+                                Content="Nouvelle facture"
+                                Padding="16,12"/>
+                        
                         <Button Command="{Binding VoirHistoriqueCommand}"
-                                Background="#64748B" Foreground="White"
-                                Padding="25,15" CornerRadius="8"
-                                FontSize="15" FontWeight="Medium">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <TextBlock Text="📋" FontSize="18"/>
-                                <TextBlock Text="Voir mes factures" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
+                                Content="Voir l'historique"
+                                Padding="16,12"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
             <!-- Dernières factures -->
-            <Border Background="White" CornerRadius="12" Padding="25" BoxShadow="0 2 8 0 #20000000">
-                <StackPanel Spacing="15">
-                    <TextBlock Text="📋 Dernières factures" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+            <Border Background="{StaticResource CardBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="24">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Dernières factures" 
+                                   FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <Button Grid.Column="1" 
+                                Content="Voir tout →"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="{StaticResource PrimaryBrush}"
+                                Command="{Binding VoirHistoriqueCommand}"
+                                Padding="8,4"/>
+                    </Grid>
                     
                     <!-- Message si aucune facture -->
                     <TextBlock Text="Aucune facture créée pour le moment."
-                               Foreground="#94A3B8" FontStyle="Italic"
+                               Foreground="{StaticResource TextSecondaryBrush}" 
+                               FontStyle="Italic"
                                IsVisible="{Binding !DernieresFactures.Count}"/>
 
                     <!-- Liste des dernières factures -->
@@ -107,28 +141,37 @@
                                   IsVisible="{Binding DernieresFactures.Count}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="#F8FAFC" CornerRadius="8" Padding="15" Margin="0,0,0,8">
-                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2" Margin="0,0,20,0">
+                                <Border Padding="0,12" 
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid ColumnDefinitions="140,*,120,100">
+                                        <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{Binding NumeroFacture}" 
-                                                       FontWeight="SemiBold" Foreground="#1E293B"/>
+                                                       FontFamily="Consolas"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"/>
                                             <TextBlock Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}" 
-                                                       FontSize="12" Foreground="#94A3B8"/>
+                                                       FontSize="12" 
+                                                       Foreground="{StaticResource TextSecondaryBrush}"/>
                                         </StackPanel>
                                         
                                         <TextBlock Grid.Column="1" Text="{Binding ClientNom}" 
-                                                   VerticalAlignment="Center" Foreground="#475569"/>
+                                                   VerticalAlignment="Center" 
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
                                         
                                         <TextBlock Grid.Column="2" 
                                                    Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
-                                                   FontWeight="SemiBold" Foreground="#16A34A"
-                                                   VerticalAlignment="Center" Margin="20,0"/>
+                                                   FontWeight="Medium" 
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
                                         
                                         <Border Grid.Column="3" 
                                                 Background="{Binding Statut, Converter={x:Static vm:StatutToColorConverter.Instance}}"
-                                                CornerRadius="4" Padding="8,4">
+                                                CornerRadius="12" Padding="8,4"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Statut}" 
-                                                       FontSize="11" Foreground="White"/>
+                                                       FontSize="11" FontWeight="Medium"
+                                                       Foreground="White"/>
                                         </Border>
                                     </Grid>
                                 </Border>
