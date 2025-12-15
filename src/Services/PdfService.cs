@@ -91,7 +91,7 @@ public class PdfService : IPdfService
             {
                 row.RelativeItem().Border(1).Padding(10).Column(col =>
                 {
-                    col.Item().Text("VENDEUR / ÉMETTEUR").Bold().FontSize(11);
+                    col.Item().Text("VENDEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     if (!string.IsNullOrEmpty(entrepreneur.RaisonSociale))
                     {
@@ -125,7 +125,7 @@ public class PdfService : IPdfService
 
                 row.RelativeItem().Border(1).Padding(10).Column(col =>
                 {
-                    col.Item().Text("CLIENT / DESTINATAIRE").Bold().FontSize(11);
+                    col.Item().Text("CLIENT").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     col.Item().Text(facture.ClientNom);
                     if (!string.IsNullOrEmpty(facture.ClientFormeJuridique))

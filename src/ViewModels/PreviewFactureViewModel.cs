@@ -145,7 +145,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
             {
                 row.RelativeItem().Border(1).Padding(10).Column(col =>
                 {
-                    col.Item().Text("VENDEUR / ÉMETTEUR").Bold().FontSize(11);
+                    col.Item().Text("VENDEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     if (!string.IsNullOrEmpty(Entrepreneur.RaisonSociale))
                     {
@@ -179,7 +179,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
                 row.RelativeItem().Border(1).Padding(10).Column(col =>
                 {
-                    col.Item().Text("CLIENT / DESTINATAIRE").Bold().FontSize(11);
+                    col.Item().Text("CLIENT").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
                     col.Item().Text(Facture.ClientNom);
                     if (!string.IsNullOrEmpty(Facture.ClientFormeJuridique))
