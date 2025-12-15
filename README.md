@@ -39,7 +39,7 @@ dotnet run
 
 ## Licence
 
-Ce projet est destiné à un usage personnel et professionnel pour les auto-entrepreneurs en Algérie.
+Ce projet est sous licence [MIT](LICENSE).
 
 ---
 
