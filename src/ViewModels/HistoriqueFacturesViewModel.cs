@@ -393,26 +393,83 @@ public partial class HistoriqueFacturesViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task ChangerStatutAsync(Facture facture)
+    private async Task MarquerPayeeAsync(Facture facture)
     {
         if (facture == null) return;
+        await ChangerStatutFactureAsync(facture, StatutFacture.Payee, "payée");
+    }
 
-        // Cycle: EnAttente -> Payee -> Annulee -> EnAttente
-        facture.Statut = facture.Statut switch
+    [RelayCommand]
+    private async Task MarquerEnAttenteAsync(Facture facture)
+    {
+        if (facture == null) return;
+        await ChangerStatutFactureAsync(facture, StatutFacture.EnAttente, "en attente");
+    }
+
+    [RelayCommand]
+    private async Task MarquerAnnuleeAsync(Facture facture)
+    {
+        if (facture == null) return;
+        
+        // Demander confirmation pour l'annulation
+        bool confirme = true;
+        if (DemanderConfirmation != null)
         {
-            StatutFacture.EnAttente => StatutFacture.Payee,
-            StatutFacture.Payee => StatutFacture.Annulee,
-            StatutFacture.Annulee => StatutFacture.EnAttente,
-            _ => StatutFacture.EnAttente
-        };
+            confirme = await DemanderConfirmation.Invoke(
+                "Annuler la facture", 
+                $"Êtes-vous sûr de vouloir annuler la facture {facture.NumeroFacture} ?\n\nCette action ne peut pas être facilement inversée.");
+        }
 
+        if (!confirme) return;
+        
+        await ChangerStatutFactureAsync(facture, StatutFacture.Annulee, "annulée");
+    }
+
+    private async Task ChangerStatutFactureAsync(Facture facture, StatutFacture nouveauStatut, string nomStatut)
+    {
         try
         {
-            await _databaseService.SaveFactureAsync(facture);
+            await _databaseService.UpdateStatutFactureAsync(facture.Id, nouveauStatut);
+            MessageInfo = $"Facture {facture.NumeroFacture} marquée comme {nomStatut}";
             await ChargerDonneesAsync();
         }
         catch (Exception ex)
         {
+            MessageInfo = $"Erreur lors du changement de statut : {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChangerStatutDirectAsync((Facture facture, StatutFacture nouveauStatut) param)
+    {
+        var (facture, nouveauStatut) = param;
+        Console.WriteLine($"[DEBUG] ChangerStatutDirect called: facture={facture?.NumeroFacture}, Id={facture?.Id}, nouveauStatut={nouveauStatut}");
+        
+        if (facture == null || facture.Id <= 0)
+        {
+            Console.WriteLine($"[DEBUG] Facture is null or Id <= 0, returning");
+            return;
+        }
+
+        var nomStatut = nouveauStatut switch
+        {
+            StatutFacture.EnAttente => "en attente",
+            StatutFacture.Payee => "payée",
+            StatutFacture.Annulee => "annulée",
+            _ => "modifiée"
+        };
+
+        try
+        {
+            Console.WriteLine($"[DEBUG] Calling UpdateStatutFactureAsync with Id={facture.Id}, nouveauStatut={nouveauStatut}");
+            await _databaseService.UpdateStatutFactureAsync(facture.Id, nouveauStatut);
+            facture.Statut = nouveauStatut; // Update local object
+            Console.WriteLine($"[DEBUG] Status updated successfully");
+            MessageInfo = $"Facture {facture.NumeroFacture} marquée comme {nomStatut}";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Error: {ex.Message}");
             MessageInfo = $"Erreur lors du changement de statut : {ex.Message}";
         }
     }

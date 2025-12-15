@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace FatouraDZ.Models;
 
-public class Facture
+public class Facture : INotifyPropertyChanged
 {
+    private StatutFacture _statut = StatutFacture.EnAttente;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public int Id { get; set; }
     public string NumeroFacture { get; set; } = string.Empty;
     public DateTime DateFacture { get; set; } = DateTime.Today;
@@ -47,12 +53,30 @@ public class Facture
 
     // Métadonnées
     public string? CheminPDF { get; set; }
-    public StatutFacture Statut { get; set; } = StatutFacture.EnAttente;
+    
+    public StatutFacture Statut
+    {
+        get => _statut;
+        set
+        {
+            if (_statut != value)
+            {
+                _statut = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
 
     // Navigation
     public ICollection<LigneFacture> Lignes { get; set; } = new List<LigneFacture>();
+
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 }
 
 public enum TypeFacture
