@@ -45,18 +45,12 @@ public class PdfService : IPdfService
     {
         container.Column(column =>
         {
-            // 1. SELLER INFO (top)
+            // 1. SELLER INFO (top) - Left | Logo Center | Right
             column.Item().Row(row =>
             {
-                if (!string.IsNullOrEmpty(business.CheminLogo) && File.Exists(business.CheminLogo))
-                {
-                    row.ConstantItem(80).Height(60).Image(business.CheminLogo);
-                    row.ConstantItem(15);
-                }
-
+                // Left column - Company name and address
                 row.RelativeItem().Column(col =>
                 {
-                    // Display based on business type
                     if (business.TypeEntreprise == BusinessType.Reel)
                     {
                         col.Item().Text(business.RaisonSociale ?? business.Nom).Bold().FontSize(14);
@@ -77,6 +71,25 @@ public class PdfService : IPdfService
                         col.Item().Text($"Email : {business.Email}").FontSize(9);
                 });
 
+                // Center - Logo
+                if (!string.IsNullOrEmpty(business.CheminLogo) && File.Exists(business.CheminLogo))
+                {
+                    try
+                    {
+                        var logoBytes = File.ReadAllBytes(business.CheminLogo);
+                        row.ConstantItem(100).AlignCenter().AlignMiddle().Height(70).Image(logoBytes).FitArea();
+                    }
+                    catch
+                    {
+                        row.ConstantItem(100);
+                    }
+                }
+                else
+                {
+                    row.ConstantItem(100);
+                }
+
+                // Right column - Fiscal info
                 row.RelativeItem().AlignRight().Column(col =>
                 {
                     if (!string.IsNullOrEmpty(business.Activite))

@@ -99,15 +99,10 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         container.Column(column =>
         {
-            // 1. SELLER INFO (top)
+            // 1. SELLER INFO (top) - Left | Logo Center | Right
             column.Item().Row(row =>
             {
-                if (!string.IsNullOrEmpty(Business.CheminLogo) && File.Exists(Business.CheminLogo))
-                {
-                    row.ConstantItem(80).Height(60).Image(Business.CheminLogo);
-                    row.ConstantItem(15);
-                }
-
+                // Left column - Company name and address
                 row.RelativeItem().Column(col =>
                 {
                     if (Business.TypeEntreprise == BusinessType.Reel)
@@ -130,6 +125,25 @@ public partial class PreviewFactureViewModel : ViewModelBase
                         col.Item().Text($"Email : {Business.Email}").FontSize(9);
                 });
 
+                // Center - Logo
+                if (!string.IsNullOrEmpty(Business.CheminLogo) && File.Exists(Business.CheminLogo))
+                {
+                    try
+                    {
+                        var logoBytes = File.ReadAllBytes(Business.CheminLogo);
+                        row.ConstantItem(100).AlignCenter().AlignMiddle().Height(70).Image(logoBytes).FitArea();
+                    }
+                    catch
+                    {
+                        row.ConstantItem(100);
+                    }
+                }
+                else
+                {
+                    row.ConstantItem(100);
+                }
+
+                // Right column - Fiscal info
                 row.RelativeItem().AlignRight().Column(col =>
                 {
                     if (!string.IsNullOrEmpty(Business.Activite))

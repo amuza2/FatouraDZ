@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Avalonia.Platform.Storage;
 using FatouraDZ.Models;
 using FatouraDZ.Services;
+using SkiaSharp;
 
 namespace FatouraDZ.ViewModels;
 
@@ -242,25 +243,54 @@ public partial class BusinessFormViewModel : ViewModelBase
             var fichier = fichiers[0];
             var cheminSource = fichier.Path.LocalPath;
 
-            var fileInfo = new FileInfo(cheminSource);
-            if (fileInfo.Length > 2 * 1024 * 1024)
-            {
-                ErreurMessage = "Le fichier logo ne doit pas dépasser 2 Mo";
-                return;
-            }
-
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "FatouraDZ", "logos"
             );
             Directory.CreateDirectory(appDataPath);
 
-            var extension = Path.GetExtension(cheminSource);
-            var nouveauChemin = Path.Combine(appDataPath, $"logo_{Guid.NewGuid()}{extension}");
+            var nouveauChemin = Path.Combine(appDataPath, $"logo_{Guid.NewGuid()}.png");
 
-            File.Copy(cheminSource, nouveauChemin, true);
-            CheminLogo = nouveauChemin;
+            try
+            {
+                ResizeAndSaveLogo(cheminSource, nouveauChemin, 300, 200);
+                CheminLogo = nouveauChemin;
+                ErreurMessage = null;
+            }
+            catch (Exception ex)
+            {
+                ErreurMessage = $"Erreur lors du traitement du logo : {ex.Message}";
+            }
         }
+    }
+
+    private void ResizeAndSaveLogo(string sourcePath, string destPath, int maxWidth, int maxHeight)
+    {
+        using var inputStream = File.OpenRead(sourcePath);
+        using var original = SKBitmap.Decode(inputStream);
+        
+        if (original == null)
+            throw new Exception("Impossible de lire l'image");
+
+        int newWidth = original.Width;
+        int newHeight = original.Height;
+
+        // Only resize if larger than max dimensions
+        if (original.Width > maxWidth || original.Height > maxHeight)
+        {
+            float ratioX = (float)maxWidth / original.Width;
+            float ratioY = (float)maxHeight / original.Height;
+            float ratio = Math.Min(ratioX, ratioY);
+
+            newWidth = (int)(original.Width * ratio);
+            newHeight = (int)(original.Height * ratio);
+        }
+
+        using var resized = original.Resize(new SKImageInfo(newWidth, newHeight), SKFilterQuality.High);
+        using var image = SKImage.FromBitmap(resized);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 90);
+        using var outputStream = File.OpenWrite(destPath);
+        data.SaveTo(outputStream);
     }
 
     [RelayCommand]
