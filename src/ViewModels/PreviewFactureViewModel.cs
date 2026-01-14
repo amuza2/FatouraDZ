@@ -481,4 +481,55 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         DemanderFermeture?.Invoke();
     }
+
+    [RelayCommand]
+    private async Task EnregistrerExcelAsync(IStorageProvider? storageProvider)
+    {
+        if (storageProvider == null)
+        {
+            ErreurMessage = "Impossible d'accéder au système de fichiers";
+            return;
+        }
+
+        ErreurMessage = null;
+        EstSauvegarde = false;
+
+        try
+        {
+            var dossierFactures = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "FatouraDZ",
+                "Factures"
+            );
+            Directory.CreateDirectory(dossierFactures);
+
+            var clientNomNettoye = string.Join("_", Facture.ClientNom.Split(Path.GetInvalidFileNameChars()));
+            var suggestedFileName = $"{Facture.NumeroFacture}_{clientNomNettoye}.xlsx";
+            
+            var defaultFolder = await storageProvider.TryGetFolderFromPathAsync(dossierFactures);
+            
+            var file = await storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Enregistrer la facture en Excel",
+                SuggestedFileName = suggestedFileName,
+                SuggestedStartLocation = defaultFolder,
+                DefaultExtension = "xlsx",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("Excel") { Patterns = new[] { "*.xlsx" } }
+                }
+            });
+
+            if (file != null)
+            {
+                var cheminExcel = file.Path.LocalPath;
+                await ServiceLocator.ExcelService.GenererExcelAsync(Facture, Business, cheminExcel);
+                EstSauvegarde = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErreurMessage = $"Erreur lors de l'enregistrement Excel : {ex.Message}";
+        }
+    }
 }

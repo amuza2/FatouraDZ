@@ -7,6 +7,7 @@ public static class ServiceLocator
     private static IInvoiceNumberService? _invoiceNumberService;
     private static INumberToWordsService? _numberToWordsService;
     private static IPdfService? _pdfService;
+    private static IExcelService? _excelService;
     private static IValidationService? _validationService;
 
     public static IDatabaseService DatabaseService => 
@@ -23,6 +24,9 @@ public static class ServiceLocator
 
     public static IPdfService PdfService => 
         _pdfService ??= new PdfService(NumberToWordsService);
+
+    public static IExcelService ExcelService => 
+        _excelService ??= new ExcelService(NumberToWordsService);
 
     public static IValidationService ValidationService => 
         _validationService ??= new ValidationService();

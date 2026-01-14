@@ -81,6 +81,11 @@
                         Command="{Binding EnregistrerPdfCommand}"
                         CommandParameter="{Binding $parent[Window].StorageProvider}"
                         Padding="20,12"/>
+                <Button Content="Enregistrer en Excel" 
+                        Classes="success"
+                        Command="{Binding EnregistrerExcelCommand}"
+                        CommandParameter="{Binding $parent[Window].StorageProvider}"
+                        Padding="20,12"/>
                 <Button Content="Annuler" 
                         Command="{Binding AnnulerCommand}"
                         Padding="20,12"/>
