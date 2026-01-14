@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,14 +18,28 @@ public partial class BusinessListViewModel : ViewModelBase
     [ObservableProperty]
     private string? _messageErreur;
 
+    [ObservableProperty]
+    private int _filterIndex = 0; // 0 = Active, 1 = Archived
+
     public ObservableCollection<Business> Businesses { get; } = new();
 
     public event System.Action<Business>? BusinessSelected;
     public event System.Action? CreateBusinessRequested;
 
+    // Dynamic button text/background based on filter
+    public string ArchiveButtonText => FilterIndex == 0 ? "📦 Archiver" : "♻️ Restaurer";
+    public string ArchiveButtonBackground => FilterIndex == 0 ? "#FEF3C7" : "#D1FAE5";
+
     public BusinessListViewModel()
     {
         _databaseService = ServiceLocator.DatabaseService;
+    }
+
+    partial void OnFilterIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(ArchiveButtonText));
+        OnPropertyChanged(nameof(ArchiveButtonBackground));
+        _ = ChargerBusinessesAsync();
     }
 
     public async Task ChargerBusinessesAsync()
@@ -34,9 +49,12 @@ public partial class BusinessListViewModel : ViewModelBase
 
         try
         {
-            var businesses = await _databaseService.GetBusinessesAsync();
+            var allBusinesses = await _databaseService.GetBusinessesAsync();
+            var showArchived = FilterIndex == 1;
+            var filtered = allBusinesses.Where(b => b.IsArchived == showArchived).ToList();
+            
             Businesses.Clear();
-            foreach (var business in businesses)
+            foreach (var business in filtered)
             {
                 Businesses.Add(business);
             }
@@ -64,16 +82,18 @@ public partial class BusinessListViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task DeleteBusinessAsync(Business business)
+    private async Task ToggleArchiveAsync(Business business)
     {
         try
         {
-            await _databaseService.DeleteBusinessAsync(business.Id);
+            business.IsArchived = !business.IsArchived;
+            await _databaseService.SaveBusinessAsync(business);
             Businesses.Remove(business);
         }
         catch (System.Exception ex)
         {
-            MessageErreur = $"Erreur lors de la suppression : {ex.Message}";
+            MessageErreur = $"Erreur : {ex.Message}";
         }
     }
+
 }

@@ -14,7 +14,7 @@ public partial class BusinessDetailViewModel : ViewModelBase
     private readonly IDatabaseService _databaseService;
 
     [ObservableProperty]
-    private Business _business = null!;
+    private Business _business = new Business();
 
     [ObservableProperty]
     private bool _estChargement;
@@ -30,6 +30,23 @@ public partial class BusinessDetailViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _statutIndex;
+
+    [ObservableProperty]
+    private int _archiveFilterIndex = 0; // 0 = Active, 1 = Archived
+
+    // Dynamic button properties based on archive filter
+    public string ArchiveButtonContent => ArchiveFilterIndex == 0 ? "📦" : "♻️";
+    public string ArchiveButtonTooltip => ArchiveFilterIndex == 0 ? "Archiver" : "Restaurer";
+    public string ArchiveButtonBackground => ArchiveFilterIndex == 0 ? "#FEF3C7" : "#D1FAE5";
+
+    // Confirmation dialog
+    [ObservableProperty]
+    private bool _showConfirmDialog;
+
+    [ObservableProperty]
+    private string _confirmDialogMessage = string.Empty;
+
+    private Facture? _pendingArchiveFacture;
 
     public ObservableCollection<Facture> Factures { get; } = new();
 
@@ -74,8 +91,9 @@ public partial class BusinessDetailViewModel : ViewModelBase
         {
             var factures = await _databaseService.GetFacturesByBusinessIdAsync(Business.Id);
             
-            // Apply filters
-            var filtered = factures.AsEnumerable();
+            // Apply archive filter first
+            var showArchived = ArchiveFilterIndex == 1;
+            var filtered = factures.Where(f => f.IsArchived == showArchived);
 
             if (TypeFactureIndex > 0)
             {
@@ -83,7 +101,7 @@ public partial class BusinessDetailViewModel : ViewModelBase
                 {
                     1 => TypeFacture.Normale,
                     2 => TypeFacture.Avoir,
-                    3 => TypeFacture.Proformat,
+                    3 => TypeFacture.Proforma,
                     _ => (TypeFacture?)null
                 };
                 if (type.HasValue)
@@ -136,6 +154,13 @@ public partial class BusinessDetailViewModel : ViewModelBase
     partial void OnRechercheChanged(string value) => _ = ChargerFacturesAsync();
     partial void OnTypeFactureIndexChanged(int value) => _ = ChargerFacturesAsync();
     partial void OnStatutIndexChanged(int value) => _ = ChargerFacturesAsync();
+    partial void OnArchiveFilterIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(ArchiveButtonContent));
+        OnPropertyChanged(nameof(ArchiveButtonTooltip));
+        OnPropertyChanged(nameof(ArchiveButtonBackground));
+        _ = ChargerFacturesAsync();
+    }
 
     [RelayCommand]
     private void GoBack()
@@ -168,21 +193,41 @@ public partial class BusinessDetailViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task DeleteInvoiceAsync(Facture facture)
+    private void ToggleArchiveInvoice(Facture facture)
     {
+        _pendingArchiveFacture = facture;
+        var action = ArchiveFilterIndex == 0 ? "archiver" : "restaurer";
+        ConfirmDialogMessage = $"Voulez-vous {action} la facture {facture.NumeroFacture} ?";
+        ShowConfirmDialog = true;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmArchiveAsync()
+    {
+        if (_pendingArchiveFacture == null) return;
+        
         try
         {
-            await _databaseService.DeleteFactureAsync(facture.Id);
-            Factures.Remove(facture);
-            NombreFactures--;
-            if (facture.Statut == StatutFacture.EnAttente) FacturesEnAttente--;
-            if (facture.Statut == StatutFacture.Payee) FacturesPayees--;
-            if (facture.Statut != StatutFacture.Annulee) ChiffreAffaires -= facture.MontantTotal;
+            _pendingArchiveFacture.IsArchived = !_pendingArchiveFacture.IsArchived;
+            await _databaseService.SaveFactureAsync(_pendingArchiveFacture);
+            Factures.Remove(_pendingArchiveFacture);
         }
         catch (Exception ex)
         {
-            MessageErreur = $"Erreur lors de la suppression : {ex.Message}";
+            MessageErreur = $"Erreur : {ex.Message}";
         }
+        finally
+        {
+            ShowConfirmDialog = false;
+            _pendingArchiveFacture = null;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelArchive()
+    {
+        ShowConfirmDialog = false;
+        _pendingArchiveFacture = null;
     }
 
     [RelayCommand]
@@ -212,6 +257,34 @@ public partial class BusinessDetailViewModel : ViewModelBase
         catch (Exception ex)
         {
             MessageErreur = $"Erreur : {ex.Message}";
+        }
+    }
+
+    public event Action<Facture>? ConvertToInvoiceRequested;
+
+    [RelayCommand]
+    private async Task ConvertToInvoiceAsync(Facture proforma)
+    {
+        try
+        {
+            // Duplicate the proforma as a normal invoice
+            var newInvoice = await _databaseService.DupliquerFactureAsync(proforma.Id);
+            if (newInvoice != null)
+            {
+                // Change type to Normale and clear validity date
+                newInvoice.TypeFacture = TypeFacture.Normale;
+                newInvoice.DateValidite = null;
+                newInvoice.NumeroFactureOrigine = proforma.NumeroFacture;
+                newInvoice.DateFacture = DateTime.Today;
+                newInvoice.DateEcheance = DateTime.Today.AddDays(30);
+                
+                await _databaseService.SaveFactureAsync(newInvoice);
+                await ChargerFacturesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur lors de la conversion : {ex.Message}";
         }
     }
 }

@@ -62,7 +62,7 @@
         <Grid Grid.Row="2" RowDefinitions="Auto,*">
             <!-- Filters -->
             <Border Grid.Row="0" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                     <TextBox Grid.Column="0" Text="{Binding Recherche}" 
                              Watermark="🔍 Rechercher par numéro ou client..."
                              MaxWidth="400" HorizontalAlignment="Left"/>
@@ -70,13 +70,17 @@
                         <ComboBoxItem Content="Tous types"/>
                         <ComboBoxItem Content="Normale"/>
                         <ComboBoxItem Content="Avoir"/>
-                        <ComboBoxItem Content="Proformat"/>
+                        <ComboBoxItem Content="Proforma"/>
                     </ComboBox>
                     <ComboBox Grid.Column="2" SelectedIndex="{Binding StatutIndex}" Margin="10,0,0,0" Width="150">
                         <ComboBoxItem Content="Tous statuts"/>
                         <ComboBoxItem Content="En attente"/>
                         <ComboBoxItem Content="Payée"/>
                         <ComboBoxItem Content="Annulée"/>
+                    </ComboBox>
+                    <ComboBox Grid.Column="3" SelectedIndex="{Binding ArchiveFilterIndex}" Margin="10,0,0,0" Width="150">
+                        <ComboBoxItem Content="📄 Actives"/>
+                        <ComboBoxItem Content="📦 Archivées"/>
                     </ComboBox>
                 </Grid>
             </Border>
@@ -150,16 +154,15 @@
                                                     Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).EditInvoiceCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="8" Background="Transparent"/>
-                                            <Button ToolTip.Tip="Marquer payée/non payée"
+                                            <Button Content="💰" ToolTip.Tip="Marquer payée/non payée"
                                                     Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).TogglePaymentStatusCommand}"
                                                     CommandParameter="{Binding}"
-                                                    Padding="8" Background="Transparent">
-                                                <TextBlock Text="💰"/>
-                                            </Button>
-                                            <Button Content="🗑️" ToolTip.Tip="Supprimer"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).DeleteInvoiceCommand}"
+                                                    Padding="8" Background="Transparent"/>
+                                            <Button Content="📦" ToolTip.Tip="Archiver/Restaurer"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).ToggleArchiveInvoiceCommand}"
                                                     CommandParameter="{Binding}"
-                                                    Padding="8" Background="#FEE2E2"/>
+                                                    Padding="8" 
+                                                    Background="#FEF3C7"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -169,5 +172,28 @@
                 </StackPanel>
             </ScrollViewer>
         </Grid>
+        
+        <!-- Confirmation Dialog Overlay -->
+        <Border Grid.RowSpan="3" Background="#80000000" IsVisible="{Binding ShowConfirmDialog}">
+            <Border Background="White" CornerRadius="12" Padding="30" 
+                    MaxWidth="400" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Confirmation" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="{Binding ConfirmDialogMessage}" TextWrapping="Wrap" Foreground="#64748B"/>
+                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right">
+                        <Button Content="Annuler" 
+                                Command="{Binding CancelArchiveCommand}"
+                                Padding="20,10"
+                                Background="#E2E8F0"/>
+                        <Button Content="Confirmer" 
+                                Command="{Binding ConfirmArchiveCommand}"
+                                Padding="20,10"
+                                Background="#2563EB"
+                                Foreground="White"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </UserControl>

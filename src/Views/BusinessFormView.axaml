@@ -196,7 +196,7 @@
         </ScrollViewer>
         
         <!-- Fixed footer with buttons -->
-        <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="30,15">
+        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="30,15">
             <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
                 <Button Content="Annuler" 
                         Command="{Binding AnnulerCommand}"

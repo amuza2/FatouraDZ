@@ -15,6 +15,7 @@ public class Facture : INotifyPropertyChanged
     public string NumeroFacture { get; set; } = string.Empty;
     public DateTime DateFacture { get; set; } = DateTime.Today;
     public DateTime DateEcheance { get; set; } = DateTime.Today;
+    public DateTime? DateValidite { get; set; } // Validity date for Proforma invoices
     public TypeFacture TypeFacture { get; set; } = TypeFacture.Normale;
     public string ModePaiement { get; set; } = string.Empty;
     
@@ -74,6 +75,9 @@ public class Facture : INotifyPropertyChanged
     
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
+    
+    // Archive status
+    public bool IsArchived { get; set; } = false;
 
     // Foreign key to Business
     public int BusinessId { get; set; }
@@ -92,7 +96,7 @@ public enum TypeFacture
 {
     Normale,
     Avoir,
-    Proformat
+    Proforma
 }
 
 public enum StatutFacture

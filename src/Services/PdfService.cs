@@ -61,10 +61,17 @@ public class PdfService : IPdfService
                     var titreFacture = facture.TypeFacture switch
                     {
                         TypeFacture.Avoir => "FACTURE D'AVOIR",
-                        TypeFacture.Proformat => "FACTURE PROFORMAT",
+                        TypeFacture.Proforma => "FACTURE PROFORMA",
                         _ => "FACTURE"
                     };
                     col.Item().Text(titreFacture).Bold().FontSize(24);
+                    
+                    // Disclaimer for Proforma
+                    if (facture.TypeFacture == TypeFacture.Proforma)
+                    {
+                        col.Item().Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
+                    }
+                    
                     if (!string.IsNullOrEmpty(facture.NumeroFactureOrigine))
                     {
                         col.Item().Text($"Réf. facture originale : {facture.NumeroFactureOrigine}").FontSize(10).Italic();
@@ -75,6 +82,12 @@ public class PdfService : IPdfService
                 {
                     col.Item().Text($"N° {facture.NumeroFacture}").Bold();
                     col.Item().Text($"Date : {facture.DateFacture:dd/MM/yyyy}");
+                    
+                    // Validity date for Proforma
+                    if (facture.TypeFacture == TypeFacture.Proforma && facture.DateValidite.HasValue)
+                    {
+                        col.Item().Text($"Valide jusqu'au : {facture.DateValidite.Value:dd/MM/yyyy}").Bold();
+                    }
                 });
             });
 
@@ -271,7 +284,7 @@ public class PdfService : IPdfService
                 var labelTotal = facture.TypeFacture switch
                 {
                     TypeFacture.Avoir => "NET À DÉDUIRE :",
-                    TypeFacture.Proformat => "NET À PAYER :",
+                    TypeFacture.Proforma => "NET À PAYER :",
                     _ => "NET À PAYER :"
                 };
                 col.Item().PaddingTop(5).Row(row =>

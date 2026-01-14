@@ -41,6 +41,18 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private DateTimeOffset _dateEcheance = DateTimeOffset.Now.Date.AddDays(30);
 
     [ObservableProperty]
+    private DateTimeOffset _dateValidite = DateTimeOffset.Now.Date.AddDays(30);
+
+    // Show validity date only for Proforma invoices
+    public bool AfficherDateValidite => TypeFacture == TypeFacture.Proforma;
+
+    partial void OnTypeFactureIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(TypeFacture));
+        OnPropertyChanged(nameof(AfficherDateValidite));
+    }
+
+    [ObservableProperty]
     private string _modePaiement = "Espèces";
 
     // Informations client
@@ -550,6 +562,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             NumeroFacture = NumeroFacture,
             DateFacture = DateFacture.DateTime,
             DateEcheance = DateEcheance.DateTime,
+            DateValidite = TypeFacture == TypeFacture.Proforma ? DateValidite.DateTime : null,
             TypeFacture = (TypeFacture)TypeFactureIndex,
             ModePaiement = ModePaiement,
             PaiementReference = RequiertDetailsPaiement ? PaiementReference : null,

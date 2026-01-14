@@ -56,7 +56,7 @@
                             <ComboBox SelectedIndex="{Binding TypeFactureIndex}" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="Facture normale"/>
                                 <ComboBoxItem Content="Facture d'avoir"/>
-                                <ComboBoxItem Content="Facture proformat"/>
+                                <ComboBoxItem Content="Facture proforma"/>
                             </ComboBox>
                         </StackPanel>
                         
@@ -78,6 +78,21 @@
                     <!-- Statut de paiement -->
                     <CheckBox Content="Facture payée" IsChecked="{Binding EstPaye}" 
                               FontWeight="Medium" Margin="0,5,0,0"/>
+
+                    <!-- Date de validité (pour proforma uniquement) -->
+                    <Border Background="#DBEAFE" CornerRadius="4" Padding="15" 
+                            IsVisible="{Binding AfficherDateValidite}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="⚠️ Document sans valeur comptable ni fiscale" FontWeight="SemiBold" Foreground="#1E40AF"/>
+                            <TextBlock Text="Cette facture proforma est une estimation et ne constitue pas une facture définitive." 
+                                       Foreground="#3B82F6" TextWrapping="Wrap" FontSize="12"/>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Date limite de validité de l'offre" FontWeight="Medium"/>
+                                <DatePicker SelectedDate="{Binding DateValidite}" 
+                                            HorizontalAlignment="Left" MinWidth="200"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Référence facture originale (pour avoir/annulation) -->
                     <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 

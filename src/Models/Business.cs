@@ -46,6 +46,9 @@ public class Business
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
     
+    // Archive status
+    public bool IsArchived { get; set; } = false;
+    
     // Navigation property - invoices belonging to this business
     public ICollection<Facture> Factures { get; set; } = new List<Facture>();
 }

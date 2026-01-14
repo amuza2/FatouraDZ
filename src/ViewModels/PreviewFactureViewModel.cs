@@ -115,10 +115,17 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     var titreFacture = Facture.TypeFacture switch
                     {
                         TypeFacture.Avoir => "FACTURE D'AVOIR",
-                        TypeFacture.Proformat => "FACTURE PROFORMAT",
+                        TypeFacture.Proforma => "FACTURE PROFORMA",
                         _ => "FACTURE"
                     };
                     col.Item().Text(titreFacture).Bold().FontSize(24);
+                    
+                    // Disclaimer for Proforma
+                    if (Facture.TypeFacture == TypeFacture.Proforma)
+                    {
+                        col.Item().Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
+                    }
+                    
                     if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
                     {
                         col.Item().Text($"Réf. facture originale : {Facture.NumeroFactureOrigine}").FontSize(10).Italic();
@@ -129,6 +136,12 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 {
                     col.Item().Text($"N° {Facture.NumeroFacture}").Bold();
                     col.Item().Text($"Date : {Facture.DateFacture:dd/MM/yyyy}");
+                    
+                    // Validity date for Proforma
+                    if (Facture.TypeFacture == TypeFacture.Proforma && Facture.DateValidite.HasValue)
+                    {
+                        col.Item().Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").Bold();
+                    }
                 });
             });
 
@@ -305,7 +318,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 var labelTotal = Facture.TypeFacture switch
                 {
                     TypeFacture.Avoir => "NET À DÉDUIRE :",
-                    TypeFacture.Proformat => "NET À PAYER :",
+                    TypeFacture.Proforma => "NET À PAYER :",
                     _ => "NET À PAYER :"
                 };
                 col.Item().PaddingTop(5).Row(row =>
