@@ -419,7 +419,7 @@
             </Border>
 
             <!-- Boutons d'action -->
-            <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" Margin="0,20,0,60">
+            <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" Margin="0,20,0,80">
                 <Button Content="Réinitialiser" 
                         Command="{Binding ReinitialiserCommand}"
                         Padding="20,12"/>
