@@ -13,10 +13,11 @@ public class CalculationService : ICalculationService
 
     public decimal CalculerTVA(decimal totalHT, TauxTVA taux)
     {
+        var settings = AppSettings.Instance;
         return taux switch
         {
-            TauxTVA.TVA19 => Math.Round(totalHT * 0.19m, 2),
-            TauxTVA.TVA9 => Math.Round(totalHT * 0.09m, 2),
+            TauxTVA.TVA19 => Math.Round(totalHT * (settings.TauxTVAStandard / 100m), 2),
+            TauxTVA.TVA9 => Math.Round(totalHT * (settings.TauxTVAReduit / 100m), 2),
             TauxTVA.Exonere => 0m,
             _ => 0m
         };
@@ -24,25 +25,17 @@ public class CalculationService : ICalculationService
 
     public decimal CalculerTimbreFiscal(decimal montantTTC)
     {
-        // Droit de timbre algérien - calcul par tranches
-        // Montants jusqu'à 30 000 DA → 1%
-        // Montants entre 30 000 et 100 000 DA → 1,5%
-        // Montants supérieurs à 100 000 DA → 2%
-        // Minimum légal : 5 DA
+        var settings = AppSettings.Instance;
         
         if (montantTTC <= 0)
             return 0m;
 
-        decimal taux = montantTTC switch
-        {
-            <= 30000m => 0.01m,      // 1%
-            <= 100000m => 0.015m,    // 1.5%
-            _ => 0.02m               // 2%
-        };
-
-        var timbre = Math.Round(montantTTC * taux, 2);
+        var timbre = Math.Round(montantTTC * (settings.TauxTimbreFiscal / 100m), 2);
         
-        // Minimum légal de 5 DA
+        // Apply maximum limit from settings
+        timbre = Math.Min(timbre, settings.MontantMaxTimbre);
+        
+        // Minimum légal : 5 DA
         return Math.Max(timbre, 5m);
     }
 

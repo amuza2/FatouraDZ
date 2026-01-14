@@ -16,6 +16,21 @@ public class AppSettings
 
     public string DatabasePath { get; set; } = DefaultDbPath;
 
+    // Fiscal Settings - TVA
+    public decimal TauxTVAStandard { get; set; } = 19m;
+    public decimal TauxTVAReduit { get; set; } = 9m;
+
+    // Fiscal Settings - Timbre Fiscal
+    public decimal TauxTimbreFiscal { get; set; } = 1m; // Percentage
+    public decimal MontantMaxTimbre { get; set; } = 2500m; // Maximum amount in DZD
+
+    // Fiscal Settings - Retenue à la Source
+    public decimal TauxRetenueSourceDefaut { get; set; } = 5m;
+
+    // Invoice Settings
+    public string FormatNumeroFacture { get; set; } = "FAC-{ANNEE}-{NUM}";
+    public int DelaiPaiementDefaut { get; set; } = 30; // Days
+
     private static AppSettings? _instance;
     public static AppSettings Instance => _instance ??= Load();
 

@@ -27,7 +27,7 @@
             <!-- Tab: Base de données -->
             <TabItem Header="💾 Base de données">
                 <ScrollViewer Padding="20" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="20" MaxWidth="600" Margin="0,0,0,40">
+                    <StackPanel Spacing="20" MaxWidth="600" Margin="0,0,0,80">
                         <TextBlock Text="Gestion de la base de données" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
                         <TextBlock Text="Exportez et importez vos données pour les sauvegarder ou les transférer vers un autre appareil." 
                                    Foreground="#64748B" TextWrapping="Wrap"/>
@@ -135,10 +135,127 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Tab: À propos -->
-            <TabItem Header="ℹ️ À propos">
+            <!-- Tab: Paramètres fiscaux -->
+            <TabItem Header="📊 Fiscalité">
                 <ScrollViewer Padding="20" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="20" MaxWidth="600" HorizontalAlignment="Center" Margin="0,0,0,40">
+                    <StackPanel Spacing="20" MaxWidth="600" Margin="0,0,0,80">
+                        <TextBlock Text="Paramètres fiscaux" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+                        <TextBlock Text="Configurez les taux de TVA, timbre fiscal et autres paramètres légaux. Ces valeurs peuvent changer selon la législation en vigueur." 
+                                   Foreground="#64748B" TextWrapping="Wrap"/>
+
+                        <!-- TVA Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="💰" FontSize="24"/>
+                                    <TextBlock Text="Taux de TVA" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <Grid ColumnDefinitions="*,20,*" RowDefinitions="Auto,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="5">
+                                        <TextBlock Text="TVA Standard (%)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding TauxTVAStandard}" Minimum="0" Maximum="100" Increment="0.5" FormatString="0.##"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="5">
+                                        <TextBlock Text="TVA Réduit (%)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding TauxTVAReduit}" Minimum="0" Maximum="100" Increment="0.5" FormatString="0.##"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Timbre Fiscal Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="🏛️" FontSize="24"/>
+                                    <TextBlock Text="Timbre Fiscal" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <Grid ColumnDefinitions="*,20,*">
+                                    <StackPanel Grid.Column="0" Spacing="5">
+                                        <TextBlock Text="Taux (%)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding TauxTimbreFiscal}" Minimum="0" Maximum="10" Increment="0.1" FormatString="0.##"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="5">
+                                        <TextBlock Text="Montant Maximum (DZD)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding MontantMaxTimbre}" Minimum="0" Maximum="100000" Increment="100" FormatString="N0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Retenue à la Source Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="📋" FontSize="24"/>
+                                    <TextBlock Text="Retenue à la Source" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <StackPanel Spacing="5" MaxWidth="200" HorizontalAlignment="Left">
+                                    <TextBlock Text="Taux par défaut (%)" FontWeight="Medium" FontSize="12"/>
+                                    <NumericUpDown Value="{Binding TauxRetenueSourceDefaut}" Minimum="0" Maximum="50" Increment="0.5" FormatString="0.##"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Invoice Settings Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="📄" FontSize="24"/>
+                                    <TextBlock Text="Paramètres de facturation" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                
+                                <Grid ColumnDefinitions="*,20,*">
+                                    <StackPanel Grid.Column="0" Spacing="5">
+                                        <TextBlock Text="Format numéro facture" FontWeight="Medium" FontSize="12"/>
+                                        <TextBox Text="{Binding FormatNumeroFacture}"/>
+                                        <TextBlock Text="Variables: {ANNEE}, {NUM}" FontSize="10" Foreground="#94A3B8"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="5">
+                                        <TextBlock Text="Délai paiement (jours)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding DelaiPaiementDefaut}" Minimum="0" Maximum="365" Increment="1" FormatString="0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button Content="Enregistrer les paramètres" 
+                                    Command="{Binding EnregistrerParametresFiscauxCommand}"
+                                    Padding="20,12"
+                                    Background="#2563EB"
+                                    Foreground="White"
+                                    FontWeight="SemiBold"/>
+                            <Button Content="Réinitialiser" 
+                                    Command="{Binding ReinitialiserParametresFiscauxCommand}"
+                                    Padding="20,12"
+                                    Background="#94A3B8"
+                                    Foreground="White"/>
+                        </StackPanel>
+
+                        <!-- Success Message -->
+                        <Border Background="#D1FAE5" CornerRadius="8" Padding="15"
+                                IsVisible="{Binding MessageSucces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding MessageSucces}" Foreground="#065F46" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <!-- Error Message -->
+                        <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                                IsVisible="{Binding MessageErreur, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding MessageErreur}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab: À propos -->
+            <TabItem Header="À propos">
+                <ScrollViewer Padding="20" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20" MaxWidth="600" HorizontalAlignment="Center" Margin="0,0,0,80">
                         <!-- App Logo/Title -->
                         <StackPanel HorizontalAlignment="Center" Spacing="10">
                             <Border Background="#2563EB" CornerRadius="16" Padding="20" HorizontalAlignment="Center">
@@ -164,7 +281,7 @@
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="✓ Gestion multi-entreprises" Foreground="#64748B"/>
                                     <TextBlock Text="✓ Factures, avoirs et proformas" Foreground="#64748B"/>
-                                    <TextBlock Text="✓ TVA 19% et 9%" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ TVA" Foreground="#64748B"/>
                                     <TextBlock Text="✓ Timbre fiscal automatique" Foreground="#64748B"/>
                                     <TextBlock Text="✓ Retenue à la source" Foreground="#64748B"/>
                                     <TextBlock Text="✓ Export PDF" Foreground="#64748B"/>
@@ -182,21 +299,8 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Tech Stack -->
-                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
-                            <StackPanel Spacing="10">
-                                <TextBlock Text="Technologies" FontWeight="SemiBold" FontSize="14"/>
-                                <StackPanel Spacing="5">
-                                    <TextBlock Text="• .NET 10 / C#" Foreground="#64748B"/>
-                                    <TextBlock Text="• Avalonia UI" Foreground="#64748B"/>
-                                    <TextBlock Text="• SQLite / Entity Framework Core" Foreground="#64748B"/>
-                                    <TextBlock Text="• QuestPDF" Foreground="#64748B"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
                         <!-- Copyright -->
-                        <TextBlock Text="© 2025 FatouraDZ. Tous droits réservés." 
+                        <TextBlock Text="© 2026 FatouraDZ. Tous droits réservés." 
                                    FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </ScrollViewer>

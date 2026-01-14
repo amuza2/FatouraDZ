@@ -24,7 +24,25 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _estChargement;
 
-    // General settings
+    // Fiscal settings - TVA
+    [ObservableProperty]
+    private decimal _tauxTVAStandard;
+
+    [ObservableProperty]
+    private decimal _tauxTVAReduit;
+
+    // Fiscal settings - Timbre
+    [ObservableProperty]
+    private decimal _tauxTimbreFiscal;
+
+    [ObservableProperty]
+    private decimal _montantMaxTimbre;
+
+    // Fiscal settings - Retenue
+    [ObservableProperty]
+    private decimal _tauxRetenueSourceDefaut;
+
+    // Invoice settings
     [ObservableProperty]
     private string _formatNumeroFacture = "FAC-{ANNEE}-{NUM}";
 
@@ -38,10 +56,10 @@ public partial class SettingsViewModel : ViewModelBase
     public string CheminParDefaut => AppSettings.GetDefaultDatabasePath();
 
     // App info
-    public string Version => "2.0.0";
+    public string Version => "1.0.0";
     public string Developpeur => "FatouraDZ Team";
     public string Description => "Application de facturation multi-entreprises conforme à la réglementation algérienne.";
-    public string Contact => "support@fatouradz.dz";
+    public string Contact => "info@dzdevelopers.com";
 
     public event Action? BackRequested;
     public event Func<string, string, Task<IStorageFile?>>? DemanderExportFichier;
@@ -51,7 +69,20 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel()
     {
         _databaseService = ServiceLocator.DatabaseService;
-        _cheminBaseDeDonnees = AppSettings.Instance.DatabasePath;
+        LoadSettings();
+    }
+
+    private void LoadSettings()
+    {
+        var settings = AppSettings.Instance;
+        CheminBaseDeDonnees = settings.DatabasePath;
+        TauxTVAStandard = settings.TauxTVAStandard;
+        TauxTVAReduit = settings.TauxTVAReduit;
+        TauxTimbreFiscal = settings.TauxTimbreFiscal;
+        MontantMaxTimbre = settings.MontantMaxTimbre;
+        TauxRetenueSourceDefaut = settings.TauxRetenueSourceDefaut;
+        FormatNumeroFacture = settings.FormatNumeroFacture;
+        DelaiPaiementDefaut = settings.DelaiPaiementDefaut;
     }
 
     [RelayCommand]
@@ -215,5 +246,49 @@ public partial class SettingsViewModel : ViewModelBase
         {
             MessageErreur = $"Erreur : {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    private void EnregistrerParametresFiscaux()
+    {
+        MessageSucces = null;
+        MessageErreur = null;
+
+        try
+        {
+            var settings = AppSettings.Instance;
+            settings.TauxTVAStandard = TauxTVAStandard;
+            settings.TauxTVAReduit = TauxTVAReduit;
+            settings.TauxTimbreFiscal = TauxTimbreFiscal;
+            settings.MontantMaxTimbre = MontantMaxTimbre;
+            settings.TauxRetenueSourceDefaut = TauxRetenueSourceDefaut;
+            settings.FormatNumeroFacture = FormatNumeroFacture;
+            settings.DelaiPaiementDefaut = DelaiPaiementDefaut;
+            settings.Save();
+
+            MessageSucces = "Paramètres fiscaux enregistrés avec succès.";
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur lors de l'enregistrement : {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void ReinitialiserParametresFiscaux()
+    {
+        MessageSucces = null;
+        MessageErreur = null;
+
+        TauxTVAStandard = 19m;
+        TauxTVAReduit = 9m;
+        TauxTimbreFiscal = 1m;
+        MontantMaxTimbre = 2500m;
+        TauxRetenueSourceDefaut = 5m;
+        FormatNumeroFacture = "FAC-{ANNEE}-{NUM}";
+        DelaiPaiementDefaut = 30;
+
+        EnregistrerParametresFiscaux();
+        MessageSucces = "Paramètres fiscaux réinitialisés aux valeurs par défaut.";
     }
 }

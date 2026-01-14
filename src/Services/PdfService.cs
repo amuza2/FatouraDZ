@@ -223,7 +223,7 @@ public class PdfService : IPdfService
                 {
                     col.Item().Row(row =>
                     {
-                        row.RelativeItem().Text("TVA 19% :");
+                        row.RelativeItem().Text($"TVA {AppSettings.Instance.TauxTVAStandard}% :");
                         row.RelativeItem().AlignRight().Text($"{facture.TotalTVA19:N2} DZD");
                     });
                 }
@@ -231,7 +231,7 @@ public class PdfService : IPdfService
                 {
                     col.Item().Row(row =>
                     {
-                        row.RelativeItem().Text("TVA 9% :");
+                        row.RelativeItem().Text($"TVA {AppSettings.Instance.TauxTVAReduit}% :");
                         row.RelativeItem().AlignRight().Text($"{facture.TotalTVA9:N2} DZD");
                     });
                 }
