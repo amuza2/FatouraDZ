@@ -307,15 +307,8 @@ public class PdfService : IPdfService
             column.Item().LineHorizontal(1);
             column.Item().PaddingTop(5).Row(row =>
             {
-                row.RelativeItem().Text($"Mode de paiement : {facture.ModePaiement}");
-                row.RelativeItem().AlignRight().Text($"Date d'échéance : {facture.DateEcheance:dd/MM/yyyy}");
+                row.RelativeItem().Text($"Date d'échéance : {facture.DateEcheance:dd/MM/yyyy}");
             });
-            
-            // Afficher les détails du paiement si présents
-            if (!string.IsNullOrEmpty(facture.PaiementReference))
-            {
-                column.Item().PaddingTop(5).Text($"Référence : {facture.PaiementReference}");
-            }
             column.Item().PaddingTop(10).AlignCenter()
                 .Text($"Facture générée le {DateTime.Now:dd/MM/yyyy à HH:mm} par FatouraDZ")
                 .FontSize(8).FontColor(Colors.Grey.Medium);

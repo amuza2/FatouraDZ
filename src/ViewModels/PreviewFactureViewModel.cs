@@ -320,6 +320,31 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
             column.Item().PaddingTop(10);
             column.Item().Text($"Montant en lettres : {Facture.MontantEnLettres}").Italic();
+
+            column.Item().PaddingTop(15);
+
+            // Tableau Mode de règlement
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(1.5f); // Mode règlement
+                    columns.RelativeColumn(1.5f); // Valeur
+                    columns.RelativeColumn(1.5f); // N° Pièce
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text("Mode règlement").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("Valeur").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("N° Pièce").Bold();
+                });
+
+                // Payment row
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(Facture.ModePaiement);
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignRight().Text($"{Facture.MontantTotal:N2} DZD");
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text(Facture.PaiementNumeroPiece ?? "-");
+            });
         });
     }
 
@@ -330,15 +355,8 @@ public partial class PreviewFactureViewModel : ViewModelBase
             column.Item().LineHorizontal(1);
             column.Item().PaddingTop(5).Row(row =>
             {
-                row.RelativeItem().Text($"Mode de paiement : {Facture.ModePaiement}");
-                row.RelativeItem().AlignRight().Text($"Date d'échéance : {Facture.DateEcheance:dd/MM/yyyy}");
+                row.RelativeItem().Text($"Date d'échéance : {Facture.DateEcheance:dd/MM/yyyy}");
             });
-            
-            // Afficher les détails du paiement si présents
-            if (!string.IsNullOrEmpty(Facture.PaiementReference))
-            {
-                column.Item().PaddingTop(5).Text($"Référence : {Facture.PaiementReference}");
-            }
             column.Item().PaddingTop(10).AlignCenter()
                 .Text($"Facture générée le {DateTime.Now:dd/MM/yyyy à HH:mm} par FatouraDZ")
                 .FontSize(8).FontColor(Colors.Grey.Medium);

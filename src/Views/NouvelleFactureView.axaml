@@ -132,18 +132,11 @@
                             IsVisible="{Binding RequiertDetailsPaiement}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="💳 Détails du paiement" FontWeight="SemiBold" Foreground="#92400E"/>
-                            <Grid ColumnDefinitions="*,20,*">
-                                <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="Référence (chèque, virement, etc.)" FontWeight="Medium"/>
-                                    <TextBox Text="{Binding PaiementReference}" 
-                                             Watermark="Référence du paiement"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="4">
-                                    <TextBlock Text="N° Pièce" FontWeight="Medium"/>
-                                    <TextBox Text="{Binding PaiementNumeroPiece}" 
-                                             Watermark="N° chèque, N° virement..."/>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="N° Pièce (chèque, virement, etc.)" FontWeight="Medium"/>
+                                <TextBox Text="{Binding PaiementNumeroPiece}" 
+                                         Watermark="N° chèque, N° virement..." MaxWidth="300" HorizontalAlignment="Left"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>
