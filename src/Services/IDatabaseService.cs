@@ -36,4 +36,7 @@ public interface IDatabaseService
     
     // Initialisation
     Task InitializeDatabaseAsync();
+    
+    // Database path
+    string GetDatabasePath();
 }

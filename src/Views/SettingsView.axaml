@@ -1,0 +1,172 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             x:Class="FatouraDZ.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Grid.Column="0" Content="← Retour" 
+                        Command="{Binding GoBackCommand}"
+                        Background="Transparent"
+                        Foreground="#64748B"
+                        Padding="10,8"
+                        Margin="0,0,20,0"/>
+                
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Paramètres" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="Configuration de l'application" Foreground="#64748B" FontSize="13"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content with Tabs -->
+        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" Margin="30,20">
+            <!-- Tab: Base de données -->
+            <TabItem Header="💾 Base de données">
+                <ScrollViewer Padding="20">
+                    <StackPanel Spacing="20" MaxWidth="600">
+                        <TextBlock Text="Gestion de la base de données" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+                        <TextBlock Text="Exportez et importez vos données pour les sauvegarder ou les transférer vers un autre appareil." 
+                                   Foreground="#64748B" TextWrapping="Wrap"/>
+
+                        <!-- Export Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="📤" FontSize="24"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Exporter la base de données" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Créer une sauvegarde de toutes vos données" Foreground="#64748B" FontSize="12"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Content="Exporter maintenant" 
+                                        Command="{Binding ExporterBaseDeDonneesCommand}"
+                                        Padding="15,10"
+                                        Background="#2563EB"
+                                        Foreground="White"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Import Section -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="📥" FontSize="24"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Importer une sauvegarde" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Restaurer vos données depuis une sauvegarde" Foreground="#64748B" FontSize="12"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Content="Importer une sauvegarde" 
+                                        Command="{Binding ImporterBaseDeDonneesCommand}"
+                                        Padding="15,10"
+                                        Background="#10B981"
+                                        Foreground="White"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Open Folder -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="📁" FontSize="24"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Dossier des sauvegardes" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Ouvrir le dossier contenant les fichiers de sauvegarde" Foreground="#64748B" FontSize="12"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Content="Ouvrir le dossier" 
+                                        Command="{Binding OuvrirDossierExportCommand}"
+                                        Padding="15,10"
+                                        Background="#6366F1"
+                                        Foreground="White"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Success Message -->
+                        <Border Background="#D1FAE5" CornerRadius="8" Padding="15"
+                                IsVisible="{Binding MessageSucces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding MessageSucces}" Foreground="#065F46" TextWrapping="Wrap"/>
+                        </Border>
+
+                        <!-- Error Message -->
+                        <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                                IsVisible="{Binding MessageErreur, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding MessageErreur}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab: À propos -->
+            <TabItem Header="ℹ️ À propos">
+                <ScrollViewer Padding="20">
+                    <StackPanel Spacing="20" MaxWidth="600" HorizontalAlignment="Center">
+                        <!-- App Logo/Title -->
+                        <StackPanel HorizontalAlignment="Center" Spacing="10">
+                            <Border Background="#2563EB" CornerRadius="16" Padding="20" HorizontalAlignment="Center">
+                                <TextBlock Text="📄" FontSize="48"/>
+                            </Border>
+                            <TextBlock Text="FatouraDZ" FontSize="28" FontWeight="Bold" Foreground="#1E293B" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding Version, StringFormat='Version {0}'}" 
+                                       FontSize="14" Foreground="#64748B" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Description -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Description" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding Description}" Foreground="#64748B" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Features -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Fonctionnalités" FontWeight="SemiBold" FontSize="14"/>
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="✓ Gestion multi-entreprises" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ Factures, avoirs et proformas" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ TVA 19% et 9%" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ Timbre fiscal automatique" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ Retenue à la source" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ Export PDF" Foreground="#64748B"/>
+                                    <TextBlock Text="✓ Sauvegarde et restauration" Foreground="#64748B"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Developer Info -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Développeur" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding Developpeur}" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding Contact}" Foreground="#2563EB"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Tech Stack -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Technologies" FontWeight="SemiBold" FontSize="14"/>
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="• .NET 10 / C#" Foreground="#64748B"/>
+                                    <TextBlock Text="• Avalonia UI" Foreground="#64748B"/>
+                                    <TextBlock Text="• SQLite / Entity Framework Core" Foreground="#64748B"/>
+                                    <TextBlock Text="• QuestPDF" Foreground="#64748B"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Copyright -->
+                        <TextBlock Text="© 2025 FatouraDZ. Tous droits réservés." 
+                                   FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

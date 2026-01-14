@@ -140,6 +140,27 @@ public partial class MainWindowViewModel : ViewModelBase
         ContenuActuel = new AProposViewModel();
     }
 
+    [RelayCommand]
+    private void AfficherParametres()
+    {
+        PageActuelle = "Paramètres";
+        var vm = new SettingsViewModel();
+        vm.BackRequested += AfficherListeEntreprises;
+        vm.DemanderExportFichier += async (nomFichier, description) =>
+        {
+            return DemanderExportFichier != null 
+                ? await DemanderExportFichier.Invoke(nomFichier, description) 
+                : null;
+        };
+        vm.DemanderImportFichier += async () =>
+        {
+            return DemanderImportFichier != null 
+                ? await DemanderImportFichier.Invoke() 
+                : null;
+        };
+        ContenuActuel = vm;
+    }
+
     public event Func<string, string, Task<bool>>? DemanderConfirmationDialog;
 
     private async Task<bool> DemanderConfirmationAsync(string titre, string message)

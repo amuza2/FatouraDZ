@@ -41,48 +41,22 @@
                                 Command="{Binding AfficherListeEntreprisesCommand}">
                             <TextBlock Text="🏢 Entreprises" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
-
-                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
-
-                        <!-- Gestion des données -->
-                        <TextBlock Text="DONNÉES" 
-                                   Foreground="{StaticResource TextSecondaryBrush}" 
-                                   FontSize="11" FontWeight="SemiBold"
-                                   Margin="16,8,0,8"/>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding ExporterBaseDeDonneesCommand}">
-                            <TextBlock Text="📤 Exporter" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding ImporterBaseDeDonneesCommand}">
-                            <TextBlock Text="📥 Importer" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <!-- Message de gestion des données -->
-                        <TextBlock Text="{Binding MessageGestionDonnees}" 
-                                   Foreground="{StaticResource SuccessBrush}" FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Margin="16,8"
-                                   IsVisible="{Binding MessageGestionDonnees, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-
-                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherAProposCommand}">
-                            <TextBlock Text="ℹ️ À propos" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Version en bas -->
-                <TextBlock Grid.Row="2" 
-                           Text="Version 2.0.0" 
-                           FontSize="11" 
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,16"/>
+                <!-- Settings at bottom -->
+                <StackPanel Grid.Row="2" Margin="12,0,12,16">
+                    <Separator Margin="0,0,0,12" Background="{StaticResource BorderBrush}"/>
+                    <Button Classes="nav-button"
+                            Command="{Binding AfficherParametresCommand}">
+                        <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Button>
+                    <TextBlock Text="Version 2.0.0" 
+                               FontSize="11" 
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,12,0,0"/>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -104,6 +78,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="vm:AProposViewModel">
                         <views:AProposView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:SettingsViewModel">
+                        <views:SettingsView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>

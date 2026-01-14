@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -299,5 +300,11 @@ public class DatabaseService : IDatabaseService
         }
         
         await context.SaveChangesAsync();
+    }
+
+    public string GetDatabasePath()
+    {
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        return Path.Combine(appDataPath, "FatouraDZ", "fatouradz.db");
     }
 }
