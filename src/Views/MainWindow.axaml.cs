@@ -25,6 +25,7 @@ public partial class MainWindow : Window
             vm.DemanderConfirmationDialog += AfficherConfirmationAsync;
             vm.DemanderExportFichier += OuvrirDialogueExportDb;
             vm.DemanderImportFichier += OuvrirDialogueImportDb;
+            vm.DemanderDossier += OuvrirDialogueChoixDossier;
             await vm.InitialiserAsync();
         }
     }
@@ -96,5 +97,17 @@ public partial class MainWindow : Window
 
         var files = await StorageProvider.OpenFilePickerAsync(options);
         return files.Count > 0 ? files[0] : null;
+    }
+
+    private async Task<IStorageFolder?> OuvrirDialogueChoixDossier()
+    {
+        var options = new FolderPickerOpenOptions
+        {
+            Title = "Choisir l'emplacement de la base de données",
+            AllowMultiple = false
+        };
+
+        var folders = await StorageProvider.OpenFolderPickerAsync(options);
+        return folders.Count > 0 ? folders[0] : null;
     }
 }

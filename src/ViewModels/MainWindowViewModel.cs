@@ -158,6 +158,12 @@ public partial class MainWindowViewModel : ViewModelBase
                 ? await DemanderImportFichier.Invoke() 
                 : null;
         };
+        vm.DemanderDossier += async () =>
+        {
+            return DemanderDossier != null 
+                ? await DemanderDossier.Invoke() 
+                : null;
+        };
         ContenuActuel = vm;
     }
 
@@ -183,6 +189,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public event Func<string, string, Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderExportFichier;
     public event Func<Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderImportFichier;
+    public event Func<Task<Avalonia.Platform.Storage.IStorageFolder?>>? DemanderDossier;
 
     [RelayCommand]
     private async Task ExporterBaseDeDonneesAsync()

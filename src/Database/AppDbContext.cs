@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 using FatouraDZ.Models;
+using FatouraDZ.Services;
 
 namespace FatouraDZ.Database;
 
@@ -16,12 +17,10 @@ public class AppDbContext : DbContext
 
     public AppDbContext()
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "FatouraDZ"
-        );
-        Directory.CreateDirectory(appDataPath);
-        _dbPath = Path.Combine(appDataPath, "fatouradz.db");
+        _dbPath = AppSettings.Instance.DatabasePath;
+        var directory = Path.GetDirectoryName(_dbPath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

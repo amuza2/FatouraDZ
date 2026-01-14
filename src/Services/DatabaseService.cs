@@ -304,7 +304,6 @@ public class DatabaseService : IDatabaseService
 
     public string GetDatabasePath()
     {
-        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appDataPath, "FatouraDZ", "fatouradz.db");
+        return AppSettings.Instance.DatabasePath;
     }
 }

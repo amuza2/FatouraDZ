@@ -31,6 +31,12 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private int _delaiPaiementDefaut = 30;
 
+    // Database path
+    [ObservableProperty]
+    private string _cheminBaseDeDonnees = string.Empty;
+
+    public string CheminParDefaut => AppSettings.GetDefaultDatabasePath();
+
     // App info
     public string Version => "2.0.0";
     public string Developpeur => "FatouraDZ Team";
@@ -40,10 +46,12 @@ public partial class SettingsViewModel : ViewModelBase
     public event Action? BackRequested;
     public event Func<string, string, Task<IStorageFile?>>? DemanderExportFichier;
     public event Func<Task<IStorageFile?>>? DemanderImportFichier;
+    public event Func<Task<IStorageFolder?>>? DemanderDossier;
 
     public SettingsViewModel()
     {
         _databaseService = ServiceLocator.DatabaseService;
+        _cheminBaseDeDonnees = AppSettings.Instance.DatabasePath;
     }
 
     [RelayCommand]
@@ -148,6 +156,64 @@ public partial class SettingsViewModel : ViewModelBase
         catch (Exception ex)
         {
             MessageErreur = $"Impossible d'ouvrir le dossier : {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ChangerEmplacementBaseDeDonneesAsync()
+    {
+        MessageSucces = null;
+        MessageErreur = null;
+
+        try
+        {
+            var dossier = DemanderDossier != null 
+                ? await DemanderDossier.Invoke() 
+                : null;
+
+            if (dossier != null)
+            {
+                var nouveauChemin = Path.Combine(dossier.Path.LocalPath, "fatouradz.db");
+                var ancienChemin = AppSettings.Instance.DatabasePath;
+
+                // Copy existing database to new location if it exists
+                if (File.Exists(ancienChemin) && ancienChemin != nouveauChemin)
+                {
+                    File.Copy(ancienChemin, nouveauChemin, overwrite: true);
+                }
+
+                // Update settings
+                AppSettings.Instance.DatabasePath = nouveauChemin;
+                AppSettings.Instance.Save();
+                CheminBaseDeDonnees = nouveauChemin;
+
+                MessageSucces = $"Emplacement de la base de données changé.\nRedémarrez l'application pour appliquer les changements.";
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur lors du changement d'emplacement : {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void ReinitialiserEmplacement()
+    {
+        MessageSucces = null;
+        MessageErreur = null;
+
+        try
+        {
+            var cheminParDefaut = AppSettings.GetDefaultDatabasePath();
+            AppSettings.Instance.DatabasePath = cheminParDefaut;
+            AppSettings.Instance.Save();
+            CheminBaseDeDonnees = cheminParDefaut;
+
+            MessageSucces = "Emplacement réinitialisé à la valeur par défaut.\nRedémarrez l'application pour appliquer les changements.";
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur : {ex.Message}";
         }
     }
 }
