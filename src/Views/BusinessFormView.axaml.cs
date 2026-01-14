@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace FatouraDZ.Views;
 
-public partial class AccueilView : UserControl
+public partial class BusinessFormView : UserControl
 {
-    public AccueilView()
+    public BusinessFormView()
     {
         InitializeComponent();
     }

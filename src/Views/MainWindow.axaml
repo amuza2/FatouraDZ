@@ -16,7 +16,7 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="240,*">
+    <Grid ColumnDefinitions="200,*">
         <!-- Menu latéral -->
         <Border Grid.Column="0" 
                 Background="{StaticResource CardBrush}"
@@ -29,8 +29,8 @@
                         <TextBlock Text="FatouraDZ" 
                                    FontSize="24" FontWeight="Bold"
                                    Foreground="White"/>
-                        <TextBlock Text="Facturation Simplifiée" 
-                                   FontSize="12" Foreground="#DBEAFE"/>
+                        <TextBlock Text="Gestion Multi-Entreprises" 
+                                   FontSize="11" Foreground="#DBEAFE"/>
                     </StackPanel>
                 </Border>
 
@@ -38,34 +38,8 @@
                 <ScrollViewer Grid.Row="1">
                     <StackPanel Margin="12,20">
                         <Button Classes="nav-button"
-                                Command="{Binding AfficherAccueilCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Tableau de bord" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherNouvelleFactureCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Nouvelle facture" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherHistoriqueCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Historique" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherArchivesCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Archives" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-
-                        <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
-
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherConfigurationCommand}">
-                            <TextBlock Text="Mes informations" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                Command="{Binding AfficherListeEntreprisesCommand}">
+                            <TextBlock Text="🏢 Entreprises" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
 
                         <Separator Margin="0,12" Background="{StaticResource BorderBrush}"/>
@@ -77,15 +51,13 @@
                                    Margin="16,8,0,8"/>
 
                         <Button Classes="nav-button"
-                                Command="{Binding ExporterBaseDeDonneesCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Exporter données" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                Command="{Binding ExporterBaseDeDonneesCommand}">
+                            <TextBlock Text="📤 Exporter" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
 
                         <Button Classes="nav-button"
-                                Command="{Binding ImporterBaseDeDonneesCommand}"
-                                IsVisible="{Binding EstEntrepreneurConfigure}">
-                            <TextBlock Text="Importer données" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                Command="{Binding ImporterBaseDeDonneesCommand}">
+                            <TextBlock Text="📥 Importer" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
 
                         <!-- Message de gestion des données -->
@@ -99,14 +71,14 @@
 
                         <Button Classes="nav-button"
                                 Command="{Binding AfficherAProposCommand}">
-                            <TextBlock Text="À propos" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="ℹ️ À propos" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- Version en bas -->
                 <TextBlock Grid.Row="2" 
-                           Text="Version 1.0.0" 
+                           Text="Version 2.0.0" 
                            FontSize="11" 
                            Foreground="{StaticResource TextSecondaryBrush}"
                            HorizontalAlignment="Center"
@@ -118,20 +90,17 @@
         <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
             <ContentControl Content="{Binding ContenuActuel}">
                 <ContentControl.DataTemplates>
-                    <DataTemplate DataType="vm:AccueilViewModel">
-                        <views:AccueilView/>
+                    <DataTemplate DataType="vm:BusinessListViewModel">
+                        <views:BusinessListView/>
                     </DataTemplate>
-                    <DataTemplate DataType="vm:EntrepreneurConfigViewModel">
-                        <views:EntrepreneurConfigView/>
+                    <DataTemplate DataType="vm:BusinessDetailViewModel">
+                        <views:BusinessDetailView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:BusinessFormViewModel">
+                        <views:BusinessFormView/>
                     </DataTemplate>
                     <DataTemplate DataType="vm:NouvelleFactureViewModel">
                         <views:NouvelleFactureView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="vm:HistoriqueFacturesViewModel">
-                        <views:HistoriqueFacturesView/>
-                    </DataTemplate>
-                    <DataTemplate DataType="vm:ArchiveFacturesViewModel">
-                        <views:ArchiveFacturesView/>
                     </DataTemplate>
                     <DataTemplate DataType="vm:AProposViewModel">
                         <views:AProposView/>

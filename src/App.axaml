@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FatouraDZ.App"
              xmlns:local="using:FatouraDZ"
+             xmlns:converters="using:FatouraDZ.Converters"
              RequestedThemeVariant="Light">
 
     <Application.Resources>
@@ -9,6 +10,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://FatouraDZ/Styles/Colors.axaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <converters:EqualConverter x:Key="EqualConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 

@@ -7,7 +7,7 @@ namespace FatouraDZ.Database;
 
 public class AppDbContext : DbContext
 {
-    public DbSet<Entrepreneur> Entrepreneurs { get; set; } = null!;
+    public DbSet<Business> Businesses { get; set; } = null!;
     public DbSet<Facture> Factures { get; set; } = null!;
     public DbSet<LigneFacture> LignesFacture { get; set; } = null!;
     public DbSet<Configuration> Configurations { get; set; } = null!;
@@ -33,19 +33,19 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Entrepreneur>(entity =>
+        modelBuilder.Entity<Business>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.NomComplet).IsRequired();
+            entity.Property(e => e.Nom).IsRequired();
+            entity.Property(e => e.TypeEntreprise).IsRequired();
             entity.Property(e => e.Adresse).IsRequired();
             entity.Property(e => e.Ville).IsRequired();
             entity.Property(e => e.Wilaya).IsRequired();
             entity.Property(e => e.Telephone).IsRequired();
-            entity.Property(e => e.RC).IsRequired();
-            entity.Property(e => e.NIS).IsRequired();
-            entity.Property(e => e.NIF).IsRequired();
-            entity.Property(e => e.AI).IsRequired();
-            entity.Property(e => e.NumeroImmatriculation).IsRequired();
+            entity.HasMany(e => e.Factures)
+                  .WithOne(f => f.Business)
+                  .HasForeignKey(f => f.BusinessId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Facture>(entity =>

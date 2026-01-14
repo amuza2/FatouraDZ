@@ -5,5 +5,5 @@ namespace FatouraDZ.Services;
 
 public interface IPdfService
 {
-    Task<string> GenererPdfAsync(Facture facture, Entrepreneur entrepreneur, string cheminDestination);
+    Task<string> GenererPdfAsync(Facture facture, Business business, string cheminDestination);
 }

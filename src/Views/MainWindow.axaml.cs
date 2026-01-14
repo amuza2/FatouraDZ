@@ -29,9 +29,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OuvrirPrevisualisation(FatouraDZ.Models.Facture facture, FatouraDZ.Models.Entrepreneur entrepreneur)
+    private void OuvrirPrevisualisation(FatouraDZ.Models.Facture facture, FatouraDZ.Models.Business business)
     {
-        var previewVm = new PreviewFactureViewModel(facture, entrepreneur);
+        var previewVm = new PreviewFactureViewModel(facture, business);
         var previewWindow = new PreviewFactureWindow(previewVm);
         previewWindow.ShowDialog(this);
     }

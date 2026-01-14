@@ -23,7 +23,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
     private Facture _facture;
 
     [ObservableProperty]
-    private Entrepreneur _entrepreneur;
+    private Business _business;
 
     [ObservableProperty]
     private Bitmap? _previewImage;
@@ -40,12 +40,12 @@ public partial class PreviewFactureViewModel : ViewModelBase
     public event Action? DemanderFermeture;
     public event Action? DemanderModification;
 
-    public PreviewFactureViewModel(Facture facture, Entrepreneur entrepreneur)
+    public PreviewFactureViewModel(Facture facture, Business business)
     {
         _pdfService = ServiceLocator.PdfService;
         _databaseService = ServiceLocator.DatabaseService;
         _facture = facture;
-        _entrepreneur = entrepreneur;
+        _business = business;
     }
 
     public async Task GenererPreviewAsync()
@@ -101,9 +101,9 @@ public partial class PreviewFactureViewModel : ViewModelBase
         {
             column.Item().Row(row =>
             {
-                if (!string.IsNullOrEmpty(Entrepreneur.CheminLogo) && File.Exists(Entrepreneur.CheminLogo))
+                if (!string.IsNullOrEmpty(Business.CheminLogo) && File.Exists(Business.CheminLogo))
                 {
-                    row.RelativeItem(1).Height(60).Image(Entrepreneur.CheminLogo);
+                    row.RelativeItem(1).Height(60).Image(Business.CheminLogo);
                 }
                 else
                 {
@@ -115,7 +115,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     var titreFacture = Facture.TypeFacture switch
                     {
                         TypeFacture.Avoir => "FACTURE D'AVOIR",
-                        TypeFacture.Annulation => "FACTURE D'ANNULATION",
+                        TypeFacture.Proformat => "FACTURE PROFORMAT",
                         _ => "FACTURE"
                     };
                     col.Item().Text(titreFacture).Bold().FontSize(24);
@@ -147,32 +147,43 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 {
                     col.Item().Text("VENDEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
-                    if (!string.IsNullOrEmpty(Entrepreneur.RaisonSociale))
+                    // Display based on business type
+                    if (Business.TypeEntreprise == BusinessType.Reel)
                     {
-                        col.Item().Text(Entrepreneur.RaisonSociale).Bold();
-                        col.Item().Text($"Représenté par : {Entrepreneur.NomComplet}");
+                        col.Item().Text(Business.RaisonSociale ?? Business.Nom).Bold();
+                        if (!string.IsNullOrEmpty(Business.CapitalSocial))
+                            col.Item().Text($"Capital : {Business.CapitalSocial}");
                     }
                     else
                     {
-                        col.Item().Text(Entrepreneur.NomComplet).Bold();
+                        col.Item().Text(Business.NomComplet).Bold();
+                        if (!string.IsNullOrEmpty(Business.RaisonSociale))
+                            col.Item().Text($"Nom commercial : {Business.RaisonSociale}");
                     }
-                    if (!string.IsNullOrEmpty(Entrepreneur.FormeJuridique))
-                        col.Item().Text($"Forme juridique : {Entrepreneur.FormeJuridique}");
-                    if (!string.IsNullOrEmpty(Entrepreneur.Activite))
-                        col.Item().Text($"Activité : {Entrepreneur.Activite}");
-                    col.Item().Text(Entrepreneur.Adresse);
-                    col.Item().Text($"{Entrepreneur.CodePostal} {Entrepreneur.Ville}, {Entrepreneur.Wilaya}");
-                    col.Item().Text($"Tél : {Entrepreneur.Telephone}");
-                    if (!string.IsNullOrEmpty(Entrepreneur.Email))
-                        col.Item().Text($"Email : {Entrepreneur.Email}");
+                    
+                    col.Item().Text(Business.Adresse);
+                    col.Item().Text($"{Business.CodePostal} {Business.Ville}, {Business.Wilaya}");
+                    col.Item().Text($"Tél : {Business.Telephone}");
+                    if (!string.IsNullOrEmpty(Business.Email))
+                        col.Item().Text($"Email : {Business.Email}");
+                    if (!string.IsNullOrEmpty(Business.Fax))
+                        col.Item().Text($"Fax : {Business.Fax}");
+                    
                     col.Item().PaddingTop(5);
-                    col.Item().Text($"RC : {Entrepreneur.RC}");
-                    col.Item().Text($"NIS : {Entrepreneur.NIS}");
-                    col.Item().Text($"NIF : {Entrepreneur.NIF}");
-                    col.Item().Text($"AI : {Entrepreneur.AI}");
-                    col.Item().Text($"N° Immatriculation : {Entrepreneur.NumeroImmatriculation}");
-                    if (Entrepreneur.EstCapitalApplicable && !string.IsNullOrEmpty(Entrepreneur.CapitalSocial))
-                        col.Item().Text($"Capital social : {Entrepreneur.CapitalSocial}");
+                    if (!string.IsNullOrEmpty(Business.Activite))
+                        col.Item().Text($"Activité : {Business.Activite}");
+                    
+                    if (Business.TypeEntreprise == BusinessType.AutoEntrepreneur)
+                    {
+                        col.Item().Text($"N° Immatriculation : {Business.NumeroImmatriculation}");
+                    }
+                    else
+                    {
+                        col.Item().Text($"RC : {Business.RC}");
+                    }
+                    col.Item().Text($"NIF : {Business.NIF}");
+                    col.Item().Text($"AI : {Business.AI}");
+                    col.Item().Text($"NIS : {Business.NIS}");
                 });
 
                 row.ConstantItem(20);
@@ -294,7 +305,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 var labelTotal = Facture.TypeFacture switch
                 {
                     TypeFacture.Avoir => "NET À DÉDUIRE :",
-                    TypeFacture.Annulation => "MONTANT ANNULÉ :",
+                    TypeFacture.Proformat => "NET À PAYER :",
                     _ => "NET À PAYER :"
                 };
                 col.Item().PaddingTop(5).Row(row =>
@@ -390,7 +401,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
             if (file != null)
             {
                 var cheminPdf = file.Path.LocalPath;
-                await _pdfService.GenererPdfAsync(Facture, Entrepreneur, cheminPdf);
+                await _pdfService.GenererPdfAsync(Facture, Business, cheminPdf);
                 
                 // Mettre à jour la facture avec le chemin PDF
                 Facture.CheminPDF = cheminPdf;
@@ -414,7 +425,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         {
             // Générer un PDF temporaire et l'ouvrir avec l'application par défaut
             var tempPath = Path.Combine(Path.GetTempPath(), $"FatouraDZ_{Facture.NumeroFacture}.pdf");
-            await _pdfService.GenererPdfAsync(Facture, Entrepreneur, tempPath);
+            await _pdfService.GenererPdfAsync(Facture, Business, tempPath);
             
             // Ouvrir le PDF avec l'application par défaut (qui permet d'imprimer)
             var psi = new System.Diagnostics.ProcessStartInfo

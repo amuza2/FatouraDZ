@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
 
 namespace FatouraDZ.Models;
 
-public class Entrepreneur
+public class Business
 {
     public int Id { get; set; }
+    
+    // Business name (displayed in the list)
+    public string Nom { get; set; } = string.Empty;
     
     // Business type determines which fields are required/shown
     public BusinessType TypeEntreprise { get; set; } = BusinessType.AutoEntrepreneur;
@@ -16,7 +20,6 @@ public class Entrepreneur
     // Brand name (optional for Auto-Entrepreneur/Forfait, Company name for Reel)
     public string? RaisonSociale { get; set; }
     
-    public string? FormeJuridique { get; set; }
     public string? Activite { get; set; }
     public string Adresse { get; set; } = string.Empty;
     public string Ville { get; set; } = string.Empty;
@@ -38,9 +41,11 @@ public class Entrepreneur
     
     // Capital social - only for Reel (Company)
     public string? CapitalSocial { get; set; }
-    public bool EstCapitalApplicable { get; set; }
     
     public string? CheminLogo { get; set; }
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
+    
+    // Navigation property - invoices belonging to this business
+    public ICollection<Facture> Factures { get; set; } = new List<Facture>();
 }

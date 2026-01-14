@@ -19,7 +19,7 @@ public class PdfService : IPdfService
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public Task<string> GenererPdfAsync(Facture facture, Entrepreneur entrepreneur, string cheminDestination)
+    public Task<string> GenererPdfAsync(Facture facture, Business business, string cheminDestination)
     {
         return Task.Run(() =>
         {
@@ -31,8 +31,8 @@ public class PdfService : IPdfService
                     page.Margin(30);
                     page.DefaultTextStyle(x => x.FontSize(10));
 
-                    page.Header().Element(c => ComposeHeader(c, facture, entrepreneur));
-                    page.Content().Element(c => ComposeContent(c, facture, entrepreneur));
+                    page.Header().Element(c => ComposeHeader(c, facture, business));
+                    page.Content().Element(c => ComposeContent(c, facture, business));
                     page.Footer().Element(c => ComposeFooter(c, facture));
                 });
             }).GeneratePdf(cheminDestination);
@@ -41,15 +41,15 @@ public class PdfService : IPdfService
         });
     }
 
-    private void ComposeHeader(IContainer container, Facture facture, Entrepreneur entrepreneur)
+    private void ComposeHeader(IContainer container, Facture facture, Business business)
     {
         container.Column(column =>
         {
             column.Item().Row(row =>
             {
-                if (!string.IsNullOrEmpty(entrepreneur.CheminLogo) && File.Exists(entrepreneur.CheminLogo))
+                if (!string.IsNullOrEmpty(business.CheminLogo) && File.Exists(business.CheminLogo))
                 {
-                    row.RelativeItem(1).Height(60).Image(entrepreneur.CheminLogo);
+                    row.RelativeItem(1).Height(60).Image(business.CheminLogo);
                 }
                 else
                 {
@@ -61,7 +61,7 @@ public class PdfService : IPdfService
                     var titreFacture = facture.TypeFacture switch
                     {
                         TypeFacture.Avoir => "FACTURE D'AVOIR",
-                        TypeFacture.Annulation => "FACTURE D'ANNULATION",
+                        TypeFacture.Proformat => "FACTURE PROFORMAT",
                         _ => "FACTURE"
                     };
                     col.Item().Text(titreFacture).Bold().FontSize(24);
@@ -82,7 +82,7 @@ public class PdfService : IPdfService
         });
     }
 
-    private void ComposeContent(IContainer container, Facture facture, Entrepreneur entrepreneur)
+    private void ComposeContent(IContainer container, Facture facture, Business business)
     {
         container.Column(column =>
         {
@@ -93,32 +93,47 @@ public class PdfService : IPdfService
                 {
                     col.Item().Text("VENDEUR").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
-                    if (!string.IsNullOrEmpty(entrepreneur.RaisonSociale))
+                    
+                    // Display based on business type
+                    if (business.TypeEntreprise == BusinessType.Reel)
                     {
-                        col.Item().Text(entrepreneur.RaisonSociale).Bold();
-                        col.Item().Text($"Représenté par : {entrepreneur.NomComplet}");
+                        // Company: show company name and capital
+                        col.Item().Text(business.RaisonSociale ?? "").Bold();
+                        if (!string.IsNullOrEmpty(business.CapitalSocial))
+                            col.Item().Text($"Capital : {business.CapitalSocial}");
                     }
                     else
                     {
-                        col.Item().Text(entrepreneur.NomComplet).Bold();
+                        // Auto-Entrepreneur/Forfait: show owner name, optional brand name
+                        col.Item().Text(business.NomComplet).Bold();
+                        if (!string.IsNullOrEmpty(business.RaisonSociale))
+                            col.Item().Text($"Nom commercial : {business.RaisonSociale}");
                     }
-                    if (!string.IsNullOrEmpty(entrepreneur.FormeJuridique))
-                        col.Item().Text($"Forme juridique : {entrepreneur.FormeJuridique}");
-                    if (!string.IsNullOrEmpty(entrepreneur.Activite))
-                        col.Item().Text($"Activité : {entrepreneur.Activite}");
-                    col.Item().Text(entrepreneur.Adresse);
-                    col.Item().Text($"{entrepreneur.CodePostal} {entrepreneur.Ville}, {entrepreneur.Wilaya}");
-                    col.Item().Text($"Tél : {entrepreneur.Telephone}");
-                    if (!string.IsNullOrEmpty(entrepreneur.Email))
-                        col.Item().Text($"Email : {entrepreneur.Email}");
+                    
+                    col.Item().Text(business.Adresse);
+                    col.Item().Text($"{business.CodePostal} {business.Ville}, {business.Wilaya}");
+                    col.Item().Text($"Tél : {business.Telephone}");
+                    if (!string.IsNullOrEmpty(business.Email))
+                        col.Item().Text($"Email : {business.Email}");
+                    if (!string.IsNullOrEmpty(business.Fax))
+                        col.Item().Text($"Fax : {business.Fax}");
+                    
                     col.Item().PaddingTop(5);
-                    col.Item().Text($"RC : {entrepreneur.RC}");
-                    col.Item().Text($"NIS : {entrepreneur.NIS}");
-                    col.Item().Text($"NIF : {entrepreneur.NIF}");
-                    col.Item().Text($"AI : {entrepreneur.AI}");
-                    col.Item().Text($"N° Immatriculation : {entrepreneur.NumeroImmatriculation}");
-                    if (entrepreneur.EstCapitalApplicable && !string.IsNullOrEmpty(entrepreneur.CapitalSocial))
-                        col.Item().Text($"Capital social : {entrepreneur.CapitalSocial}");
+                    if (!string.IsNullOrEmpty(business.Activite))
+                        col.Item().Text($"Activité : {business.Activite}");
+                    
+                    // Fiscal info based on business type
+                    if (business.TypeEntreprise == BusinessType.AutoEntrepreneur)
+                    {
+                        col.Item().Text($"N° Immatriculation : {business.NumeroImmatriculation}");
+                    }
+                    else
+                    {
+                        col.Item().Text($"RC : {business.RC}");
+                    }
+                    col.Item().Text($"NIF : {business.NIF}");
+                    col.Item().Text($"AI : {business.AI}");
+                    col.Item().Text($"NIS : {business.NIS}");
                 });
 
                 row.ConstantItem(20);
@@ -127,51 +142,66 @@ public class PdfService : IPdfService
                 {
                     col.Item().Text("CLIENT").Bold().FontSize(11);
                     col.Item().PaddingTop(5);
-                    col.Item().Text(facture.ClientNom);
-                    if (!string.IsNullOrEmpty(facture.ClientFormeJuridique))
-                        col.Item().Text($"Forme juridique : {facture.ClientFormeJuridique}");
+                    col.Item().Text(facture.ClientNom).Bold();
+                    // Show capital social for company clients (Reel)
+                    if (facture.ClientBusinessType == BusinessType.Reel && !string.IsNullOrEmpty(facture.ClientCapitalSocial))
+                        col.Item().Text($"Capital : {facture.ClientCapitalSocial}");
                     col.Item().Text(facture.ClientAdresse);
                     col.Item().Text($"Tél : {facture.ClientTelephone}");
                     if (!string.IsNullOrEmpty(facture.ClientEmail))
                         col.Item().Text($"Email : {facture.ClientEmail}");
-                    if (!string.IsNullOrEmpty(facture.ClientRC))
-                        col.Item().Text($"RC : {facture.ClientRC}");
-                    if (!string.IsNullOrEmpty(facture.ClientNIS))
-                        col.Item().Text($"NIS : {facture.ClientNIS}");
+                    if (!string.IsNullOrEmpty(facture.ClientFax))
+                        col.Item().Text($"Fax : {facture.ClientFax}");
+                    
+                    col.Item().PaddingTop(5);
+                    if (!string.IsNullOrEmpty(facture.ClientActivite))
+                        col.Item().Text($"Activité : {facture.ClientActivite}");
+                    
+                    // Client fiscal info based on their business type
+                    if (facture.ClientBusinessType == BusinessType.AutoEntrepreneur)
+                    {
+                        if (!string.IsNullOrEmpty(facture.ClientNumeroImmatriculation))
+                            col.Item().Text($"N° Immatriculation : {facture.ClientNumeroImmatriculation}");
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(facture.ClientRC))
+                            col.Item().Text($"RC : {facture.ClientRC}");
+                    }
                     if (!string.IsNullOrEmpty(facture.ClientNIF))
                         col.Item().Text($"NIF : {facture.ClientNIF}");
                     if (!string.IsNullOrEmpty(facture.ClientAI))
                         col.Item().Text($"AI : {facture.ClientAI}");
-                    if (!string.IsNullOrEmpty(facture.ClientNumeroImmatriculation))
-                        col.Item().Text($"N° Immatriculation : {facture.ClientNumeroImmatriculation}");
-                    if (!string.IsNullOrEmpty(facture.ClientActivite))
-                        col.Item().Text($"Activité : {facture.ClientActivite}");
+                    if (!string.IsNullOrEmpty(facture.ClientNIS))
+                        col.Item().Text($"NIS : {facture.ClientNIS}");
                 });
             });
 
             column.Item().PaddingVertical(15);
 
-            // Tableau des lignes
+            // Tableau des lignes - Ref, Désignation, Quantité, Unité, Prix H.T, TVA%, Total H.T
             column.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(30);
-                    columns.RelativeColumn(3);
-                    columns.RelativeColumn(1);
-                    columns.RelativeColumn(1.5f);
-                    columns.RelativeColumn(1);
-                    columns.RelativeColumn(1.5f);
+                    columns.ConstantColumn(40);   // Ref
+                    columns.RelativeColumn(3);    // Désignation
+                    columns.RelativeColumn(0.8f); // Quantité
+                    columns.RelativeColumn(0.7f); // Unité
+                    columns.RelativeColumn(1.2f); // Prix H.T
+                    columns.RelativeColumn(0.6f); // TVA %
+                    columns.RelativeColumn(1.3f); // Total H.T
                 });
 
                 table.Header(header =>
                 {
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("N°").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Réf").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Désignation").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Qté").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix unit.").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("Unité").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix H.T").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("TVA").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total HT").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total H.T").Bold();
                 });
 
                 var lignesOrdonnees = facture.Lignes.OrderBy(l => l.NumeroLigne).ToList();
@@ -180,12 +210,13 @@ public class PdfService : IPdfService
                     var ligne = lignesOrdonnees[i];
                     var bgColor = i % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
 
-                    table.Cell().Background(bgColor).Padding(5).Text((i + 1).ToString());
+                    table.Cell().Background(bgColor).Padding(5).Text(ligne.Reference ?? (i + 1).ToString());
                     table.Cell().Background(bgColor).Padding(5).Text(ligne.Designation);
                     table.Cell().Background(bgColor).Padding(5).AlignRight().Text(ligne.Quantite.ToString("N2"));
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2} DZD");
+                    table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatUnite(ligne.Unite));
+                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2}");
                     table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatTauxTVA(ligne.TauxTVA));
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2} DZD");
+                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2}");
                 }
             });
 
@@ -240,7 +271,7 @@ public class PdfService : IPdfService
                 var labelTotal = facture.TypeFacture switch
                 {
                     TypeFacture.Avoir => "NET À DÉDUIRE :",
-                    TypeFacture.Annulation => "MONTANT ANNULÉ :",
+                    TypeFacture.Proformat => "NET À PAYER :",
                     _ => "NET À PAYER :"
                 };
                 col.Item().PaddingTop(5).Row(row =>
@@ -252,6 +283,31 @@ public class PdfService : IPdfService
 
             column.Item().PaddingTop(10);
             column.Item().Text($"Montant en lettres : {facture.MontantEnLettres}").Italic();
+
+            column.Item().PaddingTop(15);
+
+            // Tableau Mode de règlement
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(1.5f); // Mode règlement
+                    columns.RelativeColumn(1.5f); // Valeur
+                    columns.RelativeColumn(1.5f); // N° Pièce
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text("Mode règlement").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("Valeur").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("N° Pièce").Bold();
+                });
+
+                // Payment row
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(facture.ModePaiement);
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignRight().Text($"{facture.MontantTotal:N2} DZD");
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text(facture.PaiementNumeroPiece ?? "-");
+            });
         });
     }
 
@@ -283,5 +339,20 @@ public class PdfService : IPdfService
         TauxTVA.TVA9 => "9%",
         TauxTVA.Exonere => "Exonéré",
         _ => ""
+    };
+
+    private static string FormatUnite(Unite unite) => unite switch
+    {
+        Unite.PCS => "PCS",
+        Unite.BOIT => "BOIT",
+        Unite.KG => "KG",
+        Unite.L => "L",
+        Unite.M => "M",
+        Unite.M2 => "M²",
+        Unite.M3 => "M³",
+        Unite.H => "H",
+        Unite.J => "J",
+        Unite.FORF => "FORF",
+        _ => "PCS"
     };
 }

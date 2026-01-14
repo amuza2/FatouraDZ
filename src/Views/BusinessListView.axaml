@@ -1,0 +1,113 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:models="using:FatouraDZ.Models"
+             x:Class="FatouraDZ.Views.BusinessListView"
+             x:DataType="vm:BusinessListViewModel">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Mes Entreprises" FontSize="28" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="Sélectionnez une entreprise pour gérer ses factures" 
+                               Foreground="#64748B" FontSize="14" Margin="0,5,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="+ Nouvelle entreprise" 
+                        Classes="primary"
+                        Command="{Binding CreateBusinessCommand}"
+                        Padding="20,12"
+                        FontSize="14"/>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" Padding="30,20">
+            <StackPanel Spacing="15">
+                <!-- Error message -->
+                <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                        IsVisible="{Binding MessageErreur, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <TextBlock Text="{Binding MessageErreur}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                </Border>
+
+                <!-- Loading indicator -->
+                <Border Background="#F0F9FF" CornerRadius="8" Padding="30"
+                        IsVisible="{Binding EstChargement}"
+                        HorizontalAlignment="Center">
+                    <TextBlock Text="Chargement..." Foreground="#0369A1" FontSize="16"/>
+                </Border>
+
+                <!-- Empty state -->
+                <Border Background="#F8FAFC" CornerRadius="12" Padding="60,40"
+                        IsVisible="{Binding !Businesses.Count}"
+                        HorizontalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center" Spacing="15">
+                        <TextBlock Text="🏢" FontSize="48" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Aucune entreprise" FontSize="20" FontWeight="SemiBold" 
+                                   Foreground="#64748B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Créez votre première entreprise pour commencer à générer des factures"
+                                   Foreground="#94A3B8" TextAlignment="Center" MaxWidth="300"/>
+                        <Button Content="Créer une entreprise" 
+                                Classes="primary"
+                                Command="{Binding CreateBusinessCommand}"
+                                HorizontalAlignment="Center"
+                                Margin="0,10,0,0"
+                                Padding="25,12"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Business list -->
+                <ItemsControl ItemsSource="{Binding Businesses}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Business">
+                            <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,10"
+                                    BorderBrush="#E2E8F0" BorderThickness="1"
+                                    Cursor="Hand">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                    </Style>
+                                </Border.Styles>
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <!-- Icon -->
+                                    <Border Grid.Column="0" Background="#EFF6FF" CornerRadius="10" 
+                                            Width="60" Height="60" Margin="0,0,20,0">
+                                        <TextBlock Text="🏢" FontSize="28" 
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    
+                                    <!-- Business info -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="{Binding Nom}" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
+                                        <TextBlock Foreground="#64748B" FontSize="13">
+                                            <Run Text="{Binding Ville}"/><Run Text=", "/><Run Text="{Binding Wilaya}"/>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding Activite}" Foreground="#94A3B8" FontSize="12"
+                                                   IsVisible="{Binding Activite, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Actions -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <Button Content="Ouvrir"
+                                                Classes="primary"
+                                                Command="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).SelectBusinessCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="20,10"/>
+                                        <Button Content="🗑️"
+                                                Background="#FEE2E2"
+                                                Foreground="#DC2626"
+                                                Command="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).DeleteBusinessCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="10"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

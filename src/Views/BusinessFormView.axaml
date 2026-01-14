@@ -1,0 +1,214 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             x:Class="FatouraDZ.Views.BusinessFormView"
+             x:DataType="vm:BusinessFormViewModel">
+    
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header with back button -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Grid.Column="0" Content="← Retour" 
+                        Command="{Binding AnnulerCommand}"
+                        Background="Transparent"
+                        Foreground="#64748B"
+                        Padding="10,8"/>
+                <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                    <TextBlock Text="{Binding TitreFormulaire}" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="Remplissez les informations de l'entreprise" Foreground="#64748B" FontSize="12"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Scrollable content -->
+        <ScrollViewer Grid.Row="1" Padding="30,20">
+            <StackPanel Spacing="20" HorizontalAlignment="Stretch">
+
+            <!-- Error message -->
+            <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                    IsVisible="{Binding ErreurMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="{Binding ErreurMessage}" Foreground="#DC2626" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- Success message -->
+            <Border Background="#D1FAE5" CornerRadius="8" Padding="15"
+                    IsVisible="{Binding EstSauvegarde}">
+                <TextBlock Text="✓ Entreprise sauvegardée avec succès" Foreground="#059669"/>
+            </Border>
+
+            <!-- Business Type -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Type d'entreprise" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    <ComboBox SelectedIndex="{Binding TypeEntrepriseIndex}" 
+                              HorizontalAlignment="Stretch" MaxWidth="300">
+                        <ComboBoxItem Content="Auto-Entrepreneur"/>
+                        <ComboBoxItem Content="Forfait"/>
+                        <ComboBoxItem Content="Société (Réel)"/>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Basic Info -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Informations générales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Nom de l'entreprise *" FontWeight="Medium"/>
+                        <TextBox Text="{Binding Nom}" Watermark="Nom affiché dans la liste"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,20,*" IsVisible="{Binding AfficherNomComplet}">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Nom complet du propriétaire" FontWeight="Medium"/>
+                            <TextBox Text="{Binding NomComplet}" Watermark="Prénom et nom"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Nom commercial (optionnel)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding RaisonSociale}" Watermark="Marque ou enseigne"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="4" IsVisible="{Binding EstReel}">
+                        <TextBlock Text="Raison sociale *" FontWeight="Medium"/>
+                        <TextBox Text="{Binding RaisonSociale}" Watermark="Nom de la société"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Activité" FontWeight="Medium"/>
+                        <TextBox Text="{Binding Activite}" Watermark="Activité commerciale"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Address -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Adresse" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Adresse *" FontWeight="Medium"/>
+                        <TextBox Text="{Binding Adresse}" Watermark="Rue, numéro, quartier"/>
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="*,20,*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Ville *" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Ville}" Watermark="Ville"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Wilaya *" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Wilaya}" Watermark="Wilaya"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Text="Code postal" FontWeight="Medium"/>
+                            <TextBox Text="{Binding CodePostal}" Watermark="00000"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Contact -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Contact" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <Grid ColumnDefinitions="*,20,*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Téléphone *" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Telephone}" Watermark="05XX XX XX XX"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Email (optionnel)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Email}" Watermark="email@exemple.com"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Spacing="4">
+                            <TextBlock Text="Fax (optionnel)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Fax}" Watermark="Numéro de fax"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Fiscal Info -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Informations fiscales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding AfficherNumeroImmatriculation}">
+                            <TextBlock Text="N° Immatriculation" FontWeight="Medium"/>
+                            <TextBox Text="{Binding NumeroImmatriculation}" Watermark="Numéro d'immatriculation"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding AfficherRC}">
+                            <TextBlock Text="Registre du Commerce (RC)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Rc}" Watermark="Numéro RC"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="NIF" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Nif}" Watermark="Numéro NIF"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Article d'Imposition (AI)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Ai}" Watermark="Numéro AI"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="NIS (15 chiffres)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding Nis}" Watermark="000000000000000"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="4" IsVisible="{Binding AfficherCapitalSocial}">
+                        <TextBlock Text="Capital social" FontWeight="Medium"/>
+                        <TextBox Text="{Binding CapitalSocial}" Watermark="Ex: 100 000 DZD"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Logo -->
+            <Border Classes="card">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Logo (optionnel)" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    <TextBlock Text="Format: PNG ou JPG, max 2 Mo" Foreground="#64748B" FontSize="12"/>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="Sélectionner un logo" 
+                                Command="{Binding SelectionnerLogoCommand}"
+                                CommandParameter="{Binding $parent[Window].StorageProvider}"/>
+                        <Button Content="Supprimer" 
+                                Command="{Binding SupprimerLogoCommand}"
+                                IsVisible="{Binding CheminLogo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                    
+                    <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" 
+                            Padding="10" MaxWidth="200" MaxHeight="100"
+                            IsVisible="{Binding CheminLogo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <Image Source="{Binding CheminLogo}" Stretch="Uniform"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Fixed footer with buttons -->
+        <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="30,15">
+            <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center">
+                <Button Content="Annuler" 
+                        Command="{Binding AnnulerCommand}"
+                        Padding="30,12"
+                        Background="#E2E8F0"/>
+                <Button Content="Enregistrer l'entreprise" 
+                        Command="{Binding SauvegarderCommand}"
+                        Padding="30,12"
+                        Background="#2563EB"
+                        Foreground="White"
+                        FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

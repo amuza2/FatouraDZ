@@ -7,12 +7,15 @@ namespace FatouraDZ.Services;
 
 public interface IDatabaseService
 {
-    // Entrepreneur
-    Task<Entrepreneur?> GetEntrepreneurAsync();
-    Task SaveEntrepreneurAsync(Entrepreneur entrepreneur);
+    // Business
+    Task<List<Business>> GetBusinessesAsync();
+    Task<Business?> GetBusinessByIdAsync(int id);
+    Task SaveBusinessAsync(Business business);
+    Task DeleteBusinessAsync(int id);
     
     // Factures
     Task<List<Facture>> GetFacturesAsync();
+    Task<List<Facture>> GetFacturesByBusinessIdAsync(int businessId);
     Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche);
     Task<Facture?> GetFactureByIdAsync(int id);
     Task<Facture?> GetFactureByNumeroAsync(string numero);

@@ -14,14 +14,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private ViewModelBase? _contenuActuel;
 
     [ObservableProperty]
-    private string _pageActuelle = "Accueil";
-
-    [ObservableProperty]
-    private bool _estEntrepreneurConfigure;
+    private string _pageActuelle = "Entreprises";
 
     private readonly IDatabaseService _databaseService;
+    private Business? _currentBusiness;
 
-    public event Action<Facture, Entrepreneur>? DemanderPrevisualisation;
+    public event Action<Facture, Business>? DemanderPrevisualisation;
 
     public MainWindowViewModel()
     {
@@ -31,101 +29,107 @@ public partial class MainWindowViewModel : ViewModelBase
     public async Task InitialiserAsync()
     {
         await _databaseService.InitializeDatabaseAsync();
-        
-        var entrepreneur = await _databaseService.GetEntrepreneurAsync();
-        EstEntrepreneurConfigure = entrepreneur != null;
-
-        if (!EstEntrepreneurConfigure)
-        {
-            // Première utilisation : afficher la configuration
-            AfficherConfiguration();
-        }
-        else
-        {
-            AfficherAccueil();
-        }
+        AfficherListeEntreprises();
     }
 
     [RelayCommand]
-    private void AfficherAccueil()
+    private void AfficherListeEntreprises()
     {
-        PageActuelle = "Accueil";
-        var vm = new AccueilViewModel();
-        vm.DemanderNouvelleFacture += () => AfficherNouvelleFacture();
-        vm.DemanderHistorique += () => AfficherHistorique();
-        _ = vm.ChargerDonneesAsync();
+        PageActuelle = "Entreprises";
+        _currentBusiness = null;
+        var vm = new BusinessListViewModel();
+        vm.BusinessSelected += AfficherDetailEntreprise;
+        vm.CreateBusinessRequested += AfficherFormulaireEntreprise;
+        _ = vm.ChargerBusinessesAsync();
         ContenuActuel = vm;
     }
 
-    [RelayCommand]
-    private void AfficherConfiguration()
+    private void AfficherDetailEntreprise(Business business)
     {
-        PageActuelle = "Configuration";
-        var vm = new EntrepreneurConfigViewModel();
-        vm.ConfigurationSauvegardee += async () =>
+        _currentBusiness = business;
+        PageActuelle = business.Nom;
+        var vm = new BusinessDetailViewModel();
+        vm.SetBusiness(business);
+        vm.BackRequested += AfficherListeEntreprises;
+        vm.EditBusinessRequested += () => AfficherFormulaireEntreprise(business);
+        vm.CreateInvoiceRequested += () => AfficherNouvelleFacture(business);
+        vm.EditInvoiceRequested += (facture) => AfficherEditionFacture(facture, business, false);
+        vm.PreviewInvoiceRequested += (facture) => DemanderPrevisualisation?.Invoke(facture, business);
+        _ = vm.ChargerFacturesAsync();
+        ContenuActuel = vm;
+    }
+
+    private void AfficherFormulaireEntreprise()
+    {
+        PageActuelle = "Nouvelle entreprise";
+        var vm = new BusinessFormViewModel();
+        vm.BusinessSaved += async () =>
         {
-            EstEntrepreneurConfigure = true;
-            await Task.Delay(1500); // Laisser le message de succès visible
-            AfficherAccueil();
+            await Task.Delay(1000);
+            AfficherListeEntreprises();
         };
+        vm.CancelRequested += AfficherListeEntreprises;
         ContenuActuel = vm;
     }
 
-    [RelayCommand]
-    private void AfficherNouvelleFacture()
+    private void AfficherFormulaireEntreprise(Business business)
+    {
+        PageActuelle = $"Modifier {business.Nom}";
+        var vm = new BusinessFormViewModel();
+        vm.ChargerBusiness(business);
+        vm.BusinessSaved += async () =>
+        {
+            await Task.Delay(1000);
+            // Reload business and show detail
+            var updated = await _databaseService.GetBusinessByIdAsync(business.Id);
+            if (updated != null)
+                AfficherDetailEntreprise(updated);
+            else
+                AfficherListeEntreprises();
+        };
+        vm.CancelRequested += () => AfficherDetailEntreprise(business);
+        ContenuActuel = vm;
+    }
+
+    private void AfficherNouvelleFacture(Business business)
     {
         PageActuelle = "Nouvelle facture";
         var vm = new NouvelleFactureViewModel();
-        vm.FactureSauvegardee += async () =>
+        vm.SetBusiness(business);
+        _ = vm.InitialiserAsync();
+        vm.FactureSauvegardee += () =>
         {
-            await Task.Delay(1500);
-            AfficherNouvelleFacture(); // Réinitialiser pour une nouvelle facture
+            AfficherDetailEntreprise(business);
         };
-        vm.DemanderPrevisualisation += async (facture) =>
+        vm.DemanderPrevisualisation += (facture) =>
         {
-            var entrepreneur = await _databaseService.GetEntrepreneurAsync();
-            if (entrepreneur != null)
-            {
-                DemanderPrevisualisation?.Invoke(facture, entrepreneur);
-            }
+            DemanderPrevisualisation?.Invoke(facture, business);
         };
+        vm.AnnulerDemande += () => AfficherDetailEntreprise(business);
         ContenuActuel = vm;
     }
 
-    [RelayCommand]
-    private void AfficherHistorique()
+    private void AfficherEditionFacture(Facture facture, Business business, bool estDuplication)
     {
-        PageActuelle = "Historique";
-        var vm = new HistoriqueFacturesViewModel();
-        vm.DemanderModification += (facture) =>
+        PageActuelle = estDuplication ? "Dupliquer facture" : "Modifier facture";
+        var vm = new NouvelleFactureViewModel();
+        vm.SetBusiness(business);
+        vm.ChargerFacture(facture, estDuplication);
+        
+        if (estDuplication)
         {
-            AfficherEditionFacture(facture, estDuplication: false);
-        };
-        vm.DemanderDuplication += (facture) =>
+            _ = vm.InitialiserAsync();
+        }
+        
+        vm.FactureSauvegardee += () =>
         {
-            AfficherEditionFacture(facture, estDuplication: true);
+            AfficherDetailEntreprise(business);
         };
-        vm.DemanderPrevisualisation += (facture, entrepreneur) =>
+        vm.DemanderPrevisualisation += (f) =>
         {
-            DemanderPrevisualisation?.Invoke(facture, entrepreneur);
+            DemanderPrevisualisation?.Invoke(f, business);
         };
-        vm.DemanderCheminSauvegarde += DemanderCheminSauvegardePdf;
-        vm.DemanderConfirmation += DemanderConfirmationAsync;
-        _ = vm.ChargerDonneesAsync();
-        ContenuActuel = vm;
-    }
-
-    [RelayCommand]
-    private void AfficherArchives()
-    {
-        PageActuelle = "Archives";
-        var vm = new ArchiveFacturesViewModel();
-        vm.DemanderConfirmation += DemanderConfirmationAsync;
-        vm.DemanderPrevisualisation += (facture, entrepreneur) =>
-        {
-            DemanderPrevisualisation?.Invoke(facture, entrepreneur);
-        };
-        _ = vm.ChargerDonneesAsync();
+        vm.AnnulerDemande += () => AfficherDetailEntreprise(business);
         ContenuActuel = vm;
     }
 
@@ -143,34 +147,6 @@ public partial class MainWindowViewModel : ViewModelBase
         return DemanderConfirmationDialog != null 
             ? await DemanderConfirmationDialog.Invoke(titre, message) 
             : true;
-    }
-
-    public void AfficherEditionFacture(Facture facture, bool estDuplication)
-    {
-        PageActuelle = estDuplication ? "Dupliquer facture" : "Modifier facture";
-        var vm = new NouvelleFactureViewModel();
-        vm.ChargerFacture(facture, estDuplication);
-        
-        if (estDuplication)
-        {
-            // Générer un nouveau numéro pour la duplication
-            _ = vm.InitialiserAsync();
-        }
-        
-        vm.FactureSauvegardee += () =>
-        {
-            // Retourner à l'historique après sauvegarde
-            AfficherHistorique();
-        };
-        vm.DemanderPrevisualisation += async (f) =>
-        {
-            var entrepreneur = await _databaseService.GetEntrepreneurAsync();
-            if (entrepreneur != null)
-            {
-                DemanderPrevisualisation?.Invoke(f, entrepreneur);
-            }
-        };
-        ContenuActuel = vm;
     }
 
     public event Func<string, Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderSauvegardeFichier;

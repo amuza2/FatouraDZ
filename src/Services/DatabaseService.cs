@@ -16,31 +16,54 @@ public class DatabaseService : IDatabaseService
         await context.Database.EnsureCreatedAsync();
     }
 
-    // Entrepreneur
-    public async Task<Entrepreneur?> GetEntrepreneurAsync()
+    // Business
+    public async Task<List<Business>> GetBusinessesAsync()
     {
         await using var context = new AppDbContext();
-        return await context.Entrepreneurs.FirstOrDefaultAsync();
+        return await context.Businesses
+            .OrderBy(b => b.Nom)
+            .ToListAsync();
     }
 
-    public async Task SaveEntrepreneurAsync(Entrepreneur entrepreneur)
+    public async Task<Business?> GetBusinessByIdAsync(int id)
     {
         await using var context = new AppDbContext();
-        var existing = await context.Entrepreneurs.FirstOrDefaultAsync();
+        return await context.Businesses
+            .Include(b => b.Factures)
+            .FirstOrDefaultAsync(b => b.Id == id);
+    }
+
+    public async Task SaveBusinessAsync(Business business)
+    {
+        await using var context = new AppDbContext();
         
-        if (existing != null)
+        if (business.Id == 0)
         {
-            entrepreneur.Id = existing.Id;
-            entrepreneur.DateModification = DateTime.Now;
-            context.Entry(existing).CurrentValues.SetValues(entrepreneur);
+            business.DateCreation = DateTime.Now;
+            context.Businesses.Add(business);
         }
         else
         {
-            entrepreneur.DateCreation = DateTime.Now;
-            context.Entrepreneurs.Add(entrepreneur);
+            business.DateModification = DateTime.Now;
+            var existing = await context.Businesses.FindAsync(business.Id);
+            if (existing != null)
+            {
+                context.Entry(existing).CurrentValues.SetValues(business);
+            }
         }
         
         await context.SaveChangesAsync();
+    }
+
+    public async Task DeleteBusinessAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var business = await context.Businesses.FindAsync(id);
+        if (business != null)
+        {
+            context.Businesses.Remove(business);
+            await context.SaveChangesAsync();
+        }
     }
 
     // Factures
@@ -49,6 +72,16 @@ public class DatabaseService : IDatabaseService
         await using var context = new AppDbContext();
         return await context.Factures
             .Include(f => f.Lignes)
+            .OrderByDescending(f => f.DateCreation)
+            .ToListAsync();
+    }
+
+    public async Task<List<Facture>> GetFacturesByBusinessIdAsync(int businessId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Factures
+            .Include(f => f.Lignes)
+            .Where(f => f.BusinessId == businessId)
             .OrderByDescending(f => f.DateCreation)
             .ToListAsync();
     }
@@ -163,19 +196,24 @@ public class DatabaseService : IDatabaseService
 
         var copie = new Facture
         {
+            BusinessId = original.BusinessId,
             DateFacture = DateTime.Today,
             DateEcheance = DateTime.Today.AddDays(30),
             TypeFacture = original.TypeFacture,
             ModePaiement = original.ModePaiement,
+            ClientBusinessType = original.ClientBusinessType,
             ClientNom = original.ClientNom,
             ClientAdresse = original.ClientAdresse,
             ClientTelephone = original.ClientTelephone,
             ClientEmail = original.ClientEmail,
+            ClientFax = original.ClientFax,
             ClientRC = original.ClientRC,
             ClientNIS = original.ClientNIS,
+            ClientNIF = original.ClientNIF,
             ClientAI = original.ClientAI,
             ClientNumeroImmatriculation = original.ClientNumeroImmatriculation,
             ClientActivite = original.ClientActivite,
+            ClientCapitalSocial = original.ClientCapitalSocial,
             TotalHT = original.TotalHT,
             TotalTVA19 = original.TotalTVA19,
             TotalTVA9 = original.TotalTVA9,

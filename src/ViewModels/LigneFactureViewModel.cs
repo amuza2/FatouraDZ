@@ -12,10 +12,18 @@ public partial class LigneFactureViewModel : ObservableObject
     private int _numeroLigne;
 
     [ObservableProperty]
+    private string? _reference;
+
+    [ObservableProperty]
     private string _designation = string.Empty;
 
     [ObservableProperty]
     private decimal _quantite = 1;
+
+    [ObservableProperty]
+    private int _uniteIndex = 0;
+
+    public Unite Unite => (Unite)UniteIndex;
 
     [ObservableProperty]
     private decimal _prixUnitaire;
@@ -63,8 +71,10 @@ public partial class LigneFactureViewModel : ObservableObject
         return new LigneFacture
         {
             NumeroLigne = NumeroLigne,
+            Reference = Reference,
             Designation = Designation,
             Quantite = Quantite,
+            Unite = (Unite)UniteIndex,
             PrixUnitaire = PrixUnitaire,
             TauxTVA = (TauxTVA)TauxTVAIndex,
             TotalHT = TotalHT
@@ -76,8 +86,10 @@ public partial class LigneFactureViewModel : ObservableObject
         return new LigneFactureViewModel
         {
             NumeroLigne = ligne.NumeroLigne,
+            Reference = ligne.Reference,
             Designation = ligne.Designation,
             Quantite = ligne.Quantite,
+            UniteIndex = (int)ligne.Unite,
             PrixUnitaire = ligne.PrixUnitaire,
             TauxTVAIndex = (int)ligne.TauxTVA,
             TotalHT = ligne.TotalHT

@@ -1,0 +1,173 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:models="using:FatouraDZ.Models"
+             x:Class="FatouraDZ.Views.BusinessDetailView"
+             x:DataType="vm:BusinessDetailViewModel">
+    
+    <Grid RowDefinitions="Auto,Auto,*">
+        <!-- Header with back button -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Content="← Retour" 
+                        Command="{Binding GoBackCommand}"
+                        Background="Transparent"
+                        Foreground="#64748B"
+                        Padding="10,8"
+                        Margin="0,0,20,0"/>
+                
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding Business.Nom}" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Foreground="#64748B" FontSize="13">
+                        <Run Text="{Binding Business.Ville}"/><Run Text=", "/><Run Text="{Binding Business.Wilaya}"/>
+                        <Run Text=" • "/><Run Text="{Binding Business.Activite}"/>
+                    </TextBlock>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <Button Content="Modifier" 
+                            Command="{Binding EditBusinessCommand}"
+                            Padding="15,10"/>
+                    <Button Content="+ Nouvelle facture" 
+                            Classes="primary"
+                            Command="{Binding CreateInvoiceCommand}"
+                            Padding="20,10"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Statistics -->
+        <Border Grid.Row="1" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,*,*,*">
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding NombreFactures}" FontSize="24" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Factures" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding ChiffreAffaires, StringFormat={}{0:N2} DA}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Chiffre d'affaires" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding FacturesEnAttente}" FontSize="24" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Center"/>
+                    <TextBlock Text="En attente" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding FacturesPayees}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Payées" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="2" RowDefinitions="Auto,*">
+            <!-- Filters -->
+            <Border Grid.Row="0" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding Recherche}" 
+                             Watermark="🔍 Rechercher par numéro ou client..."
+                             MaxWidth="400" HorizontalAlignment="Left"/>
+                    <ComboBox Grid.Column="1" SelectedIndex="{Binding TypeFactureIndex}" Margin="15,0,0,0" Width="150">
+                        <ComboBoxItem Content="Tous types"/>
+                        <ComboBoxItem Content="Normale"/>
+                        <ComboBoxItem Content="Avoir"/>
+                        <ComboBoxItem Content="Proformat"/>
+                    </ComboBox>
+                    <ComboBox Grid.Column="2" SelectedIndex="{Binding StatutIndex}" Margin="10,0,0,0" Width="150">
+                        <ComboBoxItem Content="Tous statuts"/>
+                        <ComboBoxItem Content="En attente"/>
+                        <ComboBoxItem Content="Payée"/>
+                        <ComboBoxItem Content="Annulée"/>
+                    </ComboBox>
+                </Grid>
+            </Border>
+
+            <!-- Invoice list -->
+            <ScrollViewer Grid.Row="1" Padding="30,20">
+                <StackPanel Spacing="10">
+                    <!-- Error message -->
+                    <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                            IsVisible="{Binding MessageErreur, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding MessageErreur}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <Border Background="#F8FAFC" CornerRadius="12" Padding="40"
+                            IsVisible="{Binding !Factures.Count}"
+                            HorizontalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center" Spacing="10">
+                            <TextBlock Text="📄" FontSize="40" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Aucune facture" FontSize="18" FontWeight="SemiBold" 
+                                       Foreground="#64748B" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Créez votre première facture pour cette entreprise"
+                                       Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                            <Button Content="Créer une facture" 
+                                    Classes="primary"
+                                    Command="{Binding CreateInvoiceCommand}"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,10,0,0"
+                                    Padding="20,10"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Invoice items -->
+                    <ItemsControl ItemsSource="{Binding Factures}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:Facture">
+                                <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,8"
+                                        BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <!-- Invoice info -->
+                                        <StackPanel Grid.Column="0" Spacing="3">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding NumeroFacture}" FontWeight="SemiBold" FontSize="14"/>
+                                                <Border Background="#EFF6FF" CornerRadius="4" Padding="6,2">
+                                                    <TextBlock Text="{Binding TypeFacture}" FontSize="11" Foreground="#3B82F6"/>
+                                                </Border>
+                                                <Border Background="#FEF3C7" CornerRadius="4" Padding="6,2">
+                                                    <TextBlock Text="{Binding Statut}" FontSize="11" Foreground="#92400E"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding ClientNom}" Foreground="#64748B" FontSize="13"/>
+                                            <TextBlock Foreground="#94A3B8" FontSize="12">
+                                                <Run Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}"/>
+                                                <Run Text=" • "/>
+                                                <Run Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        
+                                        <!-- Amount -->
+                                        <TextBlock Grid.Column="1" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
+                                                   FontWeight="Bold" FontSize="16" Foreground="#1E293B"
+                                                   VerticalAlignment="Center" Margin="20,0"/>
+                                        
+                                        <!-- Actions -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                            <Button Content="👁️" ToolTip.Tip="Aperçu"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).PreviewInvoiceCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8" Background="Transparent"/>
+                                            <Button Content="✏️" ToolTip.Tip="Modifier"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).EditInvoiceCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8" Background="Transparent"/>
+                                            <Button ToolTip.Tip="Marquer payée/non payée"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).TogglePaymentStatusCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8" Background="Transparent">
+                                                <TextBlock Text="💰"/>
+                                            </Button>
+                                            <Button Content="🗑️" ToolTip.Tip="Supprimer"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).DeleteInvoiceCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8" Background="#FEE2E2"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -10,8 +10,24 @@ public class ValidationService : IValidationService
     {
         var result = new ValidationResult();
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.NomComplet))
-            result.AjouterErreur("Le nom complet est obligatoire");
+        // Nom complet required for Auto-Entrepreneur and Forfait
+        if (entrepreneur.TypeEntreprise != BusinessType.Reel)
+        {
+            if (string.IsNullOrWhiteSpace(entrepreneur.NomComplet))
+                result.AjouterErreur("Le nom complet est obligatoire");
+        }
+
+        // Raison sociale required for Reel (Company)
+        if (entrepreneur.TypeEntreprise == BusinessType.Reel)
+        {
+            if (string.IsNullOrWhiteSpace(entrepreneur.RaisonSociale))
+                result.AjouterErreur("La raison sociale est obligatoire pour une société");
+            if (string.IsNullOrWhiteSpace(entrepreneur.CapitalSocial))
+                result.AjouterErreur("Le capital social est obligatoire pour une société");
+        }
+
+        if (string.IsNullOrWhiteSpace(entrepreneur.Activite))
+            result.AjouterErreur("L'activité est obligatoire");
 
         if (string.IsNullOrWhiteSpace(entrepreneur.Adresse))
             result.AjouterErreur("L'adresse est obligatoire");
@@ -27,9 +43,21 @@ public class ValidationService : IValidationService
         else if (!EstTelephoneValide(entrepreneur.Telephone))
             result.AjouterErreur("Le numéro de téléphone est invalide (mobile: 05/06/07XX XX XX XX, fixe: 0XX XX XX XX)");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.RC))
-            result.AjouterErreur("Le numéro RC est obligatoire");
+        // N° Immatriculation required only for Auto-Entrepreneur
+        if (entrepreneur.TypeEntreprise == BusinessType.AutoEntrepreneur)
+        {
+            if (string.IsNullOrWhiteSpace(entrepreneur.NumeroImmatriculation))
+                result.AjouterErreur("Le numéro d'immatriculation est obligatoire");
+        }
 
+        // RC required for Forfait and Reel
+        if (entrepreneur.TypeEntreprise != BusinessType.AutoEntrepreneur)
+        {
+            if (string.IsNullOrWhiteSpace(entrepreneur.RC))
+                result.AjouterErreur("Le numéro RC est obligatoire");
+        }
+
+        // Common fiscal fields required for all types
         if (string.IsNullOrWhiteSpace(entrepreneur.NIS))
             result.AjouterErreur("Le numéro NIS est obligatoire");
         else if (!EstNISValide(entrepreneur.NIS))
@@ -40,9 +68,6 @@ public class ValidationService : IValidationService
 
         if (string.IsNullOrWhiteSpace(entrepreneur.AI))
             result.AjouterErreur("Le numéro AI est obligatoire");
-
-        if (string.IsNullOrWhiteSpace(entrepreneur.NumeroImmatriculation))
-            result.AjouterErreur("Le numéro d'immatriculation est obligatoire");
 
         if (!string.IsNullOrWhiteSpace(entrepreneur.Email) && !EstEmailValide(entrepreneur.Email))
             result.AjouterErreur("Le format de l'email est invalide");

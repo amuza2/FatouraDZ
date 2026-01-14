@@ -18,10 +18,13 @@ public class Facture : INotifyPropertyChanged
     public TypeFacture TypeFacture { get; set; } = TypeFacture.Normale;
     public string ModePaiement { get; set; } = string.Empty;
     
-    // Détails du paiement (pour chèque, virement, carte, CCP, BaridiMob)
+    // Détails du paiement - Mode reglement table
     public string? PaiementReference { get; set; }
+    public decimal PaiementValeur { get; set; }
+    public string? PaiementNumeroPiece { get; set; }
 
     // Informations client
+    public BusinessType ClientBusinessType { get; set; } = BusinessType.AutoEntrepreneur;
     public string ClientNom { get; set; } = string.Empty;
     public string ClientAdresse { get; set; } = string.Empty;
     public string ClientTelephone { get; set; } = string.Empty;
@@ -33,6 +36,8 @@ public class Facture : INotifyPropertyChanged
     public string? ClientAI { get; set; }
     public string? ClientNumeroImmatriculation { get; set; }
     public string? ClientActivite { get; set; }
+    public string? ClientFax { get; set; }
+    public string? ClientCapitalSocial { get; set; }
 
     // Référence à la facture originale (pour avoir/annulation)
     public string? NumeroFactureOrigine { get; set; }
@@ -70,6 +75,10 @@ public class Facture : INotifyPropertyChanged
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
 
+    // Foreign key to Business
+    public int BusinessId { get; set; }
+    public Business Business { get; set; } = null!;
+
     // Navigation
     public ICollection<LigneFacture> Lignes { get; set; } = new List<LigneFacture>();
 
@@ -83,7 +92,7 @@ public enum TypeFacture
 {
     Normale,
     Avoir,
-    Annulation
+    Proformat
 }
 
 public enum StatutFacture

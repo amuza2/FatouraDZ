@@ -40,4 +40,10 @@
     <SolidColorBrush x:Key="ButtonPressedBrush">#CBD5E1</SolidColorBrush>
     <SolidColorBrush x:Key="ButtonBorderBrush">#CBD5E1</SolidColorBrush>
     
+    <!-- Couleurs light pour les cartes -->
+    <SolidColorBrush x:Key="PrimaryLightBrush">#DBEAFE</SolidColorBrush>
+    <SolidColorBrush x:Key="SuccessLightBrush">#D1FAE5</SolidColorBrush>
+    <SolidColorBrush x:Key="WarningLightBrush">#FEF3C7</SolidColorBrush>
+    <SolidColorBrush x:Key="CardBackgroundBrush">#FFFFFF</SolidColorBrush>
+    
 </ResourceDictionary>

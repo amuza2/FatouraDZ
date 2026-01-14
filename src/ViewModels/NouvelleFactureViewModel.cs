@@ -17,6 +17,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private readonly INumberToWordsService _numberToWordsService;
     private readonly IValidationService _validationService;
 
+    private int _businessId;
+
+    public void SetBusiness(Business business)
+    {
+        _businessId = business.Id;
+    }
+
     // Type de facture
     [ObservableProperty]
     private int _typeFactureIndex = 0;
@@ -37,6 +44,23 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private string _modePaiement = "Espèces";
 
     // Informations client
+    [ObservableProperty]
+    private int _clientBusinessTypeIndex = 0;
+
+    public BusinessType ClientBusinessType => (BusinessType)ClientBusinessTypeIndex;
+
+    // Computed properties for client fields visibility
+    public bool ClientAfficherNumeroImmatriculation => ClientBusinessType == BusinessType.AutoEntrepreneur;
+    public bool ClientAfficherRC => ClientBusinessType != BusinessType.AutoEntrepreneur;
+
+    partial void OnClientBusinessTypeIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(ClientBusinessType));
+        OnPropertyChanged(nameof(ClientAfficherNumeroImmatriculation));
+        OnPropertyChanged(nameof(ClientAfficherRC));
+        OnPropertyChanged(nameof(ClientAfficherCapitalSocial));
+    }
+
     [ObservableProperty]
     private string _clientNom = string.Empty;
 
@@ -69,6 +93,15 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _clientActivite;
+
+    [ObservableProperty]
+    private string? _clientFax;
+
+    [ObservableProperty]
+    private string? _clientCapitalSocial;
+
+    // Show Capital Social only for Reel client type
+    public bool ClientAfficherCapitalSocial => ClientBusinessType == BusinessType.Reel;
 
     // Lignes de facture
     public ObservableCollection<LigneFactureViewModel> Lignes { get; } = new();
@@ -151,18 +184,22 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     // Modes de paiement disponibles
     public string[] ModesPaiement { get; } = new[]
     {
-        "Espèces",
+        "À terme",
         "Chèque",
-        "Virement bancaire",
-        "Carte bancaire",
-        "CCP",
-        "BaridiMob",
-        "À terme"
+        "Virement",
+        "Espèces",
+        "Versement"
     };
 
-    // Détails du paiement
+    // Détails du paiement - Mode règlement table
     [ObservableProperty]
     private string? _paiementReference;
+
+    [ObservableProperty]
+    private string? _paiementNumeroPiece;
+
+    [ObservableProperty]
+    private bool _estPaye = false;
 
     // Indique si les détails de paiement sont requis pour le mode sélectionné
     public bool RequiertDetailsPaiement => ModePaiement != "Espèces" && ModePaiement != "À terme";
@@ -181,6 +218,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     public event Action? FactureSauvegardee;
     public event Action<Facture>? DemanderPrevisualisation;
+    public event Action? AnnulerDemande;
+
+    [RelayCommand]
+    private void Annuler()
+    {
+        AnnulerDemande?.Invoke();
+    }
 
     public NouvelleFactureViewModel()
     {
@@ -393,10 +437,12 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         DateFacture = DateTimeOffset.Now.Date;
         DateEcheance = DateTimeOffset.Now.Date.AddDays(30);
         ModePaiement = "Espèces";
+        ClientBusinessTypeIndex = 0;
         ClientNom = string.Empty;
         ClientAdresse = string.Empty;
         ClientTelephone = string.Empty;
         ClientEmail = null;
+        ClientFax = null;
         ClientFormeJuridique = null;
         ClientRc = null;
         ClientNis = null;
@@ -404,11 +450,14 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientAi = null;
         ClientNumeroImmatriculation = null;
         ClientActivite = null;
+        ClientCapitalSocial = null;
         AppliquerTimbre = true;
         AppliquerRetenueSource = false;
         TauxRetenueSource = 30m;
         NumeroFactureOrigine = null;
         PaiementReference = null;
+        PaiementNumeroPiece = null;
+        EstPaye = false;
         ErreurMessage = null;
         EstSauvegarde = false;
 
@@ -442,10 +491,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         DateEcheance = new DateTimeOffset(facture.DateEcheance);
         ModePaiement = facture.ModePaiement;
         PaiementReference = facture.PaiementReference;
+        PaiementNumeroPiece = facture.PaiementNumeroPiece;
+        ClientBusinessTypeIndex = (int)facture.ClientBusinessType;
         ClientNom = facture.ClientNom;
         ClientAdresse = facture.ClientAdresse;
         ClientTelephone = facture.ClientTelephone;
         ClientEmail = facture.ClientEmail;
+        ClientFax = facture.ClientFax;
         ClientFormeJuridique = facture.ClientFormeJuridique;
         ClientRc = facture.ClientRC;
         ClientNis = facture.ClientNIS;
@@ -453,6 +505,8 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientAi = facture.ClientAI;
         ClientNumeroImmatriculation = facture.ClientNumeroImmatriculation;
         ClientActivite = facture.ClientActivite;
+        ClientCapitalSocial = facture.ClientCapitalSocial;
+        EstPaye = facture.Statut == StatutFacture.Payee;
         NumeroFactureOrigine = facture.NumeroFactureOrigine;
         AppliquerTimbre = facture.EstTimbreApplique;
         AppliquerRetenueSource = facture.TauxRetenueSource.HasValue;
@@ -492,17 +546,23 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         var facture = new Facture
         {
             Id = _factureId,
+            BusinessId = _businessId,
             NumeroFacture = NumeroFacture,
             DateFacture = DateFacture.DateTime,
             DateEcheance = DateEcheance.DateTime,
             TypeFacture = (TypeFacture)TypeFactureIndex,
             ModePaiement = ModePaiement,
             PaiementReference = RequiertDetailsPaiement ? PaiementReference : null,
+            PaiementValeur = MontantTotal,
+            PaiementNumeroPiece = RequiertDetailsPaiement ? PaiementNumeroPiece : null,
+            Statut = EstPaye ? StatutFacture.Payee : StatutFacture.EnAttente,
             NumeroFactureOrigine = NumeroFactureOrigine,
+            ClientBusinessType = (BusinessType)ClientBusinessTypeIndex,
             ClientNom = ClientNom,
             ClientAdresse = ClientAdresse,
             ClientTelephone = ClientTelephone,
             ClientEmail = ClientEmail,
+            ClientFax = ClientFax,
             ClientFormeJuridique = ClientFormeJuridique,
             ClientRC = ClientRc,
             ClientNIS = ClientNis,
@@ -510,6 +570,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             ClientAI = ClientAi,
             ClientNumeroImmatriculation = ClientNumeroImmatriculation,
             ClientActivite = ClientActivite,
+            ClientCapitalSocial = ClientCapitalSocial,
             TauxRetenueSource = AppliquerRetenueSource ? TauxRetenueSource : null,
             RetenueSource = RetenueSource,
             TotalHT = TotalHT,

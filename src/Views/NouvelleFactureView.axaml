@@ -12,14 +12,23 @@
         <vm:NouvelleFactureViewModel/>
     </Design.DataContext>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <StackPanel Spacing="20" MaxWidth="1000" HorizontalAlignment="Center">
-            
-            <!-- Titre -->
-            <TextBlock Text="{Binding TitreFormulaire}" 
-                       FontSize="24" FontWeight="Bold" 
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,10"/>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header with back button -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*">
+                <Button Grid.Column="0" Content="← Retour" 
+                        Command="{Binding AnnulerCommand}"
+                        Background="Transparent"
+                        Foreground="#64748B"
+                        Padding="10,8"/>
+                <TextBlock Grid.Column="1" Text="{Binding TitreFormulaire}" 
+                           FontSize="20" FontWeight="Bold" Foreground="#1E293B"
+                           VerticalAlignment="Center" Margin="20,0,0,0"/>
+            </Grid>
+        </Border>
+        
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+            <StackPanel Spacing="20" MaxWidth="1000" HorizontalAlignment="Center">
 
             <!-- Message d'erreur -->
             <Border Background="#FFEBEE" BorderBrush="#EF4444" BorderThickness="1" 
@@ -47,7 +56,7 @@
                             <ComboBox SelectedIndex="{Binding TypeFactureIndex}" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="Facture normale"/>
                                 <ComboBoxItem Content="Facture d'avoir"/>
-                                <ComboBoxItem Content="Facture d'annulation"/>
+                                <ComboBoxItem Content="Facture proformat"/>
                             </ComboBox>
                         </StackPanel>
                         
@@ -65,6 +74,10 @@
                                       HorizontalAlignment="Stretch"/>
                         </StackPanel>
                     </Grid>
+                    
+                    <!-- Statut de paiement -->
+                    <CheckBox Content="Facture payée" IsChecked="{Binding EstPaye}" 
+                              FontWeight="Medium" Margin="0,5,0,0"/>
 
                     <!-- Référence facture originale (pour avoir/annulation) -->
                     <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 
@@ -102,11 +115,18 @@
                             IsVisible="{Binding RequiertDetailsPaiement}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="💳 Détails du paiement" FontWeight="SemiBold" Foreground="#92400E"/>
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Numéro de référence (chèque, virement, etc.)" FontWeight="Medium"/>
-                                <TextBox Text="{Binding PaiementReference}" 
-                                         Watermark="N° chèque, N° virement, N° transaction..."/>
-                            </StackPanel>
+                            <Grid ColumnDefinitions="*,20,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Référence (chèque, virement, etc.)" FontWeight="Medium"/>
+                                    <TextBox Text="{Binding PaiementReference}" 
+                                             Watermark="Référence du paiement"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="N° Pièce" FontWeight="Medium"/>
+                                    <TextBox Text="{Binding PaiementNumeroPiece}" 
+                                             Watermark="N° chèque, N° virement..."/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -116,6 +136,16 @@
             <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations du client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    
+                    <!-- Type de client -->
+                    <StackPanel Spacing="4" MaxWidth="300" HorizontalAlignment="Left">
+                        <TextBlock Text="Type de client" FontWeight="Medium"/>
+                        <ComboBox SelectedIndex="{Binding ClientBusinessTypeIndex}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Auto-Entrepreneur"/>
+                            <ComboBoxItem Content="Forfait"/>
+                            <ComboBoxItem Content="Société (Réel)"/>
+                        </ComboBox>
+                    </StackPanel>
                     
                     <!-- Nom et Téléphone -->
                     <Grid ColumnDefinitions="*,20,*">
@@ -144,14 +174,20 @@
                                    IsVisible="{Binding ErreurClientAdresse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                     </StackPanel>
 
-                    <!-- Email -->
-                    <StackPanel Spacing="4" MaxWidth="400" HorizontalAlignment="Left">
-                        <TextBlock Text="Email (optionnel)" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientEmail}" Watermark="email@exemple.com"
-                                 Classes.error="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        <TextBlock Text="{Binding ErreurClientEmail}" Classes="error-message"
-                                   IsVisible="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                    </StackPanel>
+                    <!-- Email et Fax -->
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Email (optionnel)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientEmail}" Watermark="email@exemple.com"
+                                     Classes.error="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Text="{Binding ErreurClientEmail}" Classes="error-message"
+                                       IsVisible="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="Fax (optionnel)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientFax}" Watermark="Numéro de fax"/>
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -159,47 +195,47 @@
             <Border Classes="card">
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations fiscales du client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
-                    <TextBlock Text="Ces informations sont obligatoires pour la validité légale de la facture" 
+                    <TextBlock Text="Ces informations varient selon le type de client sélectionné" 
                                Foreground="#64748B" FontSize="12"/>
                     
-                    <!-- Forme juridique et Activité -->
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Forme juridique" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientFormeJuridique}" Watermark="Ex: EURL, SARL"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Activité" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientActivite}" Watermark="Activité commerciale"/>
-                        </StackPanel>
-                    </Grid>
+                    <!-- Activité -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Activité" FontWeight="Medium"/>
+                        <TextBox Text="{Binding ClientActivite}" Watermark="Activité commerciale"/>
+                    </StackPanel>
 
                     <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
+                        <!-- N° Immatriculation (Auto-Entrepreneur only) -->
+                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding ClientAfficherNumeroImmatriculation}">
+                            <TextBlock Text="N° Immatriculation" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientNumeroImmatriculation}" Watermark="Numéro d'immatriculation"/>
+                        </StackPanel>
+                        <!-- RC (Forfait and Reel only) -->
+                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding ClientAfficherRC}">
                             <TextBlock Text="Registre du Commerce (RC)" FontWeight="Medium"/>
                             <TextBox Text="{Binding ClientRc}" Watermark="Numéro RC"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="NIF" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientNif}" Watermark="Numéro NIF"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,20,*">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Article d'Imposition (AI)" FontWeight="Medium"/>
+                            <TextBox Text="{Binding ClientAi}" Watermark="Numéro AI"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Spacing="4">
                             <TextBlock Text="NIS (15 chiffres)" FontWeight="Medium"/>
                             <TextBox Text="{Binding ClientNis}" Watermark="000000000000000"/>
                         </StackPanel>
                     </Grid>
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="NIF" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNif}" Watermark="Numéro NIF"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Article d'Imposition (AI)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientAi}" Watermark="Numéro AI"/>
-                        </StackPanel>
-                    </Grid>
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="N° Immatriculation" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNumeroImmatriculation}" Watermark="Numéro d'immatriculation"/>
-                        </StackPanel>
-                    </Grid>
+                    
+                    <!-- Capital Social (Reel/Company only) -->
+                    <StackPanel Spacing="4" IsVisible="{Binding ClientAfficherCapitalSocial}">
+                        <TextBlock Text="Capital social" FontWeight="Medium"/>
+                        <TextBox Text="{Binding ClientCapitalSocial}" Watermark="Ex: 100 000 DZD"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -218,39 +254,53 @@
                     </Grid>
 
                     <!-- En-tête du tableau -->
-                    <Grid ColumnDefinitions="40,*,120,140,120,120,40" Background="#F1F5F9" Margin="0,10,0,0">
-                        <TextBlock Grid.Column="0" Text="#" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
+                    <Grid ColumnDefinitions="50,*,130,100,100,100,120,40" Background="#F1F5F9" Margin="0,10,0,0">
+                        <TextBlock Grid.Column="0" Text="Réf" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
                         <TextBlock Grid.Column="1" Text="Désignation" FontWeight="SemiBold" Padding="8"/>
-                        <TextBlock Grid.Column="2" Text="Quantité" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
-                        <TextBlock Grid.Column="3" Text="Prix unitaire" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
-                        <TextBlock Grid.Column="4" Text="TVA" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
-                        <TextBlock Grid.Column="5" Text="Total HT" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Right"/>
-                        <TextBlock Grid.Column="6" Text="" Padding="8"/>
+                        <TextBlock Grid.Column="2" Text="Qté" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="Unité" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="Prix H.T" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="5" Text="TVA" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="6" Text="Total H.T" FontWeight="SemiBold" Padding="8" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="7" Text="" Padding="8"/>
                     </Grid>
 
                     <!-- Lignes -->
                     <ItemsControl ItemsSource="{Binding Lignes}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:LigneFactureViewModel">
-                                <Grid ColumnDefinitions="40,*,120,140,120,120,40" Margin="0,5,0,0">
-                                    <TextBlock Grid.Column="0" Text="{Binding NumeroLigne}" 
-                                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <Grid ColumnDefinitions="50,*,130,100,100,100,120,40" Margin="0,5,0,0">
+                                    <TextBox Grid.Column="0" Text="{Binding Reference}" 
+                                             Watermark="{Binding NumeroLigne}" Margin="2,0"/>
                                     <TextBox Grid.Column="1" Text="{Binding Designation}" 
-                                             Watermark="Description du service/produit" Margin="5,0"/>
+                                             Watermark="Description du service/produit" Margin="2,0"/>
                                     <NumericUpDown Grid.Column="2" Value="{Binding Quantite}" 
-                                                   Minimum="0.01" Increment="1" FormatString="0.##" Margin="5,0"/>
-                                    <TextBox Grid.Column="3" Text="{Binding PrixUnitaire}" 
-                                             Watermark="0.00" Margin="5,0"/>
-                                    <ComboBox Grid.Column="4" SelectedIndex="{Binding TauxTVAIndex}" Margin="5,0"
+                                                   Minimum="0.01" Increment="1" FormatString="0.##" Margin="2,0"/>
+                                    <ComboBox Grid.Column="3" SelectedIndex="{Binding UniteIndex}" Margin="2,0"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="PCS"/>
+                                        <ComboBoxItem Content="BOIT"/>
+                                        <ComboBoxItem Content="KG"/>
+                                        <ComboBoxItem Content="L"/>
+                                        <ComboBoxItem Content="M"/>
+                                        <ComboBoxItem Content="M²"/>
+                                        <ComboBoxItem Content="M³"/>
+                                        <ComboBoxItem Content="H"/>
+                                        <ComboBoxItem Content="J"/>
+                                        <ComboBoxItem Content="FORF"/>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="4" Text="{Binding PrixUnitaire}" 
+                                             Watermark="0.00" Margin="2,0"/>
+                                    <ComboBox Grid.Column="5" SelectedIndex="{Binding TauxTVAIndex}" Margin="2,0"
                                               HorizontalAlignment="Stretch">
                                         <ComboBoxItem Content="19%"/>
                                         <ComboBoxItem Content="9%"/>
-                                        <ComboBoxItem Content="Exonéré"/>
+                                        <ComboBoxItem Content="0%"/>
                                     </ComboBox>
-                                    <TextBlock Grid.Column="5" Text="{Binding TotalHT, StringFormat={}{0:N2} DA}" 
+                                    <TextBlock Grid.Column="6" Text="{Binding TotalHT, StringFormat={}{0:N2}}" 
                                                VerticalAlignment="Center" HorizontalAlignment="Right" Margin="5,0"
                                                FontWeight="Medium"/>
-                                    <Button Grid.Column="6" Content="🗑️" 
+                                    <Button Grid.Column="7" Content="🗑️" 
                                             Command="{Binding $parent[ItemsControl].((vm:NouvelleFactureViewModel)DataContext).SupprimerLigneCommand}"
                                             CommandParameter="{Binding}"
                                             Padding="5" Background="Transparent"/>
@@ -262,12 +312,12 @@
             </Border>
 
             <!-- Section: Options fiscales -->
-            <Border Classes="card">
+            <!-- <Border Classes="card">
                 <StackPanel Spacing="15">
-                    <TextBlock Text="Options fiscales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    <TextBlock Text="Options fiscales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/> -->
                     
                     <!-- Retenue à la source -->
-                    <Border Background="#F0F9FF" CornerRadius="4" Padding="15">
+                    <!-- <Border Background="#F0F9FF" CornerRadius="4" Padding="15">
                         <StackPanel Spacing="10">
                             <CheckBox Content="Appliquer une retenue à la source" 
                                       IsChecked="{Binding AppliquerRetenueSource}"/>
@@ -283,9 +333,9 @@
                                        Foreground="#64748B" FontSize="11" TextWrapping="Wrap"
                                        IsVisible="{Binding AppliquerRetenueSource}"/>
                         </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
+                    </Border> -->
+                <!-- </StackPanel>
+            </Border> -->
 
             <!-- Section: Récapitulatif -->
             <Border Classes="card">
@@ -374,5 +424,6 @@
             </StackPanel>
 
         </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
