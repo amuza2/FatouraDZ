@@ -6,18 +6,18 @@
     
     <Grid RowDefinitions="Auto,*">
         <!-- Header -->
-        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Classes="section-header">
             <Grid ColumnDefinitions="Auto,*">
                 <Button Grid.Column="0" Content="← Retour" 
                         Command="{Binding GoBackCommand}"
                         Background="Transparent"
-                        Foreground="#64748B"
+                        Foreground="{StaticResource TextSecondaryBrush}"
                         Padding="10,8"
                         Margin="0,0,20,0"/>
                 
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="Paramètres" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock Text="Configuration de l'application" Foreground="#64748B" FontSize="13"/>
+                    <TextBlock Text="Paramètres" Classes="h2"/>
+                    <TextBlock Text="Configuration de l'application" Classes="caption"/>
                 </StackPanel>
             </Grid>
         </Border>

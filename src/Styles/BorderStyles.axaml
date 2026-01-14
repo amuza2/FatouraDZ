@@ -6,16 +6,87 @@
         <Setter Property="Background" Value="{StaticResource CardBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Padding" Value="24"/>
+        <Setter Property="BoxShadow" Value="0 1 3 0 #0A000000"/>
     </Style>
     
-    <!-- Card with Shadow (legacy) -->
+    <!-- Card with Shadow -->
     <Style Selector="Border.card-shadow">
         <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="CornerRadius" Value="12"/>
         <Setter Property="Padding" Value="24"/>
-        <Setter Property="BoxShadow" Value="0 1 3 0 #1A000000"/>
+        <Setter Property="BoxShadow" Value="0 4 6 -1 #1A000000, 0 2 4 -2 #1A000000"/>
+    </Style>
+
+    <!-- Card Hover Effect -->
+    <Style Selector="Border.card-hover">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="24"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.card-hover:pointerover">
+        <Setter Property="BoxShadow" Value="0 10 15 -3 #1A000000, 0 4 6 -4 #1A000000"/>
+        <Setter Property="RenderTransform" Value="translateY(-2px)"/>
+    </Style>
+
+    <!-- Success Alert -->
+    <Style Selector="Border.alert-success">
+        <Setter Property="Background" Value="{StaticResource SuccessLightBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- Error Alert -->
+    <Style Selector="Border.alert-error">
+        <Setter Property="Background" Value="#FEE2E2"/>
+        <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- Warning Alert -->
+    <Style Selector="Border.alert-warning">
+        <Setter Property="Background" Value="{StaticResource WarningLightBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- Info Alert -->
+    <Style Selector="Border.alert-info">
+        <Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- Section Header -->
+    <Style Selector="Border.section-header">
+        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="24,16"/>
+    </Style>
+
+    <!-- Sidebar Style -->
+    <Style Selector="Border.sidebar">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,0"/>
     </Style>
     
 </Styles>
