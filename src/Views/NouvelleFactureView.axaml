@@ -94,13 +94,15 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Référence facture originale (pour avoir/annulation) -->
+                    <!-- Référence facture originale (pour avoir uniquement) -->
                     <Border Background="#FEF3C7" CornerRadius="4" Padding="15" 
-                            IsVisible="{Binding TypeFactureIndex}">
+                            IsVisible="{Binding AfficherReferenceOrigine}">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="Référence à la facture originale" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <TextBlock Text="⚠️ Facture d'avoir - Document rectificatif" FontWeight="SemiBold" Foreground="#92400E"/>
+                            <TextBlock Text="Cette facture annule ou corrige une facture précédemment émise. Elle doit référencer la facture originale." 
+                                       Foreground="#B45309" TextWrapping="Wrap" FontSize="12"/>
                             <StackPanel Spacing="4">
-                                <TextBlock Text="N° de la facture à corriger/annuler" FontWeight="Medium"/>
+                                <TextBlock Text="N° de la facture à corriger/annuler *" FontWeight="Medium"/>
                                 <TextBox Text="{Binding NumeroFactureOrigine}" 
                                          Watermark="FAC-2025-XXX" MaxWidth="300" HorizontalAlignment="Left"/>
                             </StackPanel>

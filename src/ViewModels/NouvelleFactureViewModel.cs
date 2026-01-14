@@ -45,11 +45,15 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     // Show validity date only for Proforma invoices
     public bool AfficherDateValidite => TypeFacture == TypeFacture.Proforma;
+    
+    // Show original invoice reference only for Avoir
+    public bool AfficherReferenceOrigine => TypeFacture == TypeFacture.Avoir;
 
     partial void OnTypeFactureIndexChanged(int value)
     {
         OnPropertyChanged(nameof(TypeFacture));
         OnPropertyChanged(nameof(AfficherDateValidite));
+        OnPropertyChanged(nameof(AfficherReferenceOrigine));
     }
 
     [ObservableProperty]
