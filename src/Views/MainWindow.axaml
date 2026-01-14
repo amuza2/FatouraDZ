@@ -36,26 +36,29 @@
 
                 <!-- Menu de navigation -->
                 <ScrollViewer Grid.Row="1">
-                    <StackPanel Margin="12,20">
+                    <StackPanel Margin="12,20" Spacing="4">
                         <Button Classes="nav-button"
                                 Command="{Binding AfficherListeEntreprisesCommand}">
                             <TextBlock Text="🏢 Entreprises" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </Button>
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherParametresCommand}">
+                            <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
+                        <Button Classes="nav-button"
+                                Command="{Binding AfficherAideCommand}">
+                            <TextBlock Text="❓ Aide" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Settings at bottom -->
+                <!-- Version at bottom -->
                 <StackPanel Grid.Row="2" Margin="12,0,12,16">
                     <Separator Margin="0,0,0,12" Background="{StaticResource BorderBrush}"/>
-                    <Button Classes="nav-button"
-                            Command="{Binding AfficherParametresCommand}">
-                        <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </Button>
                     <TextBlock Text="Version 1.0.0" 
                                FontSize="11" 
                                Foreground="{StaticResource TextSecondaryBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,12,0,0"/>
+                               HorizontalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>

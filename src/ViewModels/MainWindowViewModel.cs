@@ -141,6 +141,34 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void AfficherAide()
+    {
+        PageActuelle = "Aide";
+        var vm = new SettingsViewModel();
+        vm.SelectedTabIndex = 2; // Go to "À propos" tab which contains help info
+        vm.BackRequested += AfficherListeEntreprises;
+        vm.DemanderExportFichier += async (nomFichier, description) =>
+        {
+            return DemanderExportFichier != null 
+                ? await DemanderExportFichier.Invoke(nomFichier, description) 
+                : null;
+        };
+        vm.DemanderImportFichier += async () =>
+        {
+            return DemanderImportFichier != null 
+                ? await DemanderImportFichier.Invoke() 
+                : null;
+        };
+        vm.DemanderDossier += async () =>
+        {
+            return DemanderDossier != null 
+                ? await DemanderDossier.Invoke() 
+                : null;
+        };
+        ContenuActuel = vm;
+    }
+
+    [RelayCommand]
     private void AfficherParametres()
     {
         PageActuelle = "Paramètres";
