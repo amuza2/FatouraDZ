@@ -99,53 +99,80 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         container.Column(column =>
         {
+            // 1. SELLER INFO (top)
             column.Item().Row(row =>
             {
                 if (!string.IsNullOrEmpty(Business.CheminLogo) && File.Exists(Business.CheminLogo))
                 {
-                    row.RelativeItem(1).Height(60).Image(Business.CheminLogo);
-                }
-                else
-                {
-                    row.RelativeItem(1);
+                    row.ConstantItem(80).Height(60).Image(Business.CheminLogo);
+                    row.ConstantItem(15);
                 }
 
-                row.RelativeItem(2).AlignCenter().Column(col =>
+                row.RelativeItem().Column(col =>
                 {
-                    var titreFacture = Facture.TypeFacture switch
+                    if (Business.TypeEntreprise == BusinessType.Reel)
                     {
-                        TypeFacture.Avoir => "FACTURE D'AVOIR",
-                        TypeFacture.Proforma => "FACTURE PROFORMA",
-                        _ => "FACTURE"
-                    };
-                    col.Item().Text(titreFacture).Bold().FontSize(24);
-                    
-                    // Disclaimer for Proforma
-                    if (Facture.TypeFacture == TypeFacture.Proforma)
+                        col.Item().Text(Business.RaisonSociale ?? Business.Nom).Bold().FontSize(14);
+                        if (!string.IsNullOrEmpty(Business.CapitalSocial))
+                            col.Item().Text($"Capital : {Business.CapitalSocial}").FontSize(9);
+                    }
+                    else
                     {
-                        col.Item().Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
+                        col.Item().Text(Business.NomComplet).Bold().FontSize(14);
+                        if (!string.IsNullOrEmpty(Business.RaisonSociale))
+                            col.Item().Text($"Nom commercial : {Business.RaisonSociale}").FontSize(9);
                     }
                     
-                    if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
-                    {
-                        col.Item().Text($"Réf. facture originale : {Facture.NumeroFactureOrigine}").FontSize(10).Italic();
-                    }
+                    col.Item().Text($"{Business.Adresse}").FontSize(9);
+                    col.Item().Text($"{Business.CodePostal} {Business.Ville}, {Business.Wilaya}").FontSize(9);
+                    col.Item().Text($"Tél : {Business.Telephone}").FontSize(9);
+                    if (!string.IsNullOrEmpty(Business.Email))
+                        col.Item().Text($"Email : {Business.Email}").FontSize(9);
                 });
 
-                row.RelativeItem(1).AlignRight().Column(col =>
+                row.RelativeItem().AlignRight().Column(col =>
                 {
-                    col.Item().Text($"N° {Facture.NumeroFacture}").Bold();
-                    col.Item().Text($"Date : {Facture.DateFacture:dd/MM/yyyy}");
-                    
-                    // Validity date for Proforma
-                    if (Facture.TypeFacture == TypeFacture.Proforma && Facture.DateValidite.HasValue)
-                    {
-                        col.Item().Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").Bold();
-                    }
+                    if (!string.IsNullOrEmpty(Business.Activite))
+                        col.Item().Text($"Activité : {Business.Activite}").FontSize(9);
+                    if (Business.TypeEntreprise == BusinessType.AutoEntrepreneur)
+                        col.Item().Text($"N° Immatriculation : {Business.NumeroImmatriculation}").FontSize(9);
+                    else
+                        col.Item().Text($"RC : {Business.RC}").FontSize(9);
+                    col.Item().Text($"NIF : {Business.NIF}").FontSize(9);
+                    col.Item().Text($"AI : {Business.AI}").FontSize(9);
+                    col.Item().Text($"NIS : {Business.NIS}").FontSize(9);
                 });
             });
 
             column.Item().PaddingVertical(10).LineHorizontal(1);
+
+            // 2. INVOICE TITLE AND NUMBER (center)
+            column.Item().PaddingVertical(10).AlignCenter().Column(col =>
+            {
+                var titreFacture = Facture.TypeFacture switch
+                {
+                    TypeFacture.Avoir => "FACTURE D'AVOIR",
+                    TypeFacture.Proforma => "FACTURE PROFORMA",
+                    _ => "FACTURE"
+                };
+                col.Item().Text(titreFacture).Bold().FontSize(20);
+                col.Item().Text($"N° {Facture.NumeroFacture}").Bold().FontSize(12);
+                col.Item().Text($"Date : {Facture.DateFacture:dd/MM/yyyy}").FontSize(11);
+                
+                if (Facture.TypeFacture == TypeFacture.Proforma)
+                {
+                    col.Item().PaddingTop(3).Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
+                    if (Facture.DateValidite.HasValue)
+                        col.Item().Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").FontSize(9).Bold();
+                }
+                
+                if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
+                {
+                    col.Item().PaddingTop(3).Text($"Réf. facture originale : {Facture.NumeroFactureOrigine}").FontSize(9).Italic();
+                }
+            });
+
+            column.Item().PaddingVertical(5).LineHorizontal(1);
         });
     }
 
@@ -153,78 +180,41 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         container.Column(column =>
         {
-            // Blocs Vendeur et Client
-            column.Item().Row(row =>
+            // 3. CLIENT INFO
+            column.Item().Border(1).Padding(10).Column(col =>
             {
-                row.RelativeItem().Border(1).Padding(10).Column(col =>
+                col.Item().Text("CLIENT").Bold().FontSize(11);
+                col.Item().PaddingTop(5);
+                col.Item().Text(Facture.ClientNom).Bold();
+                if (Facture.ClientBusinessType == BusinessType.Reel && !string.IsNullOrEmpty(Facture.ClientCapitalSocial))
+                    col.Item().Text($"Capital : {Facture.ClientCapitalSocial}");
+                col.Item().Text(Facture.ClientAdresse);
+                col.Item().Text($"Tél : {Facture.ClientTelephone}");
+                if (!string.IsNullOrEmpty(Facture.ClientEmail))
+                    col.Item().Text($"Email : {Facture.ClientEmail}");
+                if (!string.IsNullOrEmpty(Facture.ClientFax))
+                    col.Item().Text($"Fax : {Facture.ClientFax}");
+                
+                col.Item().PaddingTop(5);
+                if (!string.IsNullOrEmpty(Facture.ClientActivite))
+                    col.Item().Text($"Activité : {Facture.ClientActivite}");
+                
+                if (Facture.ClientBusinessType == BusinessType.AutoEntrepreneur)
                 {
-                    col.Item().Text("VENDEUR").Bold().FontSize(11);
-                    col.Item().PaddingTop(5);
-                    // Display based on business type
-                    if (Business.TypeEntreprise == BusinessType.Reel)
-                    {
-                        col.Item().Text(Business.RaisonSociale ?? Business.Nom).Bold();
-                        if (!string.IsNullOrEmpty(Business.CapitalSocial))
-                            col.Item().Text($"Capital : {Business.CapitalSocial}");
-                    }
-                    else
-                    {
-                        col.Item().Text(Business.NomComplet).Bold();
-                        if (!string.IsNullOrEmpty(Business.RaisonSociale))
-                            col.Item().Text($"Nom commercial : {Business.RaisonSociale}");
-                    }
-                    
-                    col.Item().Text(Business.Adresse);
-                    col.Item().Text($"{Business.CodePostal} {Business.Ville}, {Business.Wilaya}");
-                    col.Item().Text($"Tél : {Business.Telephone}");
-                    if (!string.IsNullOrEmpty(Business.Email))
-                        col.Item().Text($"Email : {Business.Email}");
-                    if (!string.IsNullOrEmpty(Business.Fax))
-                        col.Item().Text($"Fax : {Business.Fax}");
-                    
-                    col.Item().PaddingTop(5);
-                    if (!string.IsNullOrEmpty(Business.Activite))
-                        col.Item().Text($"Activité : {Business.Activite}");
-                    
-                    if (Business.TypeEntreprise == BusinessType.AutoEntrepreneur)
-                    {
-                        col.Item().Text($"N° Immatriculation : {Business.NumeroImmatriculation}");
-                    }
-                    else
-                    {
-                        col.Item().Text($"RC : {Business.RC}");
-                    }
-                    col.Item().Text($"NIF : {Business.NIF}");
-                    col.Item().Text($"AI : {Business.AI}");
-                    col.Item().Text($"NIS : {Business.NIS}");
-                });
-
-                row.ConstantItem(20);
-
-                row.RelativeItem().Border(1).Padding(10).Column(col =>
-                {
-                    col.Item().Text("CLIENT").Bold().FontSize(11);
-                    col.Item().PaddingTop(5);
-                    col.Item().Text(Facture.ClientNom);
-                    if (!string.IsNullOrEmpty(Facture.ClientFormeJuridique))
-                        col.Item().Text($"Forme juridique : {Facture.ClientFormeJuridique}");
-                    col.Item().Text(Facture.ClientAdresse);
-                    col.Item().Text($"Tél : {Facture.ClientTelephone}");
-                    if (!string.IsNullOrEmpty(Facture.ClientEmail))
-                        col.Item().Text($"Email : {Facture.ClientEmail}");
-                    if (!string.IsNullOrEmpty(Facture.ClientRC))
-                        col.Item().Text($"RC : {Facture.ClientRC}");
-                    if (!string.IsNullOrEmpty(Facture.ClientNIS))
-                        col.Item().Text($"NIS : {Facture.ClientNIS}");
-                    if (!string.IsNullOrEmpty(Facture.ClientNIF))
-                        col.Item().Text($"NIF : {Facture.ClientNIF}");
-                    if (!string.IsNullOrEmpty(Facture.ClientAI))
-                        col.Item().Text($"AI : {Facture.ClientAI}");
                     if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
                         col.Item().Text($"N° Immatriculation : {Facture.ClientNumeroImmatriculation}");
-                    if (!string.IsNullOrEmpty(Facture.ClientActivite))
-                        col.Item().Text($"Activité : {Facture.ClientActivite}");
-                });
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(Facture.ClientRC))
+                        col.Item().Text($"RC : {Facture.ClientRC}");
+                }
+                if (!string.IsNullOrEmpty(Facture.ClientNIF))
+                    col.Item().Text($"NIF : {Facture.ClientNIF}");
+                if (!string.IsNullOrEmpty(Facture.ClientAI))
+                    col.Item().Text($"AI : {Facture.ClientAI}");
+                if (!string.IsNullOrEmpty(Facture.ClientNIS))
+                    col.Item().Text($"NIS : {Facture.ClientNIS}");
             });
 
             column.Item().PaddingVertical(15);
