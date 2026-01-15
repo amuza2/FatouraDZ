@@ -114,12 +114,25 @@
                     </Border>
 
                     <!-- Invoice items -->
-                    <ItemsControl ItemsSource="{Binding Factures}">
+                    <ItemsControl ItemsSource="{Binding Factures}" x:Name="FacturesItemsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:Facture">
                                 <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,8"
-                                        BorderBrush="#E2E8F0" BorderThickness="1">
-                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        BorderBrush="#E2E8F0" BorderThickness="1"
+                                        Cursor="Hand"
+                                        Tag="{Binding}"
+                                        PointerPressed="OnInvoiceBorderPointerPressed">
+                                    <Border.ContextMenu>
+                                        <ContextMenu x:CompileBindings="False">
+                                            <MenuItem Header="👁️ Aperçu" Click="OnPreviewInvoiceClick"/>
+                                            <MenuItem Header="✏️ Modifier" Click="OnEditInvoiceClick"/>
+                                            <Separator/>
+                                            <MenuItem Header="💰 Marquer payée/non payée" Click="OnTogglePaymentClick"/>
+                                            <Separator/>
+                                            <MenuItem Header="📦 Archiver/Restaurer" Click="OnToggleArchiveClick"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <Grid ColumnDefinitions="*,Auto">
                                         <!-- Invoice info -->
                                         <StackPanel Grid.Column="0" Spacing="3">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -143,27 +156,6 @@
                                         <TextBlock Grid.Column="1" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
                                                    FontWeight="Bold" FontSize="16" Foreground="#1E293B"
                                                    VerticalAlignment="Center" Margin="20,0"/>
-                                        
-                                        <!-- Actions -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-                                            <Button Content="👁️" ToolTip.Tip="Aperçu"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).PreviewInvoiceCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Padding="8" Background="Transparent"/>
-                                            <Button Content="✏️" ToolTip.Tip="Modifier"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).EditInvoiceCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Padding="8" Background="Transparent"/>
-                                            <Button Content="💰" ToolTip.Tip="Marquer payée/non payée"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).TogglePaymentStatusCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Padding="8" Background="Transparent"/>
-                                            <Button Content="📦" ToolTip.Tip="Archiver/Restaurer"
-                                                    Command="{Binding $parent[ItemsControl].((vm:BusinessDetailViewModel)DataContext).ToggleArchiveInvoiceCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    Padding="8" 
-                                                    Background="#FEF3C7"/>
-                                        </StackPanel>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
