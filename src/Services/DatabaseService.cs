@@ -16,8 +16,9 @@ public class DatabaseService : IDatabaseService
         await using var context = new AppDbContext();
         await context.Database.EnsureCreatedAsync();
         
-        // Run migrations for new discount columns
+        // Run migrations
         await MigrateDiscountColumnsAsync(context);
+        await MigrateClientTableAsync(context);
     }
 
     private async Task MigrateDiscountColumnsAsync(AppDbContext context)
@@ -66,6 +67,54 @@ public class DatabaseService : IDatabaseService
             using var alterCommand = connection.CreateCommand();
             alterCommand.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType}";
             await alterCommand.ExecuteNonQueryAsync();
+        }
+    }
+
+    private async Task MigrateClientTableAsync(AppDbContext context)
+    {
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync();
+        
+        try
+        {
+            // Check if Clients table exists
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='Clients'";
+            var result = await command.ExecuteScalarAsync();
+            
+            if (result == null)
+            {
+                // Create Clients table
+                using var createCommand = connection.CreateCommand();
+                createCommand.CommandText = @"
+                    CREATE TABLE Clients (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        BusinessId INTEGER NOT NULL,
+                        TypeClient INTEGER DEFAULT 0,
+                        Nom TEXT NOT NULL,
+                        Adresse TEXT NOT NULL,
+                        Telephone TEXT NOT NULL,
+                        Email TEXT,
+                        Fax TEXT,
+                        FormeJuridique TEXT,
+                        RC TEXT,
+                        NIS TEXT,
+                        NIF TEXT,
+                        AI TEXT,
+                        NumeroImmatriculation TEXT,
+                        Activite TEXT,
+                        CapitalSocial TEXT,
+                        DateCreation TEXT NOT NULL,
+                        DateModification TEXT,
+                        FOREIGN KEY (BusinessId) REFERENCES Businesses(Id) ON DELETE CASCADE
+                    )";
+                await createCommand.ExecuteNonQueryAsync();
+            }
+        }
+        finally
+        {
+            await connection.CloseAsync();
         }
     }
 
@@ -298,6 +347,55 @@ public class DatabaseService : IDatabaseService
         }
 
         return copie;
+    }
+
+    // Clients
+    public async Task<List<Client>> GetClientsByBusinessIdAsync(int businessId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Clients
+            .Where(c => c.BusinessId == businessId)
+            .OrderBy(c => c.Nom)
+            .ToListAsync();
+    }
+
+    public async Task<Client?> GetClientByIdAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        return await context.Clients.FindAsync(id);
+    }
+
+    public async Task SaveClientAsync(Client client)
+    {
+        await using var context = new AppDbContext();
+        
+        if (client.Id == 0)
+        {
+            client.DateCreation = DateTime.Now;
+            context.Clients.Add(client);
+        }
+        else
+        {
+            client.DateModification = DateTime.Now;
+            var existing = await context.Clients.FindAsync(client.Id);
+            if (existing != null)
+            {
+                context.Entry(existing).CurrentValues.SetValues(client);
+            }
+        }
+        
+        await context.SaveChangesAsync();
+    }
+
+    public async Task DeleteClientAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var client = await context.Clients.FindAsync(id);
+        if (client != null)
+        {
+            context.Clients.Remove(client);
+            await context.SaveChangesAsync();
+        }
     }
 
     // Statistiques

@@ -54,10 +54,73 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         OnPropertyChanged(nameof(TypeFacture));
         OnPropertyChanged(nameof(AfficherDateValidite));
         OnPropertyChanged(nameof(AfficherReferenceOrigine));
+        
+        // Load available invoices when switching to Avoir
+        if (TypeFacture == TypeFacture.Avoir)
+        {
+            _ = ChargerFacturesDisponiblesAsync();
+        }
+    }
+
+    private async Task ChargerFacturesDisponiblesAsync()
+    {
+        FacturesDisponibles.Clear();
+        
+        if (_businessId <= 0) return;
+        
+        var factures = await _databaseService.GetFacturesByBusinessIdAsync(_businessId);
+        
+        // Only show regular invoices (not Avoir or Proforma) that are not cancelled
+        var facturesValides = factures
+            .Where(f => f.TypeFacture == TypeFacture.Normale && f.Statut != StatutFacture.Annulee)
+            .OrderByDescending(f => f.DateFacture)
+            .ToList();
+        
+        foreach (var facture in facturesValides)
+        {
+            FacturesDisponibles.Add(facture);
+        }
+    }
+
+    private async Task ChargerFacturesDisponiblesEtSelectionnerAsync(string numeroFactureOrigine)
+    {
+        await ChargerFacturesDisponiblesAsync();
+        
+        // Select the matching invoice
+        FactureOrigineSelectionnee = FacturesDisponibles
+            .FirstOrDefault(f => f.NumeroFacture == numeroFactureOrigine);
     }
 
     [ObservableProperty]
     private string _modePaiement = "Espèces";
+
+    // Liste des clients existants
+    public ObservableCollection<Client> ClientsDisponibles { get; } = new();
+
+    [ObservableProperty]
+    private Client? _clientSelectionne;
+
+    partial void OnClientSelectionneChanged(Client? value)
+    {
+        if (value != null)
+        {
+            // Auto-fill client fields from selected client
+            ClientBusinessTypeIndex = (int)value.TypeClient;
+            ClientNom = value.Nom;
+            ClientAdresse = value.Adresse;
+            ClientTelephone = value.Telephone;
+            ClientEmail = value.Email;
+            ClientFax = value.Fax;
+            ClientFormeJuridique = value.FormeJuridique;
+            ClientRc = value.RC;
+            ClientNis = value.NIS;
+            ClientNif = value.NIF;
+            ClientAi = value.AI;
+            ClientNumeroImmatriculation = value.NumeroImmatriculation;
+            ClientActivite = value.Activite;
+            ClientCapitalSocial = value.CapitalSocial;
+        }
+    }
 
     // Informations client
     [ObservableProperty]
@@ -174,6 +237,20 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [ObservableProperty]
     private string? _numeroFactureOrigine;
 
+    // Liste des factures disponibles pour sélection (pour avoir)
+    public ObservableCollection<Facture> FacturesDisponibles { get; } = new();
+
+    [ObservableProperty]
+    private Facture? _factureOrigineSelectionnee;
+
+    partial void OnFactureOrigineSelectionneeChanged(Facture? value)
+    {
+        if (value != null)
+        {
+            NumeroFactureOrigine = value.NumeroFacture;
+        }
+    }
+
     // États
     [ObservableProperty]
     private string? _erreurMessage;
@@ -269,6 +346,21 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     public async Task InitialiserAsync()
     {
         NumeroFacture = await _invoiceNumberService.GenererProchainNumeroAsync();
+        await ChargerClientsDisponiblesAsync();
+    }
+
+    private async Task ChargerClientsDisponiblesAsync()
+    {
+        ClientsDisponibles.Clear();
+        
+        if (_businessId <= 0) return;
+        
+        var clients = await _databaseService.GetClientsByBusinessIdAsync(_businessId);
+        
+        foreach (var client in clients)
+        {
+            ClientsDisponibles.Add(client);
+        }
     }
 
     [RelayCommand]
@@ -497,6 +589,10 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         RemiseGlobale = 0;
         TypeRemiseGlobaleIndex = 0;
         NumeroFactureOrigine = null;
+        FactureOrigineSelectionnee = null;
+        FacturesDisponibles.Clear();
+        ClientSelectionne = null;
+        ClientsDisponibles.Clear();
         PaiementReference = null;
         PaiementNumeroPiece = null;
         EstPaye = false;
@@ -550,6 +646,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientCapitalSocial = facture.ClientCapitalSocial;
         EstPaye = facture.Statut == StatutFacture.Payee;
         NumeroFactureOrigine = facture.NumeroFactureOrigine;
+        
+        // Load available invoices and select the matching one for Avoir
+        if (facture.TypeFacture == TypeFacture.Avoir && !string.IsNullOrEmpty(facture.NumeroFactureOrigine))
+        {
+            _ = ChargerFacturesDisponiblesEtSelectionnerAsync(facture.NumeroFactureOrigine);
+        }
+        
         AppliquerTimbre = facture.EstTimbreApplique;
         AppliquerRetenueSource = facture.TauxRetenueSource.HasValue;
         TauxRetenueSource = facture.TauxRetenueSource ?? 30m;

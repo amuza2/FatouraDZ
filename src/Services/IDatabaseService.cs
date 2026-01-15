@@ -24,6 +24,12 @@ public interface IDatabaseService
     Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut);
     Task<Facture> DupliquerFactureAsync(int id);
     
+    // Clients
+    Task<List<Client>> GetClientsByBusinessIdAsync(int businessId);
+    Task<Client?> GetClientByIdAsync(int id);
+    Task SaveClientAsync(Client client);
+    Task DeleteClientAsync(int id);
+    
     // Statistiques
     Task<int> GetNombreFacturesAsync();
     Task<decimal> GetChiffreAffairesTotalAsync();

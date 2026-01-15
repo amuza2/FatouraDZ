@@ -102,9 +102,24 @@
                             <TextBlock Text="Cette facture annule ou corrige une facture précédemment émise. Elle doit référencer la facture originale." 
                                        Foreground="#B45309" TextWrapping="Wrap" FontSize="12"/>
                             <StackPanel Spacing="4">
-                                <TextBlock Text="N° de la facture à corriger/annuler *" FontWeight="Medium"/>
-                                <TextBox Text="{Binding NumeroFactureOrigine}" 
-                                         Watermark="FAC-2025-XXX" MaxWidth="300" HorizontalAlignment="Left"/>
+                                <TextBlock Text="Facture à corriger/annuler *" FontWeight="Medium"/>
+                                <ComboBox ItemsSource="{Binding FacturesDisponibles}"
+                                          SelectedItem="{Binding FactureOrigineSelectionnee}"
+                                          MinWidth="350" HorizontalAlignment="Left">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{Binding NumeroFacture}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="-" Foreground="#64748B"/>
+                                                <TextBlock Text="{Binding ClientNom}" Foreground="#64748B"/>
+                                                <TextBlock Text="-" Foreground="#64748B"/>
+                                                <TextBlock Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}" Foreground="#94A3B8"/>
+                                                <TextBlock Text="-" Foreground="#64748B"/>
+                                                <TextBlock Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" Foreground="#2563EB" FontWeight="Medium"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -147,13 +162,34 @@
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations du client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
+                    <!-- Sélection client existant -->
+                    <Border Background="#F0F9FF" CornerRadius="8" Padding="15"
+                            IsVisible="{Binding ClientsDisponibles.Count}">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="💡 Sélectionner un client existant" FontWeight="Medium" Foreground="#0369A1"/>
+                            <ComboBox ItemsSource="{Binding ClientsDisponibles}"
+                                      SelectedItem="{Binding ClientSelectionne}"
+                                      HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{Binding Nom}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="-" Foreground="#64748B"/>
+                                            <TextBlock Text="{Binding Telephone}" Foreground="#64748B"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+                    
                     <!-- Type de client -->
                     <StackPanel Spacing="4" MaxWidth="300" HorizontalAlignment="Left">
                         <TextBlock Text="Type de client" FontWeight="Medium"/>
                         <ComboBox SelectedIndex="{Binding ClientBusinessTypeIndex}" HorizontalAlignment="Stretch">
-                            <ComboBoxItem Content="Auto-Entrepreneur"/>
                             <ComboBoxItem Content="Forfait"/>
                             <ComboBoxItem Content="Société (Réel)"/>
+                            <ComboBoxItem Content="Auto-Entrepreneur"/>
                         </ComboBox>
                     </StackPanel>
                     

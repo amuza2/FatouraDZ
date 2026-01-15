@@ -16,7 +16,7 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="200,*">
+    <Grid ColumnDefinitions="220,*">
         <!-- Menu latéral -->
         <Border Grid.Column="0" 
                 Background="{StaticResource CardBrush}"
@@ -29,26 +29,62 @@
                         <TextBlock Text="FatouraDZ" 
                                    FontSize="24" FontWeight="Bold"
                                    Foreground="White"/>
-                        <TextBlock Text="Gestion Multi-Entreprises" 
-                                   FontSize="11" Foreground="#DBEAFE"/>
+                        <TextBlock Text="{Binding CurrentBusiness.Nom, FallbackValue='Gestion Multi-Entreprises'}" 
+                                   FontSize="11" Foreground="#DBEAFE" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Menu de navigation -->
                 <ScrollViewer Grid.Row="1">
                     <StackPanel Margin="12,20" Spacing="4">
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherListeEntreprisesCommand}">
-                            <TextBlock Text="🏢 Entreprises" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherParametresCommand}">
-                            <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
-                        <Button Classes="nav-button"
-                                Command="{Binding AfficherAideCommand}">
-                            <TextBlock Text="❓ Aide" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </Button>
+                        <!-- Menu hors contexte entreprise -->
+                        <StackPanel Spacing="4" IsVisible="{Binding EstHorsContexteEntreprise}">
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherListeEntreprisesCommand}">
+                                <TextBlock Text="🏢 Entreprises" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherParametresCommand}">
+                                <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherAideCommand}">
+                                <TextBlock Text="❓ Aide" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Menu dans contexte entreprise -->
+                        <StackPanel Spacing="4" IsVisible="{Binding EstDansContexteEntreprise}">
+                            <!-- Retour aux entreprises -->
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherListeEntreprisesCommand}"
+                                    Margin="0,0,0,10">
+                                <TextBlock Text="← Mes entreprises" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold"/>
+                            </Button>
+                            
+                            <Separator Background="{StaticResource BorderBrush}" Margin="0,0,0,10"/>
+                            
+                            <!-- Sections entreprise -->
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherFacturesCommand}">
+                                <TextBlock Text="📄 Factures" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherClientsCommand}">
+                                <TextBlock Text="👥 Clients" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherInfosEntrepriseCommand}">
+                                <TextBlock Text="🏢 Infos entreprise" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            
+                            <Separator Background="{StaticResource BorderBrush}" Margin="0,10,0,10"/>
+                            
+                            <Button Classes="nav-button"
+                                    Command="{Binding AfficherParametresCommand}">
+                                <TextBlock Text="⚙️ Paramètres" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -84,6 +120,9 @@
                     </DataTemplate>
                     <DataTemplate DataType="vm:SettingsViewModel">
                         <views:SettingsView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:ClientListViewModel">
+                        <views:ClientListView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>

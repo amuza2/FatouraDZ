@@ -148,10 +148,12 @@ public partial class BusinessFormViewModel : ViewModelBase
         ErreurMessage = null;
         EstSauvegarde = false;
 
-        // Basic validation
-        if (string.IsNullOrWhiteSpace(Nom))
+        // Basic validation - for Forfait and Auto-entrepreneur, use NomComplet as Nom
+        var nomEffectif = EstReel ? Nom : NomComplet;
+        
+        if (string.IsNullOrWhiteSpace(nomEffectif))
         {
-            ErreurMessage = "Le nom de l'entreprise est obligatoire";
+            ErreurMessage = EstReel ? "Le nom de l'entreprise est obligatoire" : "Le nom complet du propriétaire est obligatoire";
             return;
         }
 
@@ -183,7 +185,7 @@ public partial class BusinessFormViewModel : ViewModelBase
         {
             Id = _businessId,
             TypeEntreprise = TypeEntreprise,
-            Nom = Nom,
+            Nom = nomEffectif,
             NomComplet = NomComplet,
             RaisonSociale = RaisonSociale,
             Activite = Activite,

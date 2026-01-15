@@ -41,10 +41,10 @@
                 <StackPanel Spacing="15">
                     <TextBlock Text="Type d'entreprise" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     <ComboBox SelectedIndex="{Binding TypeEntrepriseIndex}" 
-                              HorizontalAlignment="Stretch" MaxWidth="300">
-                        <ComboBoxItem Content="Auto-Entrepreneur"/>
+                              HorizontalAlignment="Left" MaxWidth="300">
                         <ComboBoxItem Content="Forfait"/>
                         <ComboBoxItem Content="Société (Réel)"/>
+                        <ComboBoxItem Content="Auto-Entrepreneur"/>
                     </ComboBox>
                 </StackPanel>
             </Border>
@@ -54,7 +54,7 @@
                 <StackPanel Spacing="15">
                     <TextBlock Text="Informations générales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
-                    <StackPanel Spacing="4">
+                    <StackPanel Spacing="4" IsVisible="{Binding EstReel}">
                         <TextBlock Text="Nom de l'entreprise *" FontWeight="Medium"/>
                         <TextBox Text="{Binding Nom}" Watermark="Nom affiché dans la liste"/>
                     </StackPanel>

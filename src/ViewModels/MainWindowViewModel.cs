@@ -17,7 +17,20 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _pageActuelle = "Entreprises";
 
     private readonly IDatabaseService _databaseService;
+    
+    // Current business context for dynamic sidebar
+    [ObservableProperty]
     private Business? _currentBusiness;
+
+    // Sidebar visibility based on context
+    public bool EstDansContexteEntreprise => CurrentBusiness != null;
+    public bool EstHorsContexteEntreprise => CurrentBusiness == null;
+
+    partial void OnCurrentBusinessChanged(Business? value)
+    {
+        OnPropertyChanged(nameof(EstDansContexteEntreprise));
+        OnPropertyChanged(nameof(EstHorsContexteEntreprise));
+    }
 
     public event Action<Facture, Business>? DemanderPrevisualisation;
 
@@ -36,7 +49,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void AfficherListeEntreprises()
     {
         PageActuelle = "Entreprises";
-        _currentBusiness = null;
+        CurrentBusiness = null;
         var vm = new BusinessListViewModel();
         vm.BusinessSelected += AfficherDetailEntreprise;
         vm.CreateBusinessRequested += AfficherFormulaireEntreprise;
@@ -44,9 +57,42 @@ public partial class MainWindowViewModel : ViewModelBase
         ContenuActuel = vm;
     }
 
+    [RelayCommand]
+    private void AfficherTableauDeBord()
+    {
+        if (CurrentBusiness == null) return;
+        AfficherDetailEntreprise(CurrentBusiness);
+    }
+
+    [RelayCommand]
+    private void AfficherFactures()
+    {
+        if (CurrentBusiness == null) return;
+        AfficherDetailEntreprise(CurrentBusiness);
+    }
+
+    [RelayCommand]
+    private void AfficherClients()
+    {
+        if (CurrentBusiness == null) return;
+        PageActuelle = "Clients";
+        var vm = new ClientListViewModel();
+        vm.SetBusiness(CurrentBusiness);
+        vm.BackRequested += () => AfficherDetailEntreprise(CurrentBusiness);
+        _ = vm.ChargerClientsAsync();
+        ContenuActuel = vm;
+    }
+
+    [RelayCommand]
+    private void AfficherInfosEntreprise()
+    {
+        if (CurrentBusiness == null) return;
+        AfficherFormulaireEntreprise(CurrentBusiness);
+    }
+
     private void AfficherDetailEntreprise(Business business)
     {
-        _currentBusiness = business;
+        CurrentBusiness = business;
         PageActuelle = business.Nom;
         var vm = new BusinessDetailViewModel();
         vm.SetBusiness(business);
