@@ -6,6 +6,8 @@ FatouraDZ est une application de bureau permettant aux entreprises algériennes 
 
 > ⚠️ **Note** : Conçue pour le marché algérien (TVA, timbre fiscal, numérotation conforme).
 
+<img width="1592" height="841" alt="image" src="https://github.com/user-attachments/assets/cac28100-01b3-40db-973a-41a77b15849f" />
+
 ## Fonctionnalités
 
 - **Multi-entreprises** : Gestion de plusieurs entreprises (Auto-entrepreneur, Forfait, Société)
