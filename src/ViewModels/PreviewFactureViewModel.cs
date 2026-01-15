@@ -159,34 +159,12 @@ public partial class PreviewFactureViewModel : ViewModelBase
             });
 
             column.Item().PaddingVertical(10).LineHorizontal(1);
-
-            // 2. INVOICE TITLE AND NUMBER (center)
-            column.Item().PaddingVertical(10).AlignCenter().Column(col =>
+            
+            // Add proforma notice if applicable
+            if (Facture.TypeFacture == TypeFacture.Proforma)
             {
-                var titreFacture = Facture.TypeFacture switch
-                {
-                    TypeFacture.Avoir => "FACTURE D'AVOIR",
-                    TypeFacture.Proforma => "FACTURE PROFORMA",
-                    _ => "FACTURE"
-                };
-                col.Item().Text(titreFacture).Bold().FontSize(20);
-                col.Item().Text($"N° {Facture.NumeroFacture}").Bold().FontSize(12);
-                col.Item().Text($"Date : {Facture.DateFacture:dd/MM/yyyy}").FontSize(11);
-                
-                if (Facture.TypeFacture == TypeFacture.Proforma)
-                {
-                    col.Item().PaddingTop(3).Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
-                    if (Facture.DateValidite.HasValue)
-                        col.Item().Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").FontSize(9).Bold();
-                }
-                
-                if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
-                {
-                    col.Item().PaddingTop(3).Text($"Réf. facture originale : {Facture.NumeroFactureOrigine}").FontSize(9).Italic();
-                }
-            });
-
-            column.Item().PaddingVertical(5).LineHorizontal(1);
+                column.Item().PaddingVertical(5).AlignCenter().Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
+            }
         });
     }
 
@@ -194,41 +172,70 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         container.Column(column =>
         {
-            // 3. CLIENT INFO
-            column.Item().Border(1).Padding(10).Column(col =>
+            // 3. CLIENT INFO - Split into two columns like seller section
+            column.Item().Border(1).Padding(10).Row(row =>
             {
-                col.Item().Text("CLIENT").Bold().FontSize(11);
-                col.Item().PaddingTop(5);
-                col.Item().Text(Facture.ClientNom).Bold();
-                if (Facture.ClientBusinessType == BusinessType.Reel && !string.IsNullOrEmpty(Facture.ClientCapitalSocial))
-                    col.Item().Text($"Capital : {Facture.ClientCapitalSocial}");
-                col.Item().Text(Facture.ClientAdresse);
-                col.Item().Text($"Tél : {Facture.ClientTelephone}");
-                if (!string.IsNullOrEmpty(Facture.ClientEmail))
-                    col.Item().Text($"Email : {Facture.ClientEmail}");
-                if (!string.IsNullOrEmpty(Facture.ClientFax))
-                    col.Item().Text($"Fax : {Facture.ClientFax}");
-                
-                col.Item().PaddingTop(5);
-                if (!string.IsNullOrEmpty(Facture.ClientActivite))
-                    col.Item().Text($"Activité : {Facture.ClientActivite}");
-                
-                if (Facture.ClientBusinessType == BusinessType.AutoEntrepreneur)
+                // Left column - Client name and contact info
+                row.RelativeItem().Column(col =>
                 {
-                    if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
-                        col.Item().Text($"N° Immatriculation : {Facture.ClientNumeroImmatriculation}");
-                }
-                else
+                    col.Item().Text("CLIENT").Bold().FontSize(11);
+                    col.Item().PaddingTop(5);
+                    col.Item().Text(Facture.ClientNom).Bold().FontSize(12);
+                    if (Facture.ClientBusinessType == BusinessType.Reel && !string.IsNullOrEmpty(Facture.ClientCapitalSocial))
+                        col.Item().Text($"Capital : {Facture.ClientCapitalSocial}").FontSize(9);
+                    col.Item().Text(Facture.ClientAdresse).FontSize(9);
+                    col.Item().Text($"Tél : {Facture.ClientTelephone}").FontSize(9);
+                    if (!string.IsNullOrEmpty(Facture.ClientEmail))
+                        col.Item().Text($"Email : {Facture.ClientEmail}").FontSize(9);
+                    if (!string.IsNullOrEmpty(Facture.ClientFax))
+                        col.Item().Text($"Fax : {Facture.ClientFax}").FontSize(9);
+                });
+
+                // Center - Invoice number and date
+                row.ConstantItem(150).AlignCenter().Column(col =>
                 {
-                    if (!string.IsNullOrEmpty(Facture.ClientRC))
-                        col.Item().Text($"RC : {Facture.ClientRC}");
-                }
-                if (!string.IsNullOrEmpty(Facture.ClientNIF))
-                    col.Item().Text($"NIF : {Facture.ClientNIF}");
-                if (!string.IsNullOrEmpty(Facture.ClientAI))
-                    col.Item().Text($"AI : {Facture.ClientAI}");
-                if (!string.IsNullOrEmpty(Facture.ClientNIS))
-                    col.Item().Text($"NIS : {Facture.ClientNIS}");
+                    var titreFacture = Facture.TypeFacture switch
+                    {
+                        TypeFacture.Avoir => "AVOIR",
+                        TypeFacture.Proforma => "PROFORMA",
+                        _ => "FACTURE"
+                    };
+                    col.Item().AlignCenter().Text(titreFacture).Bold().FontSize(14);
+                    col.Item().AlignCenter().Text($"N° {Facture.NumeroFacture}").Bold().FontSize(11);
+                    col.Item().AlignCenter().Text($"{Facture.DateFacture:dd/MM/yyyy}").FontSize(10);
+                    
+                    if (Facture.TypeFacture == TypeFacture.Proforma && Facture.DateValidite.HasValue)
+                        col.Item().AlignCenter().PaddingTop(3).Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").FontSize(8).Italic();
+                    
+                    if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
+                        col.Item().AlignCenter().PaddingTop(3).Text($"Réf: {Facture.NumeroFactureOrigine}").FontSize(8).Italic();
+                });
+
+                // Right column - Fiscal info
+                row.RelativeItem().AlignRight().Column(col =>
+                {
+                    col.Item().Text("INFORMATIONS FISCALES").Bold().FontSize(9);
+                    col.Item().PaddingTop(5);
+                    if (!string.IsNullOrEmpty(Facture.ClientActivite))
+                        col.Item().Text($"Activité : {Facture.ClientActivite}").FontSize(9);
+                    
+                    if (Facture.ClientBusinessType == BusinessType.AutoEntrepreneur)
+                    {
+                        if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
+                            col.Item().Text($"N° Immat. : {Facture.ClientNumeroImmatriculation}").FontSize(9);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(Facture.ClientRC))
+                            col.Item().Text($"RC : {Facture.ClientRC}").FontSize(9);
+                    }
+                    if (!string.IsNullOrEmpty(Facture.ClientNIF))
+                        col.Item().Text($"NIF : {Facture.ClientNIF}").FontSize(9);
+                    if (!string.IsNullOrEmpty(Facture.ClientAI))
+                        col.Item().Text($"AI : {Facture.ClientAI}").FontSize(9);
+                    if (!string.IsNullOrEmpty(Facture.ClientNIS))
+                        col.Item().Text($"NIS : {Facture.ClientNIS}").FontSize(9);
+                });
             });
 
             column.Item().PaddingVertical(15);
