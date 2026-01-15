@@ -15,6 +15,58 @@ public class DatabaseService : IDatabaseService
     {
         await using var context = new AppDbContext();
         await context.Database.EnsureCreatedAsync();
+        
+        // Run migrations for new discount columns
+        await MigrateDiscountColumnsAsync(context);
+    }
+
+    private async Task MigrateDiscountColumnsAsync(AppDbContext context)
+    {
+        var connection = context.Database.GetDbConnection();
+        await connection.OpenAsync();
+        
+        try
+        {
+            // Check and add discount columns to LignesFacture table
+            await AddColumnIfNotExistsAsync(connection, "LignesFacture", "Remise", "REAL DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "LignesFacture", "TypeRemise", "INTEGER DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "LignesFacture", "MontantRemise", "REAL DEFAULT 0");
+            
+            // Check and add discount columns to Factures table
+            await AddColumnIfNotExistsAsync(connection, "Factures", "RemiseGlobale", "REAL DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "TypeRemiseGlobale", "INTEGER DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "MontantRemiseGlobale", "REAL DEFAULT 0");
+        }
+        finally
+        {
+            await connection.CloseAsync();
+        }
+    }
+
+    private async Task AddColumnIfNotExistsAsync(System.Data.Common.DbConnection connection, string tableName, string columnName, string columnType)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info({tableName})";
+        
+        bool columnExists = false;
+        using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                if (reader.GetString(1).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    columnExists = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!columnExists)
+        {
+            using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType}";
+            await alterCommand.ExecuteNonQueryAsync();
+        }
     }
 
     // Business
@@ -215,6 +267,9 @@ public class DatabaseService : IDatabaseService
             ClientNumeroImmatriculation = original.ClientNumeroImmatriculation,
             ClientActivite = original.ClientActivite,
             ClientCapitalSocial = original.ClientCapitalSocial,
+            RemiseGlobale = original.RemiseGlobale,
+            TypeRemiseGlobale = original.TypeRemiseGlobale,
+            MontantRemiseGlobale = original.MontantRemiseGlobale,
             TotalHT = original.TotalHT,
             TotalTVA19 = original.TotalTVA19,
             TotalTVA9 = original.TotalTVA9,
@@ -235,6 +290,9 @@ public class DatabaseService : IDatabaseService
                 Quantite = ligne.Quantite,
                 PrixUnitaire = ligne.PrixUnitaire,
                 TauxTVA = ligne.TauxTVA,
+                Remise = ligne.Remise,
+                TypeRemise = ligne.TypeRemise,
+                MontantRemise = ligne.MontantRemise,
                 TotalHT = ligne.TotalHT
             });
         }

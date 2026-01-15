@@ -47,6 +47,11 @@ public class Facture : INotifyPropertyChanged
     public decimal? TauxRetenueSource { get; set; }
     public decimal RetenueSource { get; set; }
 
+    // Remise globale sur Total H.T
+    public decimal RemiseGlobale { get; set; } // Discount value (amount or percentage)
+    public TypeRemise TypeRemiseGlobale { get; set; } = TypeRemise.Pourcentage;
+    public decimal MontantRemiseGlobale { get; set; } // Calculated discount amount
+
     // Montants
     public decimal TotalHT { get; set; }
     public decimal TotalTVA19 { get; set; }

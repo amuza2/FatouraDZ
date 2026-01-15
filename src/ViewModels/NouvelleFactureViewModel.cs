@@ -158,6 +158,18 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [ObservableProperty]
     private decimal _retenueSource;
 
+    // Remise globale sur Total H.T
+    [ObservableProperty]
+    private decimal _remiseGlobale;
+
+    [ObservableProperty]
+    private int _typeRemiseGlobaleIndex = 0;
+
+    public TypeRemise TypeRemiseGlobale => (TypeRemise)TypeRemiseGlobaleIndex;
+
+    [ObservableProperty]
+    private decimal _montantRemiseGlobale;
+
     // Référence facture originale (pour avoir/annulation)
     [ObservableProperty]
     private string? _numeroFactureOrigine;
@@ -292,13 +304,14 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private void RecalculerTotaux()
     {
         var lignesModel = Lignes.Select(l => l.ToModel()).ToList();
-        var totaux = _calculationService.CalculerTotaux(lignesModel, AppliquerTimbre);
+        var totaux = _calculationService.CalculerTotaux(lignesModel, AppliquerTimbre, RemiseGlobale, TypeRemiseGlobale);
 
         TotalHT = totaux.TotalHT;
         TotalTVA19 = totaux.TVA19;
         TotalTVA9 = totaux.TVA9;
         TotalTTC = totaux.TotalTTC;
         TimbreFiscal = totaux.TimbreFiscal;
+        MontantRemiseGlobale = totaux.MontantRemiseGlobale;
 
         // Calculer la retenue à la source si applicable (sur le Total HT, pas sur le TTC)
         if (AppliquerRetenueSource && TauxRetenueSource > 0)
@@ -327,6 +340,17 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     partial void OnTauxRetenueSourceChanged(decimal value)
     {
+        RecalculerTotaux();
+    }
+
+    partial void OnRemiseGlobaleChanged(decimal value)
+    {
+        RecalculerTotaux();
+    }
+
+    partial void OnTypeRemiseGlobaleIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(TypeRemiseGlobale));
         RecalculerTotaux();
     }
 
@@ -470,6 +494,8 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         AppliquerTimbre = true;
         AppliquerRetenueSource = false;
         TauxRetenueSource = 30m;
+        RemiseGlobale = 0;
+        TypeRemiseGlobaleIndex = 0;
         NumeroFactureOrigine = null;
         PaiementReference = null;
         PaiementNumeroPiece = null;
@@ -527,6 +553,8 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         AppliquerTimbre = facture.EstTimbreApplique;
         AppliquerRetenueSource = facture.TauxRetenueSource.HasValue;
         TauxRetenueSource = facture.TauxRetenueSource ?? 30m;
+        RemiseGlobale = facture.RemiseGlobale;
+        TypeRemiseGlobaleIndex = (int)facture.TypeRemiseGlobale;
 
         // Charger les lignes
         Lignes.Clear();
@@ -590,6 +618,9 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             ClientCapitalSocial = ClientCapitalSocial,
             TauxRetenueSource = AppliquerRetenueSource ? TauxRetenueSource : null,
             RetenueSource = RetenueSource,
+            RemiseGlobale = RemiseGlobale,
+            TypeRemiseGlobale = TypeRemiseGlobale,
+            MontantRemiseGlobale = MontantRemiseGlobale,
             TotalHT = TotalHT,
             TotalTVA19 = TotalTVA19,
             TotalTVA9 = TotalTVA9,

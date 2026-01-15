@@ -233,27 +233,51 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
             column.Item().PaddingVertical(15);
 
-            // Tableau des lignes
+            // Check if any line has discount
+            var hasLineDiscount = Facture.Lignes.Any(l => l.MontantRemise > 0);
+
+            // Tableau des lignes - Réf, Désignation, Qté, Unité, Prix H.T, TVA, [Remise], Total H.T
             column.Item().Table(table =>
             {
-                table.ColumnsDefinition(columns =>
+                if (hasLineDiscount)
                 {
-                    columns.ConstantColumn(30);
-                    columns.RelativeColumn(3);
-                    columns.RelativeColumn(1);
-                    columns.RelativeColumn(1.5f);
-                    columns.RelativeColumn(1);
-                    columns.RelativeColumn(1.5f);
-                });
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(35);   // Réf
+                        columns.RelativeColumn(2.5f); // Désignation
+                        columns.RelativeColumn(0.7f); // Qté
+                        columns.RelativeColumn(0.6f); // Unité
+                        columns.RelativeColumn(1f);   // Prix H.T
+                        columns.RelativeColumn(0.5f); // TVA
+                        columns.RelativeColumn(0.8f); // Remise
+                        columns.RelativeColumn(1.1f); // Total H.T
+                    });
+                }
+                else
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(40);   // Réf
+                        columns.RelativeColumn(3);    // Désignation
+                        columns.RelativeColumn(0.8f); // Qté
+                        columns.RelativeColumn(0.7f); // Unité
+                        columns.RelativeColumn(1.2f); // Prix H.T
+                        columns.RelativeColumn(0.6f); // TVA
+                        columns.RelativeColumn(1.3f); // Total H.T
+                    });
+                }
 
                 table.Header(header =>
                 {
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("N°").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Réf").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Désignation").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Qté").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix unit.").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("Unité").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix H.T").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("TVA").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total HT").Bold();
+                    if (hasLineDiscount)
+                        header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Remise").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total H.T").Bold();
                 });
 
                 var lignesOrdonnees = Facture.Lignes.OrderBy(l => l.NumeroLigne).ToList();
@@ -262,12 +286,20 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     var ligne = lignesOrdonnees[i];
                     var bgColor = i % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
 
-                    table.Cell().Background(bgColor).Padding(5).Text((i + 1).ToString());
+                    table.Cell().Background(bgColor).Padding(5).Text(ligne.Reference ?? (i + 1).ToString());
                     table.Cell().Background(bgColor).Padding(5).Text(ligne.Designation);
                     table.Cell().Background(bgColor).Padding(5).AlignRight().Text(ligne.Quantite.ToString("N2"));
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2} DZD");
+                    table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatUnite(ligne.Unite));
+                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2}");
                     table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatTauxTVA(ligne.TauxTVA));
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2} DZD");
+                    if (hasLineDiscount)
+                    {
+                        var remiseText = ligne.MontantRemise > 0 
+                            ? $"-{ligne.MontantRemise:N2}" 
+                            : "-";
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(remiseText);
+                    }
+                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2}");
                 }
             });
 
@@ -281,6 +313,17 @@ public partial class PreviewFactureViewModel : ViewModelBase
                     row.RelativeItem().Text("Total HT :");
                     row.RelativeItem().AlignRight().Text($"{Facture.TotalHT:N2} DZD");
                 });
+                if (Facture.MontantRemiseGlobale > 0)
+                {
+                    col.Item().Row(row =>
+                    {
+                        var typeRemise = Facture.TypeRemiseGlobale == TypeRemise.Pourcentage 
+                            ? $"Remise globale ({Facture.RemiseGlobale}%) :" 
+                            : "Remise globale :";
+                        row.RelativeItem().Text(typeRemise);
+                        row.RelativeItem().AlignRight().Text($"-{Facture.MontantRemiseGlobale:N2} DZD");
+                    });
+                }
                 if (Facture.TotalTVA19 > 0)
                 {
                     col.Item().Row(row =>
@@ -383,6 +426,21 @@ public partial class PreviewFactureViewModel : ViewModelBase
         TauxTVA.TVA9 => "9%",
         TauxTVA.Exonere => "Exonéré",
         _ => ""
+    };
+
+    private static string FormatUnite(Unite unite) => unite switch
+    {
+        Unite.PCS => "PCS",
+        Unite.BOIT => "BOIT",
+        Unite.KG => "KG",
+        Unite.L => "L",
+        Unite.M => "M",
+        Unite.M2 => "M²",
+        Unite.M3 => "M³",
+        Unite.H => "H",
+        Unite.J => "J",
+        Unite.FORF => "FORF",
+        _ => "PCS"
     };
 
     [RelayCommand]

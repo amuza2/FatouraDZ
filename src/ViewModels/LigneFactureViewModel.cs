@@ -33,6 +33,18 @@ public partial class LigneFactureViewModel : ObservableObject
 
     public TauxTVA TauxTVA => (TauxTVA)TauxTVAIndex;
 
+    // Discount fields
+    [ObservableProperty]
+    private decimal _remise;
+
+    [ObservableProperty]
+    private int _typeRemiseIndex = 0;
+
+    public TypeRemise TypeRemise => (TypeRemise)TypeRemiseIndex;
+
+    [ObservableProperty]
+    private decimal _montantRemise;
+
     [ObservableProperty]
     private decimal _totalHT;
 
@@ -56,6 +68,17 @@ public partial class LigneFactureViewModel : ObservableObject
         CalculerTotalHT();
     }
 
+    partial void OnRemiseChanged(decimal value)
+    {
+        CalculerTotalHT();
+    }
+
+    partial void OnTypeRemiseIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(TypeRemise));
+        CalculerTotalHT();
+    }
+
     partial void OnTauxTVAIndexChanged(int value)
     {
         OnPropertyChanged(nameof(TauxTVA));
@@ -63,7 +86,9 @@ public partial class LigneFactureViewModel : ObservableObject
 
     private void CalculerTotalHT()
     {
-        TotalHT = _calculationService.CalculerTotalHTLigne(Quantite, PrixUnitaire);
+        var (totalHT, montantRemise) = _calculationService.CalculerTotalHTLigneAvecRemise(Quantite, PrixUnitaire, Remise, TypeRemise);
+        MontantRemise = montantRemise;
+        TotalHT = totalHT;
     }
 
     public LigneFacture ToModel()
@@ -77,6 +102,9 @@ public partial class LigneFactureViewModel : ObservableObject
             Unite = (Unite)UniteIndex,
             PrixUnitaire = PrixUnitaire,
             TauxTVA = (TauxTVA)TauxTVAIndex,
+            Remise = Remise,
+            TypeRemise = (TypeRemise)TypeRemiseIndex,
+            MontantRemise = MontantRemise,
             TotalHT = TotalHT
         };
     }
@@ -92,6 +120,9 @@ public partial class LigneFactureViewModel : ObservableObject
             UniteIndex = (int)ligne.Unite,
             PrixUnitaire = ligne.PrixUnitaire,
             TauxTVAIndex = (int)ligne.TauxTVA,
+            Remise = ligne.Remise,
+            TypeRemiseIndex = (int)ligne.TypeRemise,
+            MontantRemise = ligne.MontantRemise,
             TotalHT = ligne.TotalHT
         };
     }

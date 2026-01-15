@@ -181,19 +181,39 @@ public class PdfService : IPdfService
 
             column.Item().PaddingVertical(15);
 
-            // Tableau des lignes - Ref, Désignation, Quantité, Unité, Prix H.T, TVA%, Total H.T
+            // Check if any line has discount
+            var hasLineDiscount = facture.Lignes.Any(l => l.MontantRemise > 0);
+
+            // Tableau des lignes - Ref, Désignation, Quantité, Unité, Prix H.T, TVA%, Remise, Total H.T
             column.Item().Table(table =>
             {
-                table.ColumnsDefinition(columns =>
+                if (hasLineDiscount)
                 {
-                    columns.ConstantColumn(40);   // Ref
-                    columns.RelativeColumn(3);    // Désignation
-                    columns.RelativeColumn(0.8f); // Quantité
-                    columns.RelativeColumn(0.7f); // Unité
-                    columns.RelativeColumn(1.2f); // Prix H.T
-                    columns.RelativeColumn(0.6f); // TVA %
-                    columns.RelativeColumn(1.3f); // Total H.T
-                });
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(35);   // Ref
+                        columns.RelativeColumn(2.5f); // Désignation
+                        columns.RelativeColumn(0.7f); // Quantité
+                        columns.RelativeColumn(0.6f); // Unité
+                        columns.RelativeColumn(1f);   // Prix H.T
+                        columns.RelativeColumn(0.5f); // TVA %
+                        columns.RelativeColumn(0.8f); // Remise
+                        columns.RelativeColumn(1.1f); // Total H.T
+                    });
+                }
+                else
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(40);   // Ref
+                        columns.RelativeColumn(3);    // Désignation
+                        columns.RelativeColumn(0.8f); // Quantité
+                        columns.RelativeColumn(0.7f); // Unité
+                        columns.RelativeColumn(1.2f); // Prix H.T
+                        columns.RelativeColumn(0.6f); // TVA %
+                        columns.RelativeColumn(1.3f); // Total H.T
+                    });
+                }
 
                 table.Header(header =>
                 {
@@ -203,6 +223,8 @@ public class PdfService : IPdfService
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("Unité").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix H.T").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("TVA").Bold();
+                    if (hasLineDiscount)
+                        header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Remise").Bold();
                     header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total H.T").Bold();
                 });
 
@@ -218,6 +240,13 @@ public class PdfService : IPdfService
                     table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatUnite(ligne.Unite));
                     table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2}");
                     table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatTauxTVA(ligne.TauxTVA));
+                    if (hasLineDiscount)
+                    {
+                        var remiseText = ligne.MontantRemise > 0 
+                            ? $"-{ligne.MontantRemise:N2}" 
+                            : "-";
+                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(remiseText);
+                    }
                     table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2}");
                 }
             });
@@ -232,6 +261,17 @@ public class PdfService : IPdfService
                     row.RelativeItem().Text("Total HT :");
                     row.RelativeItem().AlignRight().Text($"{facture.TotalHT:N2} DZD");
                 });
+                if (facture.MontantRemiseGlobale > 0)
+                {
+                    col.Item().Row(row =>
+                    {
+                        var typeRemise = facture.TypeRemiseGlobale == TypeRemise.Pourcentage 
+                            ? $"Remise globale ({facture.RemiseGlobale}%) :" 
+                            : "Remise globale :";
+                        row.RelativeItem().Text(typeRemise);
+                        row.RelativeItem().AlignRight().Text($"-{facture.MontantRemiseGlobale:N2} DZD");
+                    });
+                }
                 if (facture.TotalTVA19 > 0)
                 {
                     col.Item().Row(row =>

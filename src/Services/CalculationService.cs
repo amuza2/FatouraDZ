@@ -11,6 +11,52 @@ public class CalculationService : ICalculationService
         return Math.Round(quantite * prixUnitaire, 2);
     }
 
+    public (decimal TotalHT, decimal MontantRemise) CalculerTotalHTLigneAvecRemise(decimal quantite, decimal prixUnitaire, decimal remise, TypeRemise typeRemise)
+    {
+        var totalBrut = Math.Round(quantite * prixUnitaire, 2);
+        
+        if (remise <= 0)
+            return (totalBrut, 0m);
+
+        decimal montantRemise;
+        if (typeRemise == TypeRemise.Pourcentage)
+        {
+            // Percentage discount (capped at 100%)
+            var pourcentage = Math.Min(remise, 100m);
+            montantRemise = Math.Round(totalBrut * pourcentage / 100m, 2);
+        }
+        else
+        {
+            // Fixed amount discount (capped at total)
+            montantRemise = Math.Min(Math.Round(remise, 2), totalBrut);
+        }
+
+        var totalHT = totalBrut - montantRemise;
+        return (totalHT, montantRemise);
+    }
+
+    public (decimal MontantRemise, decimal TotalHTApresRemise) CalculerRemiseGlobale(decimal totalHT, decimal remise, TypeRemise typeRemise)
+    {
+        if (remise <= 0)
+            return (0m, totalHT);
+
+        decimal montantRemise;
+        if (typeRemise == TypeRemise.Pourcentage)
+        {
+            // Percentage discount (capped at 100%)
+            var pourcentage = Math.Min(remise, 100m);
+            montantRemise = Math.Round(totalHT * pourcentage / 100m, 2);
+        }
+        else
+        {
+            // Fixed amount discount (capped at total)
+            montantRemise = Math.Min(Math.Round(remise, 2), totalHT);
+        }
+
+        var totalHTApresRemise = totalHT - montantRemise;
+        return (montantRemise, totalHTApresRemise);
+    }
+
     public decimal CalculerTVA(decimal totalHT, TauxTVA taux)
     {
         var settings = AppSettings.Instance;
@@ -39,17 +85,18 @@ public class CalculationService : ICalculationService
         return Math.Max(timbre, 5m);
     }
 
-    public (decimal TotalHT, decimal TVA19, decimal TVA9, decimal TotalTTC, decimal TimbreFiscal, decimal MontantTotal) 
-        CalculerTotaux(IEnumerable<LigneFacture> lignes, bool appliquerTimbre)
+    public (decimal TotalHT, decimal TVA19, decimal TVA9, decimal TotalTTC, decimal TimbreFiscal, decimal MontantTotal, decimal MontantRemiseGlobale) 
+        CalculerTotaux(IEnumerable<LigneFacture> lignes, bool appliquerTimbre, decimal remiseGlobale = 0, TypeRemise typeRemiseGlobale = TypeRemise.Pourcentage)
     {
-        decimal totalHT = 0m;
+        decimal totalHTBrut = 0m;
         decimal tva19 = 0m;
         decimal tva9 = 0m;
 
         foreach (var ligne in lignes)
         {
-            var ligneHT = CalculerTotalHTLigne(ligne.Quantite, ligne.PrixUnitaire);
-            totalHT += ligneHT;
+            // Use line total which already includes line-level discount
+            var ligneHT = ligne.TotalHT;
+            totalHTBrut += ligneHT;
 
             switch (ligne.TauxTVA)
             {
@@ -62,10 +109,21 @@ public class CalculationService : ICalculationService
             }
         }
 
+        // Apply global discount on Total HT
+        var (montantRemiseGlobale, totalHT) = CalculerRemiseGlobale(totalHTBrut, remiseGlobale, typeRemiseGlobale);
+
+        // Recalculate TVA after global discount (proportionally reduce TVA)
+        if (totalHTBrut > 0 && montantRemiseGlobale > 0)
+        {
+            var ratio = totalHT / totalHTBrut;
+            tva19 = Math.Round(tva19 * ratio, 2);
+            tva9 = Math.Round(tva9 * ratio, 2);
+        }
+
         var totalTTC = Math.Round(totalHT + tva19 + tva9, 2);
         var timbre = appliquerTimbre ? CalculerTimbreFiscal(totalTTC) : 0m;
         var montantTotal = totalTTC + timbre;
 
-        return (totalHT, tva19, tva9, totalTTC, timbre, montantTotal);
+        return (totalHT, tva19, tva9, totalTTC, timbre, montantTotal, montantRemiseGlobale);
     }
 }

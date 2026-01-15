@@ -11,6 +11,12 @@ public class LigneFacture
     public Unite Unite { get; set; } = Unite.PCS;
     public decimal PrixUnitaire { get; set; }
     public TauxTVA TauxTVA { get; set; } = TauxTVA.TVA19;
+    
+    // Discount at product level
+    public decimal Remise { get; set; } // Discount value (amount or percentage)
+    public TypeRemise TypeRemise { get; set; } = TypeRemise.Pourcentage;
+    public decimal MontantRemise { get; set; } // Calculated discount amount
+    
     public decimal TotalHT { get; set; }
 
     // Navigation
@@ -36,4 +42,10 @@ public enum Unite
     H,      // Heure
     J,      // Jour
     FORF    // Forfait
+}
+
+public enum TypeRemise
+{
+    Pourcentage,  // Discount as percentage
+    Montant       // Discount as fixed amount
 }
