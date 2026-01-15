@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -96,12 +97,61 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     // Liste des clients existants
     public ObservableCollection<Client> ClientsDisponibles { get; } = new();
+    public ObservableCollection<Client> TousLesClients { get; } = new();
+
+    [ObservableProperty]
+    private string _rechercheClient = string.Empty;
+
+    // Show search results dropdown when there's search text and results
+    public bool RechercheClientResultatsVisible => 
+        !string.IsNullOrWhiteSpace(RechercheClient) && ClientsDisponibles.Count > 0;
+
+    partial void OnRechercheClientChanged(string value)
+    {
+        FiltrerClients();
+        OnPropertyChanged(nameof(RechercheClientResultatsVisible));
+    }
+
+    private void FiltrerClients()
+    {
+        ClientsDisponibles.Clear();
+        
+        if (string.IsNullOrWhiteSpace(RechercheClient))
+        {
+            return; // Don't show results when search is empty
+        }
+        
+        var clientsFiltres = TousLesClients.Where(c => 
+            c.Nom.Contains(RechercheClient, StringComparison.OrdinalIgnoreCase) ||
+            c.Telephone.Contains(RechercheClient, StringComparison.OrdinalIgnoreCase) ||
+            (c.Email?.Contains(RechercheClient, StringComparison.OrdinalIgnoreCase) ?? false)
+        ).ToList();
+        
+        foreach (var client in clientsFiltres)
+        {
+            ClientsDisponibles.Add(client);
+        }
+        
+        OnPropertyChanged(nameof(RechercheClientResultatsVisible));
+    }
+
+    [RelayCommand]
+    private void SelectionnerClient(Client client)
+    {
+        ClientSelectionne = client;
+        RechercheClient = string.Empty; // Clear search after selection
+    }
 
     [ObservableProperty]
     private Client? _clientSelectionne;
 
+    // Computed property to check if a client is selected
+    public bool ClientEstSelectionne => ClientSelectionne != null;
+
     partial void OnClientSelectionneChanged(Client? value)
     {
+        OnPropertyChanged(nameof(ClientEstSelectionne));
+        
         if (value != null)
         {
             // Auto-fill client fields from selected client
@@ -230,6 +280,11 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     public TypeRemise TypeRemiseGlobale => (TypeRemise)TypeRemiseGlobaleIndex;
 
+    // Label for global discount showing percentage if applicable
+    public string LibelleRemiseGlobale => TypeRemiseGlobale == TypeRemise.Pourcentage && RemiseGlobale > 0
+        ? $"Remise globale ({RemiseGlobale}%)"
+        : "Remise globale";
+
     [ObservableProperty]
     private decimal _montantRemiseGlobale;
 
@@ -351,6 +406,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     private async Task ChargerClientsDisponiblesAsync()
     {
+        TousLesClients.Clear();
         ClientsDisponibles.Clear();
         
         if (_businessId <= 0) return;
@@ -359,7 +415,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         
         foreach (var client in clients)
         {
-            ClientsDisponibles.Add(client);
+            TousLesClients.Add(client);
         }
     }
 
@@ -437,12 +493,14 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     partial void OnRemiseGlobaleChanged(decimal value)
     {
+        OnPropertyChanged(nameof(LibelleRemiseGlobale));
         RecalculerTotaux();
     }
 
     partial void OnTypeRemiseGlobaleIndexChanged(int value)
     {
         OnPropertyChanged(nameof(TypeRemiseGlobale));
+        OnPropertyChanged(nameof(LibelleRemiseGlobale));
         RecalculerTotaux();
     }
 
@@ -462,36 +520,10 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         EffacerErreursValidation();
         bool estValide = true;
 
-        // Validation du nom client
-        if (string.IsNullOrWhiteSpace(ClientNom))
+        // Validation du client sélectionné
+        if (ClientSelectionne == null)
         {
-            ErreurClientNom = "Le nom du client est obligatoire";
-            estValide = false;
-        }
-
-        // Validation de l'adresse client
-        if (string.IsNullOrWhiteSpace(ClientAdresse))
-        {
-            ErreurClientAdresse = "L'adresse du client est obligatoire";
-            estValide = false;
-        }
-
-        // Validation du téléphone client
-        if (string.IsNullOrWhiteSpace(ClientTelephone))
-        {
-            ErreurClientTelephone = "Le téléphone du client est obligatoire";
-            estValide = false;
-        }
-        else if (!_validationService.EstTelephoneValide(ClientTelephone))
-        {
-            ErreurClientTelephone = "Format invalide (mobile: 05/06/07XX XX XX XX)";
-            estValide = false;
-        }
-
-        // Validation de l'email (optionnel mais doit être valide si renseigné)
-        if (!string.IsNullOrWhiteSpace(ClientEmail) && !ClientEmail.Contains("@"))
-        {
-            ErreurClientEmail = "Format d'email invalide";
+            ErreurClientNom = "Veuillez sélectionner un client";
             estValide = false;
         }
 

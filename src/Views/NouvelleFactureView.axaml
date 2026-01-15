@@ -157,131 +157,90 @@
                 </StackPanel>
             </Border>
 
-            <!-- Section: Informations client -->
+            <!-- Section: Sélection client -->
             <Border Classes="card">
                 <StackPanel Spacing="15">
-                    <TextBlock Text="Informations du client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                    <TextBlock Text="Client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
-                    <!-- Sélection client existant -->
-                    <Border Background="#F0F9FF" CornerRadius="8" Padding="15"
-                            IsVisible="{Binding ClientsDisponibles.Count}">
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="💡 Sélectionner un client existant" FontWeight="Medium" Foreground="#0369A1"/>
-                            <ComboBox ItemsSource="{Binding ClientsDisponibles}"
-                                      SelectedItem="{Binding ClientSelectionne}"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <TextBlock Text="{Binding Nom}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="-" Foreground="#64748B"/>
-                                            <TextBlock Text="{Binding Telephone}" Foreground="#64748B"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                    <!-- Search and select client - two ways -->
+                    <Grid ColumnDefinitions="*,15,*">
+                        <!-- Search box with results dropdown -->
+                        <StackPanel Grid.Column="0" Spacing="5">
+                            <TextBox x:Name="RechercheClientTextBox"
+                                     TextChanged="OnRechercheClientTextChanged"
+                                     Watermark="🔍 Rechercher un client..."/>
+                            
+                            <!-- Search results dropdown -->
+                            <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" 
+                                    CornerRadius="4" MaxHeight="200"
+                                    IsVisible="{Binding RechercheClientResultatsVisible}">
+                                <ScrollViewer>
+                                    <ItemsControl ItemsSource="{Binding ClientsDisponibles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Client">
+                                                <Button Classes="nav-button" 
+                                                        Command="{Binding $parent[UserControl].((vm:NouvelleFactureViewModel)DataContext).SelectionnerClientCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        HorizontalAlignment="Stretch"
+                                                        HorizontalContentAlignment="Left"
+                                                        Padding="10,8">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Nom}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Telephone}" Foreground="#64748B" FontSize="11"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
                         </StackPanel>
+                        
+                        <!-- Or use ComboBox -->
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding TousLesClients}"
+                                  SelectedItem="{Binding ClientSelectionne}"
+                                  HorizontalAlignment="Stretch"
+                                  PlaceholderText="Ou sélectionner dans la liste...">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:Client">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Nom}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Telephone}" Foreground="#64748B" FontSize="11"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                    
+                    <!-- Selected client info -->
+                    <Border Background="#F0FDF4" CornerRadius="8" Padding="15"
+                            IsVisible="{Binding ClientEstSelectionne}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding ClientNom}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding ClientAdresse}" Foreground="#64748B" FontSize="12"/>
+                                <StackPanel Orientation="Horizontal" Spacing="15">
+                                    <TextBlock Foreground="#64748B" FontSize="12">
+                                        <Run Text="📞 "/><Run Text="{Binding ClientTelephone}"/>
+                                    </TextBlock>
+                                    <TextBlock Foreground="#64748B" FontSize="12"
+                                               IsVisible="{Binding ClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                        <Run Text="✉️ "/><Run Text="{Binding ClientEmail}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="✓" Foreground="#16A34A" FontSize="24" 
+                                       VerticalAlignment="Center" FontWeight="Bold"/>
+                        </Grid>
                     </Border>
                     
-                    <!-- Type de client -->
-                    <StackPanel Spacing="4" MaxWidth="300" HorizontalAlignment="Left">
-                        <TextBlock Text="Type de client" FontWeight="Medium"/>
-                        <ComboBox SelectedIndex="{Binding ClientBusinessTypeIndex}" HorizontalAlignment="Stretch">
-                            <ComboBoxItem Content="Forfait"/>
-                            <ComboBoxItem Content="Société (Réel)"/>
-                            <ComboBoxItem Content="Auto-Entrepreneur"/>
-                        </ComboBox>
-                    </StackPanel>
-                    
-                    <!-- Nom et Téléphone -->
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Nom du client *" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNom}" Watermark="Nom complet ou raison sociale"
-                                     Classes.error="{Binding ErreurClientNom, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding ErreurClientNom}" Classes="error-message"
-                                       IsVisible="{Binding ErreurClientNom, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Téléphone *" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientTelephone}" Watermark="05XX XX XX XX"
-                                     Classes.error="{Binding ErreurClientTelephone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding ErreurClientTelephone}" Classes="error-message"
-                                       IsVisible="{Binding ErreurClientTelephone, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Adresse -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Adresse *" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientAdresse}" Watermark="Adresse complète"
-                                 Classes.error="{Binding ErreurClientAdresse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        <TextBlock Text="{Binding ErreurClientAdresse}" Classes="error-message"
-                                   IsVisible="{Binding ErreurClientAdresse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                    </StackPanel>
-
-                    <!-- Email et Fax -->
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Email (optionnel)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientEmail}" Watermark="email@exemple.com"
-                                     Classes.error="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Text="{Binding ErreurClientEmail}" Classes="error-message"
-                                       IsVisible="{Binding ErreurClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="Fax (optionnel)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientFax}" Watermark="Numéro de fax"/>
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
-            <!-- Section: Informations fiscales client -->
-            <Border Classes="card">
-                <StackPanel Spacing="15">
-                    <TextBlock Text="Informations fiscales du client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
-                    <TextBlock Text="Ces informations varient selon le type de client sélectionné" 
-                               Foreground="#64748B" FontSize="12"/>
-                    
-                    <!-- Activité -->
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="Activité" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientActivite}" Watermark="Activité commerciale"/>
-                    </StackPanel>
-
-                    <Grid ColumnDefinitions="*,20,*">
-                        <!-- N° Immatriculation (Auto-Entrepreneur only) -->
-                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding ClientAfficherNumeroImmatriculation}">
-                            <TextBlock Text="N° Immatriculation" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNumeroImmatriculation}" Watermark="Numéro d'immatriculation"/>
-                        </StackPanel>
-                        <!-- RC (Forfait and Reel only) -->
-                        <StackPanel Grid.Column="0" Spacing="4" IsVisible="{Binding ClientAfficherRC}">
-                            <TextBlock Text="Registre du Commerce (RC)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientRc}" Watermark="Numéro RC"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="NIF" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNif}" Watermark="Numéro NIF"/>
-                        </StackPanel>
-                    </Grid>
-                    <Grid ColumnDefinitions="*,20,*">
-                        <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Article d'Imposition (AI)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientAi}" Watermark="Numéro AI"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="4">
-                            <TextBlock Text="NIS (15 chiffres)" FontWeight="Medium"/>
-                            <TextBox Text="{Binding ClientNis}" Watermark="000000000000000"/>
-                        </StackPanel>
-                    </Grid>
-                    
-                    <!-- Capital Social (Reel/Company only) -->
-                    <StackPanel Spacing="4" IsVisible="{Binding ClientAfficherCapitalSocial}">
-                        <TextBlock Text="Capital social" FontWeight="Medium"/>
-                        <TextBox Text="{Binding ClientCapitalSocial}" Watermark="Ex: 100 000 DZD"/>
-                    </StackPanel>
+                    <!-- No client selected warning -->
+                    <Border Background="#FEF3C7" CornerRadius="8" Padding="15"
+                            IsVisible="{Binding !ClientEstSelectionne}">
+                        <TextBlock Text="⚠️ Veuillez sélectionner un client pour cette facture. Vous pouvez ajouter des clients depuis le menu 'Clients' dans la barre latérale."
+                                   Foreground="#92400E" TextWrapping="Wrap" FontSize="12"/>
+                    </Border>
                 </StackPanel>
             </Border>
 
@@ -423,7 +382,7 @@
                                 </Grid>
                                 
                                 <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding MontantRemiseGlobale}">
-                                    <TextBlock Text="Remise globale" Foreground="#EF4444"/>
+                                    <TextBlock Text="{Binding LibelleRemiseGlobale}" Foreground="#EF4444"/>
                                     <TextBlock Grid.Column="1" Text="{Binding MontantRemiseGlobale, StringFormat='-{0:N2} DA'}" 
                                                HorizontalAlignment="Right" Foreground="#EF4444"/>
                                 </Grid>
