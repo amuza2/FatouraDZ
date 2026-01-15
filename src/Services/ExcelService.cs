@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using FatouraDZ.Models;
@@ -29,11 +30,14 @@ public class ExcelService : IExcelService
             var worksheet = workbook.Worksheets.Add("Facture");
 
             // Set column widths
-            worksheet.Column(1).Width = 8;
-            worksheet.Column(2).Width = 40;
-            worksheet.Column(3).Width = 12;
-            worksheet.Column(4).Width = 15;
-            worksheet.Column(5).Width = 15;
+            worksheet.Column(1).Width = 12;  // Réf
+            worksheet.Column(2).Width = 35;  // Désignation
+            worksheet.Column(3).Width = 8;   // Qté
+            worksheet.Column(4).Width = 10;  // Unité
+            worksheet.Column(5).Width = 14;  // Prix U. HT
+            worksheet.Column(6).Width = 10;  // TVA
+            worksheet.Column(7).Width = 12;  // Remise
+            worksheet.Column(8).Width = 14;  // Total HT
 
             int row = 1;
 
@@ -132,55 +136,98 @@ public class ExcelService : IExcelService
             }
             row++;
 
+            // Check if any line has discount
+            var hasLineDiscount = facture.Lignes.Any(l => l.MontantRemise > 0);
+            int lastCol = hasLineDiscount ? 8 : 7;
+
             // Items Header
-            var headerRange = worksheet.Range(row, 1, row, 5);
+            var headerRange = worksheet.Range(row, 1, row, lastCol);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#2563EB");
             headerRange.Style.Font.FontColor = XLColor.White;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-            worksheet.Cell(row, 1).Value = "N°";
-            worksheet.Cell(row, 2).Value = "Désignation";
-            worksheet.Cell(row, 3).Value = "Quantité";
-            worksheet.Cell(row, 4).Value = "Prix Unitaire";
-            worksheet.Cell(row, 5).Value = "Total HT";
+            int col = 1;
+            worksheet.Cell(row, col++).Value = "Réf";
+            worksheet.Cell(row, col++).Value = "Désignation";
+            worksheet.Cell(row, col++).Value = "Qté";
+            worksheet.Cell(row, col++).Value = "Unité";
+            worksheet.Cell(row, col++).Value = "Prix U. HT";
+            worksheet.Cell(row, col++).Value = "TVA";
+            if (hasLineDiscount)
+                worksheet.Cell(row, col++).Value = "Remise";
+            worksheet.Cell(row, col).Value = "Total HT";
             row++;
 
             // Items
-            int itemNum = 1;
             foreach (var ligne in facture.Lignes)
             {
-                worksheet.Cell(row, 1).Value = itemNum++;
-                worksheet.Cell(row, 2).Value = ligne.Designation;
-                worksheet.Cell(row, 3).Value = ligne.Quantite;
-                worksheet.Cell(row, 4).Value = ligne.PrixUnitaire;
-                worksheet.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00 \"DA\"";
-                worksheet.Cell(row, 5).Value = ligne.TotalHT;
-                worksheet.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00 \"DA\"";
+                col = 1;
+                worksheet.Cell(row, col++).Value = ligne.Reference ?? "";
+                worksheet.Cell(row, col++).Value = ligne.Designation;
+                worksheet.Cell(row, col++).Value = ligne.Quantite;
+                worksheet.Cell(row, col++).Value = ligne.Unite.ToString();
+                worksheet.Cell(row, col).Value = ligne.PrixUnitaire;
+                worksheet.Cell(row, col++).Style.NumberFormat.Format = "#,##0.00";
+                var tvaText = ligne.TauxTVA switch
+                {
+                    TauxTVA.TVA19 => "19%",
+                    TauxTVA.TVA9 => "9%",
+                    TauxTVA.Exonere => "0%",
+                    _ => "19%"
+                };
+                worksheet.Cell(row, col++).Value = tvaText;
+                if (hasLineDiscount)
+                {
+                    if (ligne.MontantRemise > 0)
+                        worksheet.Cell(row, col).Value = ligne.MontantRemise;
+                    worksheet.Cell(row, col++).Style.NumberFormat.Format = "#,##0.00";
+                }
+                worksheet.Cell(row, col).Value = ligne.TotalHT;
+                worksheet.Cell(row, col).Style.NumberFormat.Format = "#,##0.00";
                 
                 // Alternate row colors
-                if (itemNum % 2 == 0)
+                if (row % 2 == 0)
                 {
-                    worksheet.Range(row, 1, row, 5).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
+                    worksheet.Range(row, 1, row, lastCol).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
                 }
                 row++;
             }
 
             // Add border to items table
-            var tableRange = worksheet.Range(row - facture.Lignes.Count - 1, 1, row - 1, 5);
+            var tableRange = worksheet.Range(row - facture.Lignes.Count - 1, 1, row - 1, lastCol);
             tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
             row++;
 
-            // Totals section
-            int totalsCol = 4;
+            // Totals section - position based on table width
+            int totalsCol = lastCol - 1;
             
             worksheet.Cell(row, totalsCol).Value = "Total HT:";
             worksheet.Cell(row, totalsCol).Style.Font.Bold = true;
             worksheet.Cell(row, totalsCol + 1).Value = facture.TotalHT;
             worksheet.Cell(row, totalsCol + 1).Style.NumberFormat.Format = "#,##0.00 \"DA\"";
             row++;
+
+            // Global discount
+            if (facture.MontantRemiseGlobale > 0)
+            {
+                var remiseLabel = facture.TypeRemiseGlobale == TypeRemise.Pourcentage 
+                    ? $"Remise globale ({facture.RemiseGlobale}%):" 
+                    : "Remise globale:";
+                worksheet.Cell(row, totalsCol).Value = remiseLabel;
+                worksheet.Cell(row, totalsCol + 1).Value = -facture.MontantRemiseGlobale;
+                worksheet.Cell(row, totalsCol + 1).Style.NumberFormat.Format = "#,##0.00 \"DA\"";
+                worksheet.Cell(row, totalsCol + 1).Style.Font.FontColor = XLColor.Red;
+                row++;
+                
+                worksheet.Cell(row, totalsCol).Value = "Total HT après remise:";
+                worksheet.Cell(row, totalsCol).Style.Font.Bold = true;
+                worksheet.Cell(row, totalsCol + 1).Value = facture.TotalHT - facture.MontantRemiseGlobale;
+                worksheet.Cell(row, totalsCol + 1).Style.NumberFormat.Format = "#,##0.00 \"DA\"";
+                row++;
+            }
 
             decimal totalTVA = facture.TotalTVA19 + facture.TotalTVA9;
             if (totalTVA > 0)
