@@ -141,9 +141,10 @@ public class ValidationServiceTests
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingRC_ReturnsError()
+    public void ValiderEntrepreneur_MissingRC_ReturnsError_ForForfait()
     {
         var entrepreneur = CreateValidEntrepreneur();
+        entrepreneur.TypeEntreprise = BusinessType.Forfait; // RC required for Forfait
         entrepreneur.RC = "";
 
         var result = _service.ValiderEntrepreneur(entrepreneur);
@@ -407,14 +408,15 @@ public class ValidationServiceTests
     {
         return new Entrepreneur
         {
+            TypeEntreprise = BusinessType.AutoEntrepreneur,
             NomComplet = "Mohammed Chami",
+            Activite = "Développement logiciel",
             Adresse = "123 Rue Test",
             Ville = "Alger",
             Wilaya = "Alger",
             CodePostal = "16000",
             Telephone = "0550123456",
             Email = "test@example.com",
-            RC = "RC123456",
             NIS = "123456789012345",
             NIF = "NIF123456",
             AI = "AI123456",

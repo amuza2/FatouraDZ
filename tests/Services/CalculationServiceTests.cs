@@ -74,12 +74,11 @@ public class CalculationServiceTests
     [InlineData(100, 5)]         // Small amount, minimum 5 DA
     [InlineData(500, 5)]         // 500 * 1% = 5 DA (minimum)
     [InlineData(1000, 10)]       // 1000 * 1% = 10 DA
-    [InlineData(30000, 300)]     // 30000 * 1% = 300 DA (boundary)
-    [InlineData(30001, 450.02)]  // 30001 * 1.5% = 450.015 -> 450.02 DA
-    [InlineData(50000, 750)]     // 50000 * 1.5% = 750 DA
-    [InlineData(100000, 1500)]   // 100000 * 1.5% = 1500 DA (boundary)
-    [InlineData(100001, 2000.02)]// 100001 * 2% = 2000.02 DA
-    [InlineData(500000, 10000)]  // 500000 * 2% = 10000 DA
+    [InlineData(30000, 300)]     // 30000 * 1% = 300 DA
+    [InlineData(50000, 500)]     // 50000 * 1% = 500 DA
+    [InlineData(100000, 1000)]   // 100000 * 1% = 1000 DA
+    [InlineData(250000, 2500)]   // 250000 * 1% = 2500 DA (max limit)
+    [InlineData(500000, 2500)]   // 500000 * 1% = 5000 DA but capped at 2500 DA max
     public void CalculerTimbreFiscal_ReturnsCorrectAmount(decimal montantTTC, decimal expected)
     {
         var result = _service.CalculerTimbreFiscal(montantTTC);
@@ -179,7 +178,7 @@ public class CalculationServiceTests
     [Fact]
     public void CalculerTotaux_LargeAmount_CorrectTimbreRate()
     {
-        // Test with amount > 100,000 DA to verify 2% rate
+        // Test with amount > 250,000 DA to verify max cap at 2500 DA
         var lignes = new List<LigneFacture>
         {
             new() { Quantite = 1, PrixUnitaire = 100000, TauxTVA = TauxTVA.TVA19 }
@@ -190,9 +189,9 @@ public class CalculationServiceTests
         Assert.Equal(100000m, result.TotalHT);
         Assert.Equal(19000m, result.TVA19);
         Assert.Equal(119000m, result.TotalTTC);
-        // Timbre: 119000 * 2% = 2380 DA
-        Assert.Equal(2380m, result.TimbreFiscal);
-        Assert.Equal(121380m, result.MontantTotal);
+        // Timbre: 119000 * 1% = 1190 DA
+        Assert.Equal(1190m, result.TimbreFiscal);
+        Assert.Equal(120190m, result.MontantTotal);
     }
 
     #endregion

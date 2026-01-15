@@ -31,7 +31,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_ValidData_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         var outputPath = Path.Combine(_testOutputDir, "test_invoice.pdf");
 
@@ -48,7 +48,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_WithMultipleLines_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         
         // Add more lines
@@ -78,7 +78,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_AvoirType_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.TypeFacture = TypeFacture.Avoir;
         facture.NumeroFactureOrigine = "FAC-2025-001";
@@ -92,14 +92,13 @@ public class PdfServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GenererPdfAsync_AnnulationType_CreatesPdfFile()
+    public async Task GenererPdfAsync_ProformaType_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
-        facture.TypeFacture = TypeFacture.Annulation;
-        facture.NumeroFactureOrigine = "FAC-2025-001";
-        var outputPath = Path.Combine(_testOutputDir, "test_annulation.pdf");
+        facture.TypeFacture = TypeFacture.Proforma;
+        var outputPath = Path.Combine(_testOutputDir, "test_proforma.pdf");
 
         // Act
         await _service.GenererPdfAsync(facture, entrepreneur, outputPath);
@@ -112,7 +111,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_WithTimbre_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.EstTimbreApplique = true;
         facture.TimbreFiscal = 11.90m;
@@ -130,7 +129,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_WithRetenueSource_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.TauxRetenueSource = 30;
         facture.RetenueSource = 300; // 30% of 1000 HT
@@ -148,7 +147,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_LargeAmount_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.TotalHT = 1000000;
         facture.TotalTVA19 = 190000;
@@ -168,7 +167,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_WithAllClientInfo_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.ClientRC = "RC-CLIENT-123";
         facture.ClientNIS = "987654321012345";
@@ -192,7 +191,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_EmptyLines_ThrowsOrHandlesGracefully()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.Lignes.Clear();
         var outputPath = Path.Combine(_testOutputDir, "test_empty_lines.pdf");
@@ -215,7 +214,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_LongDesignation_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         var lignesList = facture.Lignes.ToList();
         lignesList[0].Designation = new string('A', 500); // Very long designation
@@ -232,7 +231,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_SpecialCharacters_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.ClientNom = "Société à responsabilité limitée «Test & Co»";
         var lignesList = facture.Lignes.ToList();
@@ -250,7 +249,7 @@ public class PdfServiceTests : IDisposable
     public async Task GenererPdfAsync_ArabicCharacters_CreatesPdfFile()
     {
         // Arrange
-        var entrepreneur = CreateTestEntrepreneur();
+        var entrepreneur = CreateTestBusiness();
         var facture = CreateTestFacture();
         facture.ClientNom = "شركة الاختبار";
         var outputPath = Path.Combine(_testOutputDir, "test_arabic.pdf");
@@ -272,12 +271,14 @@ public class PdfServiceTests : IDisposable
 
     #region Helper Methods
 
-    private static Entrepreneur CreateTestEntrepreneur()
+    private static Business CreateTestBusiness()
     {
-        return new Entrepreneur
+        return new Business
         {
+            Nom = "Chami Consulting",
             NomComplet = "Mohammed Chami",
             RaisonSociale = "Chami Consulting",
+            TypeEntreprise = BusinessType.AutoEntrepreneur,
             Adresse = "123 Rue Didouche Mourad",
             Ville = "Alger",
             Wilaya = "Alger",
@@ -289,7 +290,6 @@ public class PdfServiceTests : IDisposable
             NIF = "123456789012345678",
             AI = "16123456789",
             NumeroImmatriculation = "AE-16-2024-123456",
-            FormeJuridique = "Auto-entrepreneur",
             Activite = "Développement logiciel"
         };
     }
