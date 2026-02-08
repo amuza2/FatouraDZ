@@ -166,6 +166,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _ = vm.InitialiserAsync();
         }
+        else
+        {
+            _ = vm.InitialiserEditionAsync();
+        }
         
         vm.FactureSauvegardee += () =>
         {

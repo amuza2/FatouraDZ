@@ -28,7 +28,13 @@
         <!-- Content -->
         <Grid Grid.Row="1">
             <!-- Client List -->
-            <ScrollViewer Padding="30,20" IsVisible="{Binding !AfficherFormulaire}">
+            <ScrollViewer Padding="30,20">
+                <ScrollViewer.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="!AfficherFormulaire"/>
+                        <Binding Path="!AfficherDetails"/>
+                    </MultiBinding>
+                </ScrollViewer.IsVisible>
                 <StackPanel Spacing="15" Margin="0,0,0,100">
                     <!-- Error message -->
                     <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
@@ -95,6 +101,11 @@
                                         
                                         <!-- Actions -->
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <Button Content="👁️ Voir"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.VoirDetailsCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="12,8"
+                                                    Background="#EFF6FF"/>
                                             <Button Content="✏️ Modifier"
                                                     Command="{Binding $parent[ItemsControl].DataContext.ModifierClientCommand}"
                                                     CommandParameter="{Binding}"
@@ -111,6 +122,109 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+            </ScrollViewer>
+
+            <!-- Client Detail View -->
+            <ScrollViewer Padding="30,20" IsVisible="{Binding AfficherDetails}" HorizontalScrollBarVisibility="Disabled">
+                <Border Background="White" CornerRadius="12" Padding="30">
+                    <StackPanel Spacing="20">
+                        <!-- Header -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding ClientDetail.Nom}" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
+                                <TextBlock Text="{Binding ClientDetail.TypeClient}" Foreground="#64748B" FontSize="13"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Top">
+                                <Button Content="✏️ Modifier" 
+                                        Command="{Binding ModifierClientCommand}"
+                                        CommandParameter="{Binding ClientDetail}"
+                                        Padding="15,10"/>
+                                <Button Content="← Retour" 
+                                        Command="{Binding FermerDetailsCommand}"
+                                        Padding="15,10"
+                                        Background="#E2E8F0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Separator Background="#E2E8F0"/>
+
+                        <!-- Informations générales -->
+                        <TextBlock Text="Informations générales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                        <Grid ColumnDefinitions="*,20,*">
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Nom / Raison sociale" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Nom}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Adresse" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Adresse}" FontSize="14" Foreground="#1E293B" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Email" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Email}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="8">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="Téléphone" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Telephone}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.Fax, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Fax" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Fax}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.Activite, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Activité" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.Activite}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <Separator Background="#E2E8F0"/>
+
+                        <!-- Informations fiscales -->
+                        <TextBlock Text="Informations fiscales" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                        <Grid ColumnDefinitions="*,20,*">
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.RC, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Registre de commerce (RC)" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.RC}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.NumeroImmatriculation, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="N° Immatriculation" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.NumeroImmatriculation}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.NIF, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="NIF" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.NIF}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.CapitalSocial, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Capital social" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.CapitalSocial}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="8">
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.NIS, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="NIS" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.NIS}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                                <StackPanel Spacing="2" IsVisible="{Binding ClientDetail.AI, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="Article d'imposition (AI)" FontWeight="Medium" Foreground="#64748B" FontSize="12"/>
+                                    <TextBlock Text="{Binding ClientDetail.AI}" FontSize="14" Foreground="#1E293B"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Metadata -->
+                        <Separator Background="#E2E8F0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="20">
+                            <TextBlock Foreground="#94A3B8" FontSize="12">
+                                <Run Text="Créé le: "/><Run Text="{Binding ClientDetail.DateCreation, StringFormat={}{0:dd/MM/yyyy}, Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
             </ScrollViewer>
 
             <!-- Client Form -->

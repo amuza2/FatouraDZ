@@ -404,6 +404,22 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         await ChargerClientsDisponiblesAsync();
     }
 
+    public async Task InitialiserEditionAsync()
+    {
+        await ChargerClientsDisponiblesAsync();
+        
+        // Try to match the client from invoice data
+        if (!string.IsNullOrEmpty(ClientNom))
+        {
+            var match = TousLesClients.FirstOrDefault(c => 
+                c.Nom == ClientNom && c.Telephone == ClientTelephone);
+            if (match != null)
+            {
+                ClientSelectionne = match;
+            }
+        }
+    }
+
     private async Task ChargerClientsDisponiblesAsync()
     {
         TousLesClients.Clear();

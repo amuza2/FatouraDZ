@@ -32,6 +32,12 @@ public partial class ClientListViewModel : ViewModelBase
     private bool _afficherFormulaire;
 
     [ObservableProperty]
+    private bool _afficherDetails;
+
+    [ObservableProperty]
+    private Client? _clientDetail;
+
+    [ObservableProperty]
     private bool _estModeEdition;
 
     [ObservableProperty]
@@ -164,6 +170,21 @@ public partial class ClientListViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void VoirDetails(Client client)
+    {
+        ClientDetail = client;
+        AfficherDetails = true;
+        AfficherFormulaire = false;
+    }
+
+    [RelayCommand]
+    private void FermerDetails()
+    {
+        AfficherDetails = false;
+        ClientDetail = null;
+    }
+
+    [RelayCommand]
     private void NouveauClient()
     {
         _clientIdEnEdition = 0;
@@ -171,6 +192,7 @@ public partial class ClientListViewModel : ViewModelBase
         TitreFormulaire = "Nouveau client";
         ReinitialiserFormulaire();
         AfficherFormulaire = true;
+        AfficherDetails = false;
     }
 
     [RelayCommand]
@@ -196,6 +218,7 @@ public partial class ClientListViewModel : ViewModelBase
         CapitalSocial = client.CapitalSocial;
         
         AfficherFormulaire = true;
+        AfficherDetails = false;
     }
 
     [RelayCommand]
