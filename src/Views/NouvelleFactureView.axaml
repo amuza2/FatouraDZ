@@ -6,7 +6,9 @@
              xmlns:models="using:FatouraDZ.Models"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="900"
              x:Class="FatouraDZ.Views.NouvelleFactureView"
-             x:DataType="vm:NouvelleFactureViewModel">
+             x:DataType="vm:NouvelleFactureViewModel"
+             x:CompileBindings="False"
+             x:Name="Root">
 
     <Design.DataContext>
         <vm:NouvelleFactureViewModel/>
@@ -179,7 +181,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="models:Client">
                                                 <Button Classes="nav-button" 
-                                                        Command="{Binding $parent[UserControl].((vm:NouvelleFactureViewModel)DataContext).SelectionnerClientCommand}"
+                                                        Command="{Binding #Root.DataContext.SelectionnerClientCommand}"
                                                         CommandParameter="{Binding}"
                                                         HorizontalAlignment="Stretch"
                                                         HorizontalContentAlignment="Left"
@@ -222,11 +224,11 @@
                                 <TextBlock Text="{Binding ClientAdresse}" Foreground="#64748B" FontSize="12"/>
                                 <StackPanel Orientation="Horizontal" Spacing="15">
                                     <TextBlock Foreground="#64748B" FontSize="12">
-                                        <Run Text="📞 "/><Run Text="{Binding ClientTelephone}"/>
+                                        <Run Text="📞 "/><Run Text="{Binding ClientTelephone, Mode=OneWay}"/>
                                     </TextBlock>
                                     <TextBlock Foreground="#64748B" FontSize="12"
                                                IsVisible="{Binding ClientEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                        <Run Text="✉️ "/><Run Text="{Binding ClientEmail}"/>
+                                        <Run Text="✉️ "/><Run Text="{Binding ClientEmail, Mode=OneWay}"/>
                                     </TextBlock>
                                 </StackPanel>
                             </StackPanel>
@@ -296,16 +298,16 @@
                                         <ComboBoxItem Content="J"/>
                                         <ComboBoxItem Content="FORF"/>
                                     </ComboBox>
-                                    <TextBox Grid.Column="4" Text="{Binding PrixUnitaire}" 
-                                             Watermark="0.00" Margin="2,0"/>
+                                    <NumericUpDown Grid.Column="4" Value="{Binding PrixUnitaire}" 
+                                                   Minimum="0" Increment="1" FormatString="0.##" Margin="2,0"/>
                                     <ComboBox Grid.Column="5" SelectedIndex="{Binding TauxTVAIndex}" Margin="2,0"
                                               HorizontalAlignment="Stretch">
                                         <ComboBoxItem Content="19%"/>
                                         <ComboBoxItem Content="9%"/>
                                         <ComboBoxItem Content="0%"/>
                                     </ComboBox>
-                                    <TextBox Grid.Column="6" Text="{Binding Remise}" 
-                                             Watermark="0" Margin="2,0"/>
+                                    <NumericUpDown Grid.Column="6" Value="{Binding Remise}" 
+                                                   Minimum="0" Increment="1" FormatString="0.##" Margin="2,0"/>
                                     <ComboBox Grid.Column="7" SelectedIndex="{Binding TypeRemiseIndex}" Margin="2,0"
                                               HorizontalAlignment="Stretch">
                                         <ComboBoxItem Content="%"/>
@@ -315,7 +317,7 @@
                                                VerticalAlignment="Center" HorizontalAlignment="Right" Margin="5,0"
                                                FontWeight="Medium"/>
                                     <Button Grid.Column="9" Content="🗑️" 
-                                            Command="{Binding $parent[ItemsControl].((vm:NouvelleFactureViewModel)DataContext).SupprimerLigneCommand}"
+                                            Command="{Binding #Root.DataContext.SupprimerLigneCommand}"
                                             CommandParameter="{Binding}"
                                             Padding="5" Background="Transparent"/>
                                 </Grid>
@@ -358,7 +360,7 @@
                     <StackPanel Grid.Column="0" Spacing="15">
                         <TextBlock Text="Remise globale sur Total H.T" FontSize="14" FontWeight="SemiBold" Foreground="#64748B"/>
                         <StackPanel Orientation="Horizontal" Spacing="10">
-                            <TextBox Text="{Binding RemiseGlobale}" Width="100" Watermark="0"/>
+                            <NumericUpDown Value="{Binding RemiseGlobale}" Width="120" Minimum="0" Increment="1" FormatString="0.##"/>
                             <ComboBox SelectedIndex="{Binding TypeRemiseGlobaleIndex}" Width="80">
                                 <ComboBoxItem Content="%"/>
                                 <ComboBoxItem Content="DA"/>

@@ -19,8 +19,8 @@
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="{Binding Business.Nom}" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
                     <TextBlock Foreground="#64748B" FontSize="13">
-                        <Run Text="{Binding Business.Ville}"/><Run Text=", "/><Run Text="{Binding Business.Wilaya}"/>
-                        <Run Text=" • "/><Run Text="{Binding Business.Activite}"/>
+                        <Run Text="{Binding Business.Ville, Mode=OneWay}"/><Run Text=", "/><Run Text="{Binding Business.Wilaya, Mode=OneWay}"/>
+                        <Run Text=" • "/><Run Text="{Binding Business.Activite, Mode=OneWay}"/>
                     </TextBlock>
                 </StackPanel>
                 
@@ -146,9 +146,9 @@
                                             </StackPanel>
                                             <TextBlock Text="{Binding ClientNom}" Foreground="#64748B" FontSize="13"/>
                                             <TextBlock Foreground="#94A3B8" FontSize="12">
-                                                <Run Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}"/>
+                                                <Run Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}, Mode=OneWay}"/>
                                                 <Run Text=" • "/>
-                                                <Run Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}"/>
+                                                <Run Text="{Binding MontantTotal, StringFormat={}{0:N2} DA, Mode=OneWay}"/>
                                             </TextBlock>
                                         </StackPanel>
                                         

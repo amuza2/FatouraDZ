@@ -68,7 +68,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="models:Business">
                             <Button Background="Transparent" Padding="0" Margin="0,0,0,10"
-                                    Command="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).SelectBusinessCommand}"
+                                    Command="{Binding $parent[ItemsControl].DataContext.SelectBusinessCommand}"
                                     CommandParameter="{Binding}"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Stretch">
@@ -92,7 +92,7 @@
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                                             <TextBlock Text="{Binding Nom}" FontSize="18" FontWeight="SemiBold" Foreground="#1E293B"/>
                                             <TextBlock Foreground="#64748B" FontSize="13">
-                                                <Run Text="{Binding Ville}"/><Run Text=", "/><Run Text="{Binding Wilaya}"/>
+                                                <Run Text="{Binding Ville, Mode=OneWay}"/><Run Text=", "/><Run Text="{Binding Wilaya, Mode=OneWay}"/>
                                             </TextBlock>
                                             <TextBlock Text="{Binding Activite}" Foreground="#94A3B8" FontSize="12"
                                                        IsVisible="{Binding Activite, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
@@ -100,9 +100,9 @@
                                         
                                         <!-- Archive/Restore button -->
                                         <Button Grid.Column="2" 
-                                                Content="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).ArchiveButtonText}"
-                                                Background="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).ArchiveButtonBackground}"
-                                                Command="{Binding $parent[ItemsControl].((vm:BusinessListViewModel)DataContext).ToggleArchiveCommand}"
+                                                Content="{Binding $parent[ItemsControl].DataContext.ArchiveButtonText}"
+                                                Background="{Binding $parent[ItemsControl].DataContext.ArchiveButtonBackground}"
+                                                Command="{Binding $parent[ItemsControl].DataContext.ToggleArchiveCommand}"
                                                 CommandParameter="{Binding}"
                                                 Padding="15,10"
                                                 VerticalAlignment="Center"/>

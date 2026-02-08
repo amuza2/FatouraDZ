@@ -80,15 +80,15 @@
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                             <TextBlock Text="{Binding Nom}" FontSize="16" FontWeight="SemiBold" Foreground="#1E293B"/>
                                             <TextBlock Foreground="#64748B" FontSize="13">
-                                                <Run Text="📍 "/><Run Text="{Binding Adresse}"/>
+                                                <Run Text="📍 "/><Run Text="{Binding Adresse, Mode=OneWay}"/>
                                             </TextBlock>
                                             <StackPanel Orientation="Horizontal" Spacing="15">
                                                 <TextBlock Foreground="#94A3B8" FontSize="12">
-                                                    <Run Text="📞 "/><Run Text="{Binding Telephone}"/>
+                                                    <Run Text="📞 "/><Run Text="{Binding Telephone, Mode=OneWay}"/>
                                                 </TextBlock>
                                                 <TextBlock Foreground="#94A3B8" FontSize="12"
                                                            IsVisible="{Binding Email, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <Run Text="✉️ "/><Run Text="{Binding Email}"/>
+                                                    <Run Text="✉️ "/><Run Text="{Binding Email, Mode=OneWay}"/>
                                                 </TextBlock>
                                             </StackPanel>
                                         </StackPanel>
@@ -96,12 +96,12 @@
                                         <!-- Actions -->
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                             <Button Content="✏️ Modifier"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ClientListViewModel)DataContext).ModifierClientCommand}"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.ModifierClientCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="12,8"/>
                                             <Button Content="🗑️"
                                                     Background="#FEE2E2"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ClientListViewModel)DataContext).SupprimerClientCommand}"
+                                                    Command="{Binding $parent[ItemsControl].DataContext.SupprimerClientCommand}"
                                                     CommandParameter="{Binding}"
                                                     Padding="10,8"/>
                                         </StackPanel>

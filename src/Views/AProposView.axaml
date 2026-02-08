@@ -42,7 +42,7 @@
                 <StackPanel Spacing="8" HorizontalAlignment="Center">
                     <TextBlock HorizontalAlignment="Center">
                         <Run Text="Développé par " Foreground="#64748B"/>
-                        <Run Text="{Binding Auteur}" FontWeight="SemiBold" Foreground="#1E293B"/>
+                        <Run Text="{Binding Auteur, Mode=OneWay}" FontWeight="SemiBold" Foreground="#1E293B"/>
                     </TextBlock>
                     <TextBlock Text="{Binding Annee, StringFormat='© {0} - Tous droits réservés'}" 
                                Foreground="#94A3B8" FontSize="12" HorizontalAlignment="Center"/>
