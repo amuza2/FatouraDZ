@@ -114,9 +114,15 @@
             </ScrollViewer>
 
             <!-- Client Form -->
-            <ScrollViewer Padding="30,20" IsVisible="{Binding AfficherFormulaire}">
-                <Border Background="White" CornerRadius="12" Padding="30" MaxWidth="700" HorizontalAlignment="Center">
+            <ScrollViewer Padding="30,20" IsVisible="{Binding AfficherFormulaire}" HorizontalScrollBarVisibility="Disabled">
+                <Border Background="White" CornerRadius="12" Padding="30">
                     <StackPanel Spacing="20">
+                        <StackPanel.Styles>
+                            <Style Selector="TextBox">
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter Property="MinWidth" Value="0"/>
+                            </Style>
+                        </StackPanel.Styles>
                         <TextBlock Text="{Binding TitreFormulaire}" FontSize="24" FontWeight="Bold" Foreground="#1E293B"/>
                         
                         <!-- Error message -->
@@ -207,7 +213,7 @@
                         </StackPanel>
 
                         <!-- Buttons -->
-                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,20,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,20,0,30">
                             <Button Grid.Column="1" Content="Annuler" 
                                     Command="{Binding AnnulerFormulaireCommand}"
                                     Padding="20,12" Margin="0,0,10,0"/>

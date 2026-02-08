@@ -29,8 +29,17 @@
             </Grid>
         </Border>
         
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="20">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="20">
             <StackPanel Spacing="20">
+            <StackPanel.Styles>
+                <Style Selector="TextBox">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                </Style>
+                <Style Selector="ItemsControl > ContentPresenter">
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                </Style>
+            </StackPanel.Styles>
 
             <!-- Message d'erreur -->
             <Border Background="#FFEBEE" BorderBrush="#EF4444" BorderThickness="1" 
@@ -65,7 +74,7 @@
                         <!-- Numéro de facture -->
                         <StackPanel Grid.Column="2" Spacing="4">
                             <TextBlock Text="Numéro de facture" FontWeight="Medium"/>
-                            <TextBox Text="{Binding NumeroFacture}"/>
+                            <TextBox Text="{Binding NumeroFacture}" HorizontalAlignment="Stretch"/>
                         </StackPanel>
                         
                         <!-- Mode de paiement -->
@@ -152,7 +161,7 @@
                             <StackPanel Spacing="4">
                                 <TextBlock Text="N° Pièce (chèque, virement, etc.)" FontWeight="Medium"/>
                                 <TextBox Text="{Binding PaiementNumeroPiece}" 
-                                         Watermark="N° chèque, N° virement..." MaxWidth="300" HorizontalAlignment="Left"/>
+                                         Watermark="N° chèque, N° virement..." HorizontalAlignment="Stretch"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -165,12 +174,13 @@
                     <TextBlock Text="Client" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
                     
                     <!-- Search and select client - two ways -->
-                    <Grid ColumnDefinitions="*,15,*">
+                    <Grid ColumnDefinitions="*,20,*">
                         <!-- Search box with results dropdown -->
                         <StackPanel Grid.Column="0" Spacing="5">
                             <TextBox x:Name="RechercheClientTextBox"
                                      TextChanged="OnRechercheClientTextChanged"
-                                     Watermark="🔍 Rechercher un client..."/>
+                                     Watermark="🔍 Rechercher un client..."
+                                     HorizontalAlignment="Stretch"/>
                             
                             <!-- Search results dropdown -->
                             <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" 
