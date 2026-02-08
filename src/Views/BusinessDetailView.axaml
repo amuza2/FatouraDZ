@@ -25,9 +25,9 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
-                    <Button Content="Modifier" 
+                    <!-- <Button Content="Modifier" 
                             Command="{Binding EditBusinessCommand}"
-                            Padding="15,10"/>
+                            Padding="15,10"/> -->
                     <Button Content="+ Nouvelle facture" 
                             Classes="primary"
                             Command="{Binding CreateInvoiceCommand}"

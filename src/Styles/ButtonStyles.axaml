@@ -112,6 +112,7 @@
     <Style Selector="Button.success:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource SuccessHoverBrush}"/>
         <Setter Property="BorderBrush" Value="#047857"/>
+        <Setter Property="Foreground" Value="white"/>
     </Style>
     <Style Selector="Button.success:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="#047857"/>

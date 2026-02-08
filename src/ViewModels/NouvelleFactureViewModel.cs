@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia.Threading;
 using FatouraDZ.Models;
 using FatouraDZ.Services;
 
@@ -406,17 +407,45 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     public async Task InitialiserEditionAsync()
     {
+        Console.WriteLine($"[DEBUG] InitialiserEditionAsync called. BusinessId={_businessId}, ClientNom='{ClientNom}', ClientTelephone='{ClientTelephone}'");
+        
         await ChargerClientsDisponiblesAsync();
+        
+        Console.WriteLine($"[DEBUG] TousLesClients count: {TousLesClients.Count}");
+        foreach (var c in TousLesClients)
+        {
+            Console.WriteLine($"[DEBUG]   Client: '{c.Nom}' / '{c.Telephone}'");
+        }
         
         // Try to match the client from invoice data
         if (!string.IsNullOrEmpty(ClientNom))
         {
+            // Try exact match first (name + phone)
             var match = TousLesClients.FirstOrDefault(c => 
-                c.Nom == ClientNom && c.Telephone == ClientTelephone);
+                string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase) && 
+                string.Equals(c.Telephone?.Trim(), ClientTelephone?.Trim(), StringComparison.OrdinalIgnoreCase));
+            
+            Console.WriteLine($"[DEBUG] Name+Phone match: {match != null}");
+            
+            // Fallback: match by name only
+            match ??= TousLesClients.FirstOrDefault(c => 
+                string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase));
+            
+            Console.WriteLine($"[DEBUG] Final match: {match != null} -> {match?.Nom}");
+            
             if (match != null)
             {
-                ClientSelectionne = match;
+                // Defer to next UI frame so ComboBox finishes updating ItemsSource
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ClientSelectionne = match;
+                    Console.WriteLine($"[DEBUG] ClientSelectionne set to: {ClientSelectionne?.Nom}");
+                });
             }
+        }
+        else
+        {
+            Console.WriteLine("[DEBUG] ClientNom is empty - no matching attempted");
         }
     }
 
