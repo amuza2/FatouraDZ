@@ -17,26 +17,51 @@ public class DatabaseService : IDatabaseService
         await context.Database.EnsureCreatedAsync();
         
         // Run migrations
-        await MigrateDiscountColumnsAsync(context);
+        await MigrateColumnsAsync(context);
         await MigrateClientTableAsync(context);
     }
 
-    private async Task MigrateDiscountColumnsAsync(AppDbContext context)
+    private async Task MigrateColumnsAsync(AppDbContext context)
     {
         var connection = context.Database.GetDbConnection();
         await connection.OpenAsync();
         
         try
         {
-            // Check and add discount columns to LignesFacture table
+            // LignesFacture columns
+            await AddColumnIfNotExistsAsync(connection, "LignesFacture", "Reference", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "LignesFacture", "Unite", "INTEGER DEFAULT 0");
             await AddColumnIfNotExistsAsync(connection, "LignesFacture", "Remise", "REAL DEFAULT 0");
             await AddColumnIfNotExistsAsync(connection, "LignesFacture", "TypeRemise", "INTEGER DEFAULT 0");
             await AddColumnIfNotExistsAsync(connection, "LignesFacture", "MontantRemise", "REAL DEFAULT 0");
             
-            // Check and add discount columns to Factures table
+            // Factures - discount columns
             await AddColumnIfNotExistsAsync(connection, "Factures", "RemiseGlobale", "REAL DEFAULT 0");
             await AddColumnIfNotExistsAsync(connection, "Factures", "TypeRemiseGlobale", "INTEGER DEFAULT 0");
             await AddColumnIfNotExistsAsync(connection, "Factures", "MontantRemiseGlobale", "REAL DEFAULT 0");
+            
+            // Factures - payment details
+            await AddColumnIfNotExistsAsync(connection, "Factures", "PaiementReference", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "PaiementValeur", "REAL DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "PaiementNumeroPiece", "TEXT");
+            
+            // Factures - client extended fields
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientBusinessType", "INTEGER DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientFormeJuridique", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientFax", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientCapitalSocial", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientNumeroImmatriculation", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "ClientActivite", "TEXT");
+            
+            // Factures - avoir, retenue, proforma, archive
+            await AddColumnIfNotExistsAsync(connection, "Factures", "NumeroFactureOrigine", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "TauxRetenueSource", "REAL");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "RetenueSource", "REAL DEFAULT 0");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "DateValidite", "TEXT");
+            await AddColumnIfNotExistsAsync(connection, "Factures", "IsArchived", "INTEGER DEFAULT 0");
+            
+            // Businesses - archive
+            await AddColumnIfNotExistsAsync(connection, "Businesses", "IsArchived", "INTEGER DEFAULT 0");
         }
         finally
         {
@@ -335,8 +360,10 @@ public class DatabaseService : IDatabaseService
             copie.Lignes.Add(new LigneFacture
             {
                 NumeroLigne = ligne.NumeroLigne,
+                Reference = ligne.Reference,
                 Designation = ligne.Designation,
                 Quantite = ligne.Quantite,
+                Unite = ligne.Unite,
                 PrixUnitaire = ligne.PrixUnitaire,
                 TauxTVA = ligne.TauxTVA,
                 Remise = ligne.Remise,

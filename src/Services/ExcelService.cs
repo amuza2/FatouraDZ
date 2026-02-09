@@ -163,7 +163,7 @@ public class ExcelService : IExcelService
             foreach (var ligne in facture.Lignes)
             {
                 col = 1;
-                worksheet.Cell(row, col++).Value = ligne.Reference ?? "";
+                worksheet.Cell(row, col++).Value = !string.IsNullOrEmpty(ligne.Reference) ? ligne.Reference : ligne.NumeroLigne.ToString();
                 worksheet.Cell(row, col++).Value = ligne.Designation;
                 worksheet.Cell(row, col++).Value = ligne.Quantite;
                 worksheet.Cell(row, col++).Value = ligne.Unite.ToString();
