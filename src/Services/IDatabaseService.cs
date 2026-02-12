@@ -22,6 +22,7 @@ public interface IDatabaseService
     Task SaveFactureAsync(Facture facture);
     Task DeleteFactureAsync(int id);
     Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut);
+    Task UpdateCheminPdfAsync(int id, string cheminPdf);
     Task<Facture> DupliquerFactureAsync(int id);
     
     // Clients

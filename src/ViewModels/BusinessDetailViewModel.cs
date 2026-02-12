@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,6 +34,12 @@ public partial class BusinessDetailViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _archiveFilterIndex = 0; // 0 = Active, 1 = Archived
+
+    // Year filter
+    public ObservableCollection<int> AnneesDisponibles { get; } = new();
+
+    [ObservableProperty]
+    private int _anneeSelectionnee = DateTime.Now.Year;
 
     // Dynamic button properties based on archive filter
     public string ArchiveButtonContent => ArchiveFilterIndex == 0 ? "📦" : "♻️";
@@ -91,9 +98,15 @@ public partial class BusinessDetailViewModel : ViewModelBase
         {
             var factures = await _databaseService.GetFacturesByBusinessIdAsync(Business.Id);
             
-            // Apply archive filter first
+            // Update available years from all invoices
+            MettreAJourAnneesDisponibles(factures);
+            
+            // Filter by selected year
+            var yearFiltered = factures.Where(f => f.DateFacture.Year == AnneeSelectionnee).ToList();
+            
+            // Apply archive filter
             var showArchived = ArchiveFilterIndex == 1;
-            var filtered = factures.Where(f => f.IsArchived == showArchived);
+            var filtered = yearFiltered.Where(f => f.IsArchived == showArchived);
 
             if (TypeFactureIndex > 0)
             {
@@ -135,11 +148,11 @@ public partial class BusinessDetailViewModel : ViewModelBase
                 Factures.Add(facture);
             }
 
-            // Update statistics
-            NombreFactures = factures.Count;
-            ChiffreAffaires = factures.Where(f => f.Statut != StatutFacture.Annulee).Sum(f => f.MontantTotal);
-            FacturesEnAttente = factures.Count(f => f.Statut == StatutFacture.EnAttente);
-            FacturesPayees = factures.Count(f => f.Statut == StatutFacture.Payee);
+            // Update statistics for selected year (all invoices in that year, not just filtered by type/status)
+            NombreFactures = yearFiltered.Count;
+            ChiffreAffaires = yearFiltered.Where(f => f.Statut != StatutFacture.Annulee && !f.IsArchived).Sum(f => f.MontantTotal);
+            FacturesEnAttente = yearFiltered.Count(f => f.Statut == StatutFacture.EnAttente && !f.IsArchived);
+            FacturesPayees = yearFiltered.Count(f => f.Statut == StatutFacture.Payee && !f.IsArchived);
         }
         catch (Exception ex)
         {
@@ -151,9 +164,39 @@ public partial class BusinessDetailViewModel : ViewModelBase
         }
     }
 
+    private void MettreAJourAnneesDisponibles(List<Facture> factures)
+    {
+        var years = factures
+            .Select(f => f.DateFacture.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToList();
+        
+        // Always include current year
+        if (!years.Contains(DateTime.Now.Year))
+            years.Insert(0, DateTime.Now.Year);
+        
+        // Only update if the list changed
+        var currentYears = AnneesDisponibles.ToList();
+        if (!years.SequenceEqual(currentYears))
+        {
+            var selectedYear = AnneeSelectionnee;
+            AnneesDisponibles.Clear();
+            foreach (var year in years.OrderByDescending(y => y))
+                AnneesDisponibles.Add(year);
+            
+            // Restore selection (or default to current year)
+            if (AnneesDisponibles.Contains(selectedYear))
+                AnneeSelectionnee = selectedYear;
+            else
+                AnneeSelectionnee = AnneesDisponibles.First();
+        }
+    }
+
     partial void OnRechercheChanged(string value) => _ = ChargerFacturesAsync();
     partial void OnTypeFactureIndexChanged(int value) => _ = ChargerFacturesAsync();
     partial void OnStatutIndexChanged(int value) => _ = ChargerFacturesAsync();
+    partial void OnAnneeSelectionneeChanged(int value) => _ = ChargerFacturesAsync();
     partial void OnArchiveFilterIndexChanged(int value)
     {
         OnPropertyChanged(nameof(ArchiveButtonContent));

@@ -46,14 +46,6 @@
                     <TextBlock Text="{Binding ErreurMessage}" Foreground="#EF4444" TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- Message de succès -->
-                <Border Background="#E8F5E9" BorderBrush="#10B981" BorderThickness="1" 
-                        CornerRadius="4" Padding="15" VerticalAlignment="Top" HorizontalAlignment="Center"
-                        Margin="0,0,0,10"
-                        IsVisible="{Binding EstSauvegarde}">
-                    <TextBlock Text="✓ Facture enregistrée avec succès" Foreground="#10B981"/>
-                </Border>
-
                 <!-- Image de prévisualisation -->
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" 
                               VerticalScrollBarVisibility="Auto"
@@ -90,6 +82,15 @@
                         Command="{Binding AnnulerCommand}"
                         Padding="20,12"/>
             </StackPanel>
+        </Border>
+        <!-- Message de succès - overlay -->
+        <Border Grid.RowSpan="3" VerticalAlignment="Top" HorizontalAlignment="Center"
+                Margin="0,80,0,0" ZIndex="100"
+                Background="#E8F5E9" BorderBrush="#10B981" BorderThickness="1" 
+                CornerRadius="8" Padding="20,12"
+                BoxShadow="0 4 12 0 #40000000"
+                IsVisible="{Binding EstSauvegarde}">
+            <TextBlock Text="✓ Facture enregistrée avec succès" Foreground="#10B981" FontWeight="SemiBold"/>
         </Border>
     </Grid>
 </Window>

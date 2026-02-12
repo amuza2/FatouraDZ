@@ -283,6 +283,18 @@ public class DatabaseService : IDatabaseService
         }
     }
 
+    public async Task UpdateCheminPdfAsync(int id, string cheminPdf)
+    {
+        await using var context = new AppDbContext();
+        var facture = await context.Factures.FindAsync(id);
+        if (facture != null)
+        {
+            facture.CheminPDF = cheminPdf;
+            facture.DateModification = DateTime.Now;
+            await context.SaveChangesAsync();
+        }
+    }
+
     public async Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche)
     {
         await using var context = new AppDbContext();

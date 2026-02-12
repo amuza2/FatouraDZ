@@ -64,6 +64,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[ERROR] GenererPreviewAsync: {ex}");
             ErreurMessage = $"Erreur lors de la génération de l'aperçu : {ex.Message}";
         }
         finally
@@ -91,7 +92,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         return document.GenerateImages(new ImageGenerationSettings
         {
             ImageFormat = ImageFormat.Png,
-            RasterDpi = 150
+            RasterDpi = 120
         }).First();
     }
 
@@ -501,15 +502,19 @@ public partial class PreviewFactureViewModel : ViewModelBase
                 var cheminPdf = file.Path.LocalPath;
                 await _pdfService.GenererPdfAsync(Facture, Business, cheminPdf);
                 
-                // Mettre à jour la facture avec le chemin PDF
+                // Mettre à jour le chemin PDF uniquement si la facture existe déjà en base
                 Facture.CheminPDF = cheminPdf;
-                await _databaseService.SaveFactureAsync(Facture);
+                if (Facture.Id > 0)
+                {
+                    await _databaseService.UpdateCheminPdfAsync(Facture.Id, cheminPdf);
+                }
                 
-                EstSauvegarde = true;
+                _ = AfficherSuccesTemporaireAsync();
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[ERROR] EnregistrerPdfAsync: {ex}");
             ErreurMessage = $"Erreur lors de l'enregistrement : {ex.Message}";
         }
     }
@@ -535,8 +540,16 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[ERROR] ImprimerAsync: {ex}");
             ErreurMessage = $"Erreur lors de l'impression : {ex.Message}";
         }
+    }
+
+    private async Task AfficherSuccesTemporaireAsync()
+    {
+        EstSauvegarde = true;
+        await Task.Delay(3000);
+        EstSauvegarde = false;
     }
 
     [RelayCommand]
@@ -587,11 +600,12 @@ public partial class PreviewFactureViewModel : ViewModelBase
             {
                 var cheminExcel = file.Path.LocalPath;
                 await ServiceLocator.ExcelService.GenererExcelAsync(Facture, Business, cheminExcel);
-                EstSauvegarde = true;
+                _ = AfficherSuccesTemporaireAsync();
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[ERROR] EnregistrerExcelAsync: {ex}");
             ErreurMessage = $"Erreur lors de l'enregistrement Excel : {ex.Message}";
         }
     }

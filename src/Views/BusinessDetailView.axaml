@@ -38,23 +38,34 @@
 
         <!-- Statistics -->
         <Border Grid.Row="1" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="*,*,*,*">
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding NombreFactures}" FontSize="24" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Factures" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*">
+                <!-- Year selector -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,0,0,12">
+                    <TextBlock Text="Année :" VerticalAlignment="Center" Foreground="#64748B" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding AnneesDisponibles}" 
+                              SelectedItem="{Binding AnneeSelectionnee}"
+                              Width="120" HorizontalContentAlignment="Center"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding ChiffreAffaires, StringFormat={}{0:N2} DA}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Chiffre d'affaires" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding FacturesEnAttente}" FontSize="24" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Center"/>
-                    <TextBlock Text="En attente" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
-                <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                    <TextBlock Text="{Binding FacturesPayees}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Payées" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
-                </StackPanel>
+                
+                <!-- Stats row -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*">
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding NombreFactures}" FontSize="24" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Factures" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ChiffreAffaires, StringFormat={}{0:N2} DA}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Chiffre d'affaires" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding FacturesEnAttente}" FontSize="24" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Center"/>
+                        <TextBlock Text="En attente" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding FacturesPayees}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Payées" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 
