@@ -8,6 +8,6 @@ public partial class AProposViewModel : ViewModelBase
     public string Version => "1.0.0";
     public string Description => "Application de facturation pour entrepreneurs individuels et auto-entrepreneurs en Algérie, conforme aux exigences légales algériennes.";
     public string Auteur => "FatouraDZ Team";
-    public string Annee => "2025";
+    public string Annee => "2026";
     public string Technologies => "Avalonia UI • .NET • SQLite • QuestPDF";
 }
