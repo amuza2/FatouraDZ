@@ -5,6 +5,15 @@
              x:Class="FatouraDZ.Views.BusinessDetailView"
              x:DataType="vm:BusinessDetailViewModel">
     
+    <UserControl.Styles>
+        <Style Selector="StackPanel.invoice-actions">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="Border.invoice-row:pointerover StackPanel.invoice-actions">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+    </UserControl.Styles>
+    
     <Grid RowDefinitions="Auto,Auto,*">
         <!-- Header with back button -->
         <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -128,22 +137,12 @@
                     <ItemsControl ItemsSource="{Binding Factures}" x:Name="FacturesItemsControl">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:Facture">
-                                <Border Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,8"
+                                <Border Classes="invoice-row" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,8"
                                         BorderBrush="#E2E8F0" BorderThickness="1"
                                         Cursor="Hand"
                                         Tag="{Binding}"
                                         PointerPressed="OnInvoiceBorderPointerPressed">
-                                    <Border.ContextMenu>
-                                        <ContextMenu x:CompileBindings="False">
-                                            <MenuItem Header="👁️ Aperçu" Click="OnPreviewInvoiceClick"/>
-                                            <MenuItem Header="✏️ Modifier" Click="OnEditInvoiceClick"/>
-                                            <Separator/>
-                                            <MenuItem Header="💰 Marquer payée/non payée" Click="OnTogglePaymentClick"/>
-                                            <Separator/>
-                                            <MenuItem Header="📦 Archiver/Restaurer" Click="OnToggleArchiveClick"/>
-                                        </ContextMenu>
-                                    </Border.ContextMenu>
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
                                         <!-- Invoice info -->
                                         <StackPanel Grid.Column="0" Spacing="3">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
@@ -163,10 +162,27 @@
                                             </TextBlock>
                                         </StackPanel>
                                         
+                                        <!-- Action buttons (visible on hover) -->
+                                        <StackPanel Classes="invoice-actions" Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                                                    VerticalAlignment="Center" Margin="10,0">
+                                            <Button Content="👁️" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand" ToolTip.Tip="Aperçu"
+                                                    Click="OnPreviewInvoiceClick"/>
+                                            <Button Content="✏️" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand" ToolTip.Tip="Modifier"
+                                                    Click="OnEditInvoiceClick"/>
+                                            <Button Content="💰" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand" ToolTip.Tip="Marquer payée/non payée"
+                                                    Click="OnTogglePaymentClick"/>
+                                            <Button Content="📦" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand" ToolTip.Tip="Archiver/Restaurer"
+                                                    Click="OnToggleArchiveClick"/>
+                                        </StackPanel>
+
                                         <!-- Amount -->
-                                        <TextBlock Grid.Column="1" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
+                                        <TextBlock Grid.Column="2" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" 
                                                    FontWeight="Bold" FontSize="16" Foreground="#1E293B"
-                                                   VerticalAlignment="Center" Margin="20,0"/>
+                                                   VerticalAlignment="Center" Margin="10,0"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

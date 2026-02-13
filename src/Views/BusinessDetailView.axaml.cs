@@ -8,8 +8,6 @@ namespace FatouraDZ.Views;
 
 public partial class BusinessDetailView : UserControl
 {
-    private Facture? _currentContextMenuFacture;
-    
     public BusinessDetailView()
     {
         InitializeComponent();
@@ -19,9 +17,6 @@ public partial class BusinessDetailView : UserControl
     {
         if (sender is Border border && border.Tag is Facture facture)
         {
-            _currentContextMenuFacture = facture;
-            
-            // Left click opens preview
             var point = e.GetCurrentPoint(border);
             if (point.Properties.IsLeftButtonPressed && DataContext is BusinessDetailViewModel vm)
             {
@@ -32,33 +27,25 @@ public partial class BusinessDetailView : UserControl
     
     private void OnPreviewInvoiceClick(object? sender, RoutedEventArgs e)
     {
-        if (_currentContextMenuFacture != null && DataContext is BusinessDetailViewModel vm)
-        {
-            vm.PreviewInvoiceCommand.Execute(_currentContextMenuFacture);
-        }
+        if (sender is Button btn && btn.DataContext is Facture facture && DataContext is BusinessDetailViewModel vm)
+            vm.PreviewInvoiceCommand.Execute(facture);
     }
     
     private void OnEditInvoiceClick(object? sender, RoutedEventArgs e)
     {
-        if (_currentContextMenuFacture != null && DataContext is BusinessDetailViewModel vm)
-        {
-            vm.EditInvoiceCommand.Execute(_currentContextMenuFacture);
-        }
+        if (sender is Button btn && btn.DataContext is Facture facture && DataContext is BusinessDetailViewModel vm)
+            vm.EditInvoiceCommand.Execute(facture);
     }
     
     private void OnTogglePaymentClick(object? sender, RoutedEventArgs e)
     {
-        if (_currentContextMenuFacture != null && DataContext is BusinessDetailViewModel vm)
-        {
-            vm.TogglePaymentStatusCommand.Execute(_currentContextMenuFacture);
-        }
+        if (sender is Button btn && btn.DataContext is Facture facture && DataContext is BusinessDetailViewModel vm)
+            vm.TogglePaymentStatusCommand.Execute(facture);
     }
     
     private void OnToggleArchiveClick(object? sender, RoutedEventArgs e)
     {
-        if (_currentContextMenuFacture != null && DataContext is BusinessDetailViewModel vm)
-        {
-            vm.ToggleArchiveInvoiceCommand.Execute(_currentContextMenuFacture);
-        }
+        if (sender is Button btn && btn.DataContext is Facture facture && DataContext is BusinessDetailViewModel vm)
+            vm.ToggleArchiveInvoiceCommand.Execute(facture);
     }
 }
