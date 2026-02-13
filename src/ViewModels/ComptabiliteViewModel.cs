@@ -50,6 +50,21 @@ public partial class ComptabiliteViewModel : ViewModelBase
     [ObservableProperty]
     private bool _afficherArchivees;
 
+    // Pagination
+    [ObservableProperty]
+    private int _pageActuelle = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private int _totalResultats;
+
+    [ObservableProperty]
+    private int _taillePage = 15;
+
+    public int[] TaillePageOptions { get; } = [10, 15, 25, 50];
+
     // Statistics
     [ObservableProperty]
     private decimal _chiffreAffaires;
@@ -195,9 +210,14 @@ public partial class ComptabiliteViewModel : ViewModelBase
             filtered = filtered.Where(t => t.Categorie == CategorieFiltre);
 
         var list = filtered.ToList();
+        TotalResultats = list.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)TaillePage));
+        if (PageActuelle > TotalPages) PageActuelle = TotalPages;
+
+        var paged = list.Skip((PageActuelle - 1) * TaillePage).Take(TaillePage).ToList();
 
         Transactions.Clear();
-        foreach (var t in list)
+        foreach (var t in paged)
             Transactions.Add(t);
 
         // Statistics based on date range — always exclude archived (canceled)
@@ -239,11 +259,25 @@ public partial class ComptabiliteViewModel : ViewModelBase
         AppliquerFiltres();
     }
 
-    partial void OnDateDebutChanged(DateTimeOffset value) { if (!_suppressFilters) AppliquerFiltres(); }
-    partial void OnDateFinChanged(DateTimeOffset value) { if (!_suppressFilters) AppliquerFiltres(); }
-    partial void OnTypeFiltreChanged(int value) { if (!_suppressFilters) AppliquerFiltres(); }
-    partial void OnCategorieFiltreChanged(string value) { if (!_suppressFilters) AppliquerFiltres(); }
-    partial void OnAfficherArchiveesChanged(bool value) { if (!_suppressFilters) AppliquerFiltres(); }
+    partial void OnDateDebutChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnDateFinChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnTypeFiltreChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnCategorieFiltreChanged(string value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnAfficherArchiveesChanged(bool value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnPageActuelleChanged(int value) { if (!_suppressFilters) AppliquerFiltres(); }
+    partial void OnTaillePageChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+
+    [RelayCommand]
+    private void PagePrecedente()
+    {
+        if (PageActuelle > 1) PageActuelle--;
+    }
+
+    [RelayCommand]
+    private void PageSuivante()
+    {
+        if (PageActuelle < TotalPages) PageActuelle++;
+    }
 
     // Commands
     [RelayCommand]
