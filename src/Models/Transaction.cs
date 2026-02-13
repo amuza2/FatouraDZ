@@ -22,6 +22,8 @@ public class Transaction
     public int? FactureId { get; set; }
     public string? NumeroFacture { get; set; }
     
+    public bool IsArchived { get; set; } = false;
+    
     public DateTime DateCreation { get; set; } = DateTime.Now;
     public DateTime? DateModification { get; set; }
     

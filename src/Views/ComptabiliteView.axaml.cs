@@ -39,12 +39,12 @@ public partial class ComptabiliteView : UserControl
         }
     }
 
-    private void OnDeleteTransactionClick(object? sender, RoutedEventArgs e)
+    private void OnArchiveTransactionClick(object? sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.DataContext is Transaction transaction)
         {
             if (this.DataContext is ComptabiliteViewModel vm)
-                vm.DemanderSuppressionTransactionCommand.Execute(transaction);
+                vm.ArchiverTransactionCommand.Execute(transaction);
         }
     }
 }

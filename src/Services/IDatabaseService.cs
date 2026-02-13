@@ -41,6 +41,7 @@ public interface IDatabaseService
     Task<List<Transaction>> GetTransactionsByBusinessIdAsync(int businessId);
     Task SaveTransactionAsync(Transaction transaction);
     Task DeleteTransactionAsync(int id);
+    Task ArchiveTransactionAsync(int id);
     Task<Transaction?> GetTransactionByFactureIdAsync(int factureId);
     
     // Catégories de transactions

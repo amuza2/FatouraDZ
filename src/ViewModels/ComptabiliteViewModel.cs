@@ -46,6 +46,10 @@ public partial class ComptabiliteViewModel : ViewModelBase
     [ObservableProperty]
     private string _categorieFiltre = "Toutes";
 
+    // Show archived toggle
+    [ObservableProperty]
+    private bool _afficherArchivees;
+
     // Statistics
     [ObservableProperty]
     private decimal _chiffreAffaires;
@@ -111,14 +115,6 @@ public partial class ComptabiliteViewModel : ViewModelBase
     [ObservableProperty]
     private int _nouvelleCategorieTypeIndex; // 0=Recette, 1=Dépense
 
-    // Confirmation dialog
-    [ObservableProperty]
-    private bool _showConfirmDialog;
-
-    [ObservableProperty]
-    private string _confirmDialogMessage = string.Empty;
-
-    private Transaction? _pendingDeleteTransaction;
     private int _editingTransactionId;
 
     // Navigation
@@ -177,6 +173,12 @@ public partial class ComptabiliteViewModel : ViewModelBase
     {
         var filtered = _toutesTransactions.AsEnumerable();
 
+        // Show archived or active
+        if (AfficherArchivees)
+            filtered = filtered.Where(t => t.IsArchived);
+        else
+            filtered = filtered.Where(t => !t.IsArchived);
+
         // Date range filter
         var debut = DateDebut.Date;
         var fin = DateFin.Date;
@@ -198,9 +200,9 @@ public partial class ComptabiliteViewModel : ViewModelBase
         foreach (var t in list)
             Transactions.Add(t);
 
-        // Statistics based on date range (all types, ignore type/category filter)
+        // Statistics based on date range — always exclude archived (canceled)
         var dateFiltered = _toutesTransactions
-            .Where(t => t.Date.Date >= debut && t.Date.Date <= fin)
+            .Where(t => !t.IsArchived && t.Date.Date >= debut && t.Date.Date <= fin)
             .ToList();
 
         ChiffreAffaires = dateFiltered
@@ -241,6 +243,7 @@ public partial class ComptabiliteViewModel : ViewModelBase
     partial void OnDateFinChanged(DateTimeOffset value) { if (!_suppressFilters) AppliquerFiltres(); }
     partial void OnTypeFiltreChanged(int value) { if (!_suppressFilters) AppliquerFiltres(); }
     partial void OnCategorieFiltreChanged(string value) { if (!_suppressFilters) AppliquerFiltres(); }
+    partial void OnAfficherArchiveesChanged(bool value) { if (!_suppressFilters) AppliquerFiltres(); }
 
     // Commands
     [RelayCommand]
@@ -340,37 +343,17 @@ public partial class ComptabiliteViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DemanderSuppressionTransaction(Transaction transaction)
+    private async Task ArchiverTransactionAsync(Transaction transaction)
     {
-        _pendingDeleteTransaction = transaction;
-        ConfirmDialogMessage = $"Voulez-vous supprimer la transaction \"{transaction.Description}\" ?";
-        ShowConfirmDialog = true;
-    }
-
-    [RelayCommand]
-    private async Task ConfirmerSuppressionAsync()
-    {
-        if (_pendingDeleteTransaction != null)
+        try
         {
-            try
-            {
-                await _databaseService.DeleteTransactionAsync(_pendingDeleteTransaction.Id);
-                await ChargerDonneesAsync();
-            }
-            catch (Exception ex)
-            {
-                ErreurMessage = $"Erreur : {ex.Message}";
-            }
+            await _databaseService.ArchiveTransactionAsync(transaction.Id);
+            await ChargerDonneesAsync();
         }
-        ShowConfirmDialog = false;
-        _pendingDeleteTransaction = null;
-    }
-
-    [RelayCommand]
-    private void AnnulerSuppression()
-    {
-        ShowConfirmDialog = false;
-        _pendingDeleteTransaction = null;
+        catch (Exception ex)
+        {
+            ErreurMessage = $"Erreur : {ex.Message}";
+        }
     }
 
     // Category management

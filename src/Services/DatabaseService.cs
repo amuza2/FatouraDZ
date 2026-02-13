@@ -183,6 +183,9 @@ public class DatabaseService : IDatabaseService
                     FOREIGN KEY (BusinessId) REFERENCES Businesses(Id) ON DELETE CASCADE
                 )";
             await cmd2.ExecuteNonQueryAsync();
+
+            // Add IsArchived column if missing
+            await AddColumnIfNotExistsAsync(connection, "Transactions", "IsArchived", "INTEGER DEFAULT 0");
         }
         finally
         {
@@ -557,6 +560,18 @@ public class DatabaseService : IDatabaseService
         if (transaction != null)
         {
             context.Transactions.Remove(transaction);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ArchiveTransactionAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var transaction = await context.Transactions.FindAsync(id);
+        if (transaction != null)
+        {
+            transaction.IsArchived = !transaction.IsArchived;
+            transaction.DateModification = DateTime.Now;
             await context.SaveChangesAsync();
         }
     }

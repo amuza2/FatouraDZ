@@ -29,6 +29,8 @@
                 <TextBlock Grid.Column="1" Text="Comptabilité" FontSize="24" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <ToggleButton Content="📦 Archivées" IsChecked="{Binding AfficherArchivees}"
+                                  Padding="15,10"/>
                     <Button Content="+ Catégorie" 
                             Command="{Binding NouvelleCategorieCommand}"
                             Padding="15,10"
@@ -178,9 +180,9 @@
                                             <Button Content="✏️" Padding="6,4" Background="Transparent"
                                                     FontSize="14" Cursor="Hand"
                                                     Click="OnEditTransactionClick"/>
-                                            <Button Content="🗑️" Padding="6,4" Background="Transparent"
+                                            <Button Content="�" Padding="6,4" Background="Transparent"
                                                     FontSize="14" Cursor="Hand"
-                                                    Click="OnDeleteTransactionClick"/>
+                                                    Click="OnArchiveTransactionClick"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -281,27 +283,5 @@
             </Border>
         </Border>
 
-        <!-- Confirmation Dialog Overlay -->
-        <Border Grid.RowSpan="4" Background="#80000000" IsVisible="{Binding ShowConfirmDialog}">
-            <Border Background="White" CornerRadius="12" Padding="30" 
-                    MaxWidth="400" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="20">
-                    <TextBlock Text="Confirmation" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
-                    <TextBlock Text="{Binding ConfirmDialogMessage}" TextWrapping="Wrap" Foreground="#64748B"/>
-                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right">
-                        <Button Content="Annuler" 
-                                Command="{Binding AnnulerSuppressionCommand}"
-                                Padding="20,10"
-                                Background="#E2E8F0"/>
-                        <Button Content="Supprimer" 
-                                Command="{Binding ConfirmerSuppressionCommand}"
-                                Padding="20,10"
-                                Background="#DC2626"
-                                Foreground="White"
-                                FontWeight="SemiBold"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Border>
     </Grid>
 </UserControl>
