@@ -1,5 +1,3 @@
-<img width="1584" height="811" alt="image" src="https://github.com/user-attachments/assets/c9019b86-aa58-4886-96e1-13308be6257f" /># FatouraDZ 🇩🇿
-
 **Application de facturation pour entreprises algériennes**
 
 FatouraDZ est une application de bureau permettant aux entreprises algériennes (Auto-entrepreneurs, Forfait, Sociétés) de créer, gérer et exporter des factures conformes à la législation algérienne.
