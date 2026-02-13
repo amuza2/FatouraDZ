@@ -37,6 +37,17 @@ public interface IDatabaseService
     Task<decimal> GetMontantMoyenAsync();
     Task<List<Facture>> GetDernieresFacturesAsync(int nombre);
     
+    // Transactions
+    Task<List<Transaction>> GetTransactionsByBusinessIdAsync(int businessId);
+    Task SaveTransactionAsync(Transaction transaction);
+    Task DeleteTransactionAsync(int id);
+    Task<Transaction?> GetTransactionByFactureIdAsync(int factureId);
+    
+    // Catégories de transactions
+    Task<List<CategorieTransaction>> GetCategoriesByBusinessIdAsync(int businessId);
+    Task SaveCategorieAsync(CategorieTransaction categorie);
+    Task DeleteCategorieAsync(int id);
+    
     // Configuration
     Task<string?> GetConfigurationAsync(string cle);
     Task SetConfigurationAsync(string cle, string valeur);

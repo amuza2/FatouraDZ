@@ -285,14 +285,39 @@ public partial class BusinessDetailViewModel : ViewModelBase
             await _databaseService.UpdateStatutFactureAsync(facture.Id, newStatus);
             facture.Statut = newStatus;
             
-            // Update statistics
+            // Auto-create/remove recette transaction
             if (newStatus == StatutFacture.Payee)
             {
+                // Create recette transaction for paid invoice
+                var existingTransaction = await _databaseService.GetTransactionByFactureIdAsync(facture.Id);
+                if (existingTransaction == null)
+                {
+                    var transaction = new Transaction
+                    {
+                        BusinessId = Business.Id,
+                        Date = facture.DateFacture,
+                        Description = $"Facture {facture.NumeroFacture} - {facture.ClientNom}",
+                        Montant = facture.MontantTotal,
+                        Type = TypeTransaction.Recette,
+                        Categorie = "Ventes",
+                        FactureId = facture.Id,
+                        NumeroFacture = facture.NumeroFacture
+                    };
+                    await _databaseService.SaveTransactionAsync(transaction);
+                }
+                
                 FacturesPayees++;
                 FacturesEnAttente--;
             }
             else
             {
+                // Remove auto-created recette when unmarking as paid
+                var existingTransaction = await _databaseService.GetTransactionByFactureIdAsync(facture.Id);
+                if (existingTransaction != null)
+                {
+                    await _databaseService.DeleteTransactionAsync(existingTransaction.Id);
+                }
+                
                 FacturesPayees--;
                 FacturesEnAttente++;
             }

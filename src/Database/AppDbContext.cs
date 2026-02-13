@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<LigneFacture> LignesFacture { get; set; } = null!;
     public DbSet<Client> Clients { get; set; } = null!;
     public DbSet<Configuration> Configurations { get; set; } = null!;
+    public DbSet<Transaction> Transactions { get; set; } = null!;
+    public DbSet<CategorieTransaction> CategoriesTransaction { get; set; } = null!;
 
     private readonly string _dbPath;
 
@@ -72,6 +74,27 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Configuration>(entity =>
         {
             entity.HasKey(e => e.Cle);
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Description).IsRequired();
+            entity.Property(e => e.Categorie).IsRequired();
+            entity.HasOne(e => e.Business)
+                  .WithMany()
+                  .HasForeignKey(e => e.BusinessId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CategorieTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nom).IsRequired();
+            entity.HasOne(e => e.Business)
+                  .WithMany()
+                  .HasForeignKey(e => e.BusinessId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Client>(entity =>

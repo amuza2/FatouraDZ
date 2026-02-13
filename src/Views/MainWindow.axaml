@@ -74,6 +74,10 @@
                                 <TextBlock Text="👥 Clients" Foreground="{StaticResource TextSecondaryBrush}"/>
                             </Button>
                             <Button Classes="nav-button"
+                                    Command="{Binding AfficherComptabiliteCommand}">
+                                <TextBlock Text="📊 Comptabilité" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </Button>
+                            <Button Classes="nav-button"
                                     Command="{Binding AfficherInfosEntrepriseCommand}">
                                 <TextBlock Text="🏢 Infos entreprise" Foreground="{StaticResource TextSecondaryBrush}"/>
                             </Button>

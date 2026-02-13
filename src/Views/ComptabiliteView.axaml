@@ -1,0 +1,307 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:FatouraDZ.ViewModels"
+             xmlns:models="using:FatouraDZ.Models"
+             xmlns:conv="using:FatouraDZ.Converters"
+             x:Class="FatouraDZ.Views.ComptabiliteView"
+             x:DataType="vm:ComptabiliteViewModel">
+    
+    <UserControl.Styles>
+        <Style Selector="StackPanel.action-buttons">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="Border.transaction-row:pointerover StackPanel.action-buttons">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#F8FAFC" Padding="30,20" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Content="← Retour" 
+                        Command="{Binding GoBackCommand}"
+                        Background="Transparent"
+                        Foreground="#64748B"
+                        Padding="10,8"
+                        Margin="0,0,20,0"/>
+                
+                <TextBlock Grid.Column="1" Text="Comptabilité" FontSize="24" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center"/>
+                
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <Button Content="+ Catégorie" 
+                            Command="{Binding NouvelleCategorieCommand}"
+                            Padding="15,10"
+                            Background="#E2E8F0"/>
+                    <Button Content="+ Transaction" 
+                            Classes="primary"
+                            Command="{Binding NouvelleTransactionCommand}"
+                            Padding="20,10"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Date filters -->
+        <Border Grid.Row="1" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                <!-- Quick period buttons -->
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <Button Content="Ce mois" Padding="14,8"
+                            Tag="0" Click="OnPeriodeClick"/>
+                    <Button Content="Mois dernier" Padding="14,8"
+                            Tag="1" Click="OnPeriodeClick"/>
+                    <Button Content="Cette année" Padding="14,8"
+                            Tag="2" Click="OnPeriodeClick"/>
+                </StackPanel>
+
+                <Border Width="1" Background="#E2E8F0" Margin="5,0"/>
+                
+                <!-- Custom date range -->
+                <TextBlock Text="Du" VerticalAlignment="Center" Foreground="#64748B"/>
+                <DatePicker SelectedDate="{Binding DateDebut}" MinWidth="130"/>
+                <TextBlock Text="Au" VerticalAlignment="Center" Foreground="#64748B"/>
+                <DatePicker SelectedDate="{Binding DateFin}" MinWidth="130"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Statistics cards -->
+        <Border Grid.Row="2" Background="White" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,*,*">
+                <Border Grid.Column="0" Background="#F0FDF4" CornerRadius="10" Padding="20,15" Margin="0,0,10,0">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding ChiffreAffaires, StringFormat={}{0:N2} DA}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="#16A34A" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Chiffre d'affaires" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#FEF2F2" CornerRadius="10" Padding="20,15" Margin="5,0">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Depenses, StringFormat={}{0:N2} DA}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="#DC2626" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Dépenses" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="#EFF6FF" CornerRadius="10" Padding="20,15" Margin="10,0,0,0">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding BeneficeNet, StringFormat={}{0:N2} DA}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="#2563EB" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Bénéfice net" Foreground="#64748B" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Journal -->
+        <Grid Grid.Row="3" RowDefinitions="Auto,*">
+            <!-- Journal filters -->
+            <Border Grid.Row="0" Background="White" Padding="30,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Type filter buttons -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0">
+                        <Button Content="Tous" Padding="14,8" CornerRadius="6,0,0,6"
+                                Tag="0" Click="OnTypeFiltreClick"/>
+                        <Button Content="Recettes" Padding="14,8" CornerRadius="0"
+                                Tag="1" Click="OnTypeFiltreClick"/>
+                        <Button Content="Dépenses" Padding="14,8" CornerRadius="0,6,6,0"
+                                Tag="2" Click="OnTypeFiltreClick"/>
+                    </StackPanel>
+                    
+                    <!-- Category filter -->
+                    <ComboBox Grid.Column="2" ItemsSource="{Binding CategoriesFiltre}" 
+                              SelectedItem="{Binding CategorieFiltre}"
+                              Width="200" Margin="10,0,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Transaction list -->
+            <ScrollViewer Grid.Row="1" Padding="30,15">
+                <StackPanel Spacing="6">
+                    <!-- Error message -->
+                    <Border Background="#FEE2E2" CornerRadius="8" Padding="15"
+                            IsVisible="{Binding ErreurMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="{Binding ErreurMessage}" Foreground="#DC2626" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <Border Background="#F8FAFC" CornerRadius="12" Padding="40"
+                            IsVisible="{Binding !Transactions.Count}"
+                            HorizontalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center" Spacing="10">
+                            <TextBlock Text="📊" FontSize="40" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Aucune transaction" FontSize="18" FontWeight="SemiBold" 
+                                       Foreground="#64748B" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Ajoutez votre première transaction"
+                                       Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Transaction items -->
+                    <ItemsControl ItemsSource="{Binding Transactions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="models:Transaction">
+                                <Border Classes="transaction-row" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,4"
+                                        BorderBrush="#E2E8F0" BorderThickness="1">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <!-- Date -->
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,15,0" Width="70">
+                                            <TextBlock Text="{Binding Date, StringFormat={}{0:dd/MM}}" 
+                                                       FontWeight="SemiBold" Foreground="#64748B" FontSize="13" HorizontalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Date, StringFormat={}{0:yyyy}}" 
+                                                       Foreground="#94A3B8" FontSize="11" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Description & category -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding Description}" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
+                                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,2"
+                                                        IsVisible="{Binding NumeroFacture, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                    <TextBlock Text="{Binding NumeroFacture}" FontSize="10" Foreground="#64748B"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Categorie}" Foreground="#94A3B8" FontSize="12"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Amount -->
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                                            <TextBlock Text="{Binding Type, Converter={x:Static conv:TransactionTypeToSignConverter.Instance}}"
+                                                       FontWeight="Bold" FontSize="15"
+                                                       Foreground="{Binding Type, Converter={x:Static conv:TransactionTypeToColorConverter.Instance}}"/>
+                                            <TextBlock Text="{Binding Montant, StringFormat={}{0:N2} DA}"
+                                                       FontWeight="Bold" FontSize="15"
+                                                       Foreground="{Binding Type, Converter={x:Static conv:TransactionTypeToColorConverter.Instance}}"/>
+                                        </StackPanel>
+
+                                        <!-- Action buttons (visible on hover) -->
+                                        <StackPanel Classes="action-buttons" Grid.Column="3" Orientation="Horizontal" Spacing="4" 
+                                                    VerticalAlignment="Center" Margin="10,0,0,0">
+                                            <Button Content="✏️" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand"
+                                                    Click="OnEditTransactionClick"/>
+                                            <Button Content="🗑️" Padding="6,4" Background="Transparent"
+                                                    FontSize="14" Cursor="Hand"
+                                                    Click="OnDeleteTransactionClick"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+        
+        <!-- Transaction Form Overlay -->
+        <Border Grid.RowSpan="4" Background="#80000000" IsVisible="{Binding AfficherFormulaire}">
+            <Border Background="White" CornerRadius="12" Padding="30" 
+                    MaxWidth="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="{Binding TitreFormulaire}" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                    
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Type" Foreground="#64748B" FontSize="12"/>
+                        <ComboBox SelectedIndex="{Binding FormTypeIndex}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Recette"/>
+                            <ComboBoxItem Content="Dépense"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Date" Foreground="#64748B" FontSize="12"/>
+                        <DatePicker SelectedDate="{Binding FormDate}" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Description" Foreground="#64748B" FontSize="12"/>
+                        <TextBox Text="{Binding FormDescription}" Watermark="Description de la transaction"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Montant (DA)" Foreground="#64748B" FontSize="12"/>
+                        <TextBox Text="{Binding FormMontant}" Watermark="0.00"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Catégorie" Foreground="#64748B" FontSize="12"/>
+                        <ComboBox ItemsSource="{Binding CategoriesNoms}" 
+                                  SelectedItem="{Binding FormCategorie}"
+                                  HorizontalAlignment="Stretch"
+                                  PlaceholderText="Choisir une catégorie"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="Annuler" 
+                                Command="{Binding AnnulerFormulaireCommand}"
+                                Padding="20,10"
+                                Background="#E2E8F0"/>
+                        <Button Content="Enregistrer" 
+                                Command="{Binding EnregistrerTransactionCommand}"
+                                Padding="20,10"
+                                Background="#2563EB"
+                                Foreground="White"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Category Form Overlay -->
+        <Border Grid.RowSpan="4" Background="#80000000" IsVisible="{Binding AfficherFormulaireCategorie}">
+            <Border Background="White" CornerRadius="12" Padding="30" 
+                    MaxWidth="400" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="Nouvelle catégorie" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                    
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Nom" Foreground="#64748B" FontSize="12"/>
+                        <TextBox Text="{Binding NouvelleCategorieNom}" Watermark="Nom de la catégorie"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Type" Foreground="#64748B" FontSize="12"/>
+                        <ComboBox SelectedIndex="{Binding NouvelleCategorieTypeIndex}" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="Recette"/>
+                            <ComboBoxItem Content="Dépense"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="Annuler" 
+                                Command="{Binding AnnulerCategorieCommand}"
+                                Padding="20,10"
+                                Background="#E2E8F0"/>
+                        <Button Content="Enregistrer" 
+                                Command="{Binding EnregistrerCategorieCommand}"
+                                Padding="20,10"
+                                Background="#2563EB"
+                                Foreground="White"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Confirmation Dialog Overlay -->
+        <Border Grid.RowSpan="4" Background="#80000000" IsVisible="{Binding ShowConfirmDialog}">
+            <Border Background="White" CornerRadius="12" Padding="30" 
+                    MaxWidth="400" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="Confirmation" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                    <TextBlock Text="{Binding ConfirmDialogMessage}" TextWrapping="Wrap" Foreground="#64748B"/>
+                    <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right">
+                        <Button Content="Annuler" 
+                                Command="{Binding AnnulerSuppressionCommand}"
+                                Padding="20,10"
+                                Background="#E2E8F0"/>
+                        <Button Content="Supprimer" 
+                                Command="{Binding ConfirmerSuppressionCommand}"
+                                Padding="20,10"
+                                Background="#DC2626"
+                                Foreground="White"
+                                FontWeight="SemiBold"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

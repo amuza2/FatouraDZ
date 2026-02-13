@@ -84,6 +84,18 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void AfficherComptabilite()
+    {
+        if (CurrentBusiness == null) return;
+        PageActuelle = "Comptabilité";
+        var vm = new ComptabiliteViewModel();
+        vm.SetBusinessId(CurrentBusiness.Id);
+        vm.BackRequested += () => AfficherDetailEntreprise(CurrentBusiness);
+        _ = vm.ChargerDonneesAsync();
+        ContenuActuel = vm;
+    }
+
+    [RelayCommand]
     private void AfficherInfosEntreprise()
     {
         if (CurrentBusiness == null) return;

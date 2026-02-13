@@ -19,6 +19,7 @@ public class DatabaseService : IDatabaseService
         // Run migrations
         await MigrateColumnsAsync(context);
         await MigrateClientTableAsync(context);
+        await MigrateTransactionTablesAsync(context);
     }
 
     private async Task MigrateColumnsAsync(AppDbContext context)
@@ -136,6 +137,52 @@ public class DatabaseService : IDatabaseService
                     )";
                 await createCommand.ExecuteNonQueryAsync();
             }
+        }
+        finally
+        {
+            await connection.CloseAsync();
+        }
+    }
+
+    private async Task MigrateTransactionTablesAsync(AppDbContext context)
+    {
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync();
+        
+        try
+        {
+            // Create Transactions table if not exists
+            using var cmd1 = connection.CreateCommand();
+            cmd1.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Transactions (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    BusinessId INTEGER NOT NULL,
+                    Date TEXT NOT NULL,
+                    Description TEXT NOT NULL,
+                    Montant REAL NOT NULL DEFAULT 0,
+                    Type INTEGER NOT NULL DEFAULT 0,
+                    Categorie TEXT NOT NULL DEFAULT '',
+                    FactureId INTEGER,
+                    NumeroFacture TEXT,
+                    DateCreation TEXT NOT NULL,
+                    DateModification TEXT,
+                    FOREIGN KEY (BusinessId) REFERENCES Businesses(Id) ON DELETE CASCADE
+                )";
+            await cmd1.ExecuteNonQueryAsync();
+
+            // Create CategoriesTransaction table if not exists
+            using var cmd2 = connection.CreateCommand();
+            cmd2.CommandText = @"
+                CREATE TABLE IF NOT EXISTS CategoriesTransaction (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    BusinessId INTEGER NOT NULL,
+                    Nom TEXT NOT NULL,
+                    Type INTEGER NOT NULL DEFAULT 0,
+                    DateCreation TEXT NOT NULL,
+                    FOREIGN KEY (BusinessId) REFERENCES Businesses(Id) ON DELETE CASCADE
+                )";
+            await cmd2.ExecuteNonQueryAsync();
         }
         finally
         {
@@ -470,6 +517,95 @@ public class DatabaseService : IDatabaseService
             .OrderByDescending(f => f.DateCreation)
             .Take(nombre)
             .ToListAsync();
+    }
+
+    // Transactions
+    public async Task<List<Transaction>> GetTransactionsByBusinessIdAsync(int businessId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Transactions
+            .Where(t => t.BusinessId == businessId)
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.DateCreation)
+            .ToListAsync();
+    }
+
+    public async Task SaveTransactionAsync(Transaction transaction)
+    {
+        await using var context = new AppDbContext();
+        if (transaction.Id == 0)
+        {
+            transaction.DateCreation = DateTime.Now;
+            context.Transactions.Add(transaction);
+        }
+        else
+        {
+            transaction.DateModification = DateTime.Now;
+            var existing = await context.Transactions.FindAsync(transaction.Id);
+            if (existing != null)
+            {
+                context.Entry(existing).CurrentValues.SetValues(transaction);
+            }
+        }
+        await context.SaveChangesAsync();
+    }
+
+    public async Task DeleteTransactionAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var transaction = await context.Transactions.FindAsync(id);
+        if (transaction != null)
+        {
+            context.Transactions.Remove(transaction);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<Transaction?> GetTransactionByFactureIdAsync(int factureId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Transactions
+            .FirstOrDefaultAsync(t => t.FactureId == factureId);
+    }
+
+    // Catégories de transactions
+    public async Task<List<CategorieTransaction>> GetCategoriesByBusinessIdAsync(int businessId)
+    {
+        await using var context = new AppDbContext();
+        return await context.CategoriesTransaction
+            .Where(c => c.BusinessId == businessId)
+            .OrderBy(c => c.Nom)
+            .ToListAsync();
+    }
+
+    public async Task SaveCategorieAsync(CategorieTransaction categorie)
+    {
+        await using var context = new AppDbContext();
+        if (categorie.Id == 0)
+        {
+            categorie.DateCreation = DateTime.Now;
+            context.CategoriesTransaction.Add(categorie);
+        }
+        else
+        {
+            var existing = await context.CategoriesTransaction.FindAsync(categorie.Id);
+            if (existing != null)
+            {
+                context.Entry(existing).CurrentValues.SetValues(categorie);
+            }
+        }
+        await context.SaveChangesAsync();
+    }
+
+    public async Task DeleteCategorieAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var categorie = await context.CategoriesTransaction.FindAsync(id);
+        if (categorie != null)
+        {
+            context.CategoriesTransaction.Remove(categorie);
+            await context.SaveChangesAsync();
+        }
     }
 
     // Configuration
