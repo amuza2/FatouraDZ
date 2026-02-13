@@ -328,7 +328,7 @@
 
                         <!-- Buttons -->
                         <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,20,0,30">
-                            <Button Grid.Column="1" Content="Annuler" 
+                            <Button Grid.Column="1" Content="Annuler" Foreground="White"
                                     Command="{Binding AnnulerFormulaireCommand}"
                                     Padding="20,12" Margin="0,0,10,0"/>
                             <Button Grid.Column="2" Content="💾 Enregistrer" 

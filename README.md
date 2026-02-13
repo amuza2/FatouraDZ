@@ -14,15 +14,18 @@ FatouraDZ est une application de bureau permettant aux entreprises algériennes 
 - **Gestion des clients** : Base de données clients avec recherche et informations fiscales
 - **Création de factures** : Factures, proformas et avoirs avec remises (produit et globale)
 - **Calculs automatiques** : TVA (19%/9%), timbre fiscal, retenue à la source
-- **Export PDF** : Génération professionnelle avec aperçu intégré
-- **Historique** : Suivi des factures avec statuts et archivage
-- **Comptabiliré** Ajouter des transactions:
+- **Export PDF / Excel** : Génération professionnelle avec aperçu intégré
+- **Historique** : Suivi des factures avec statuts, paiement et archivage
+- **Comptabilité** : Journal de transactions avec recettes et dépenses, catégories personnalisées, filtrage par type/période/catégorie et pagination
+- **Archivage** : Archivage des transactions et factures avec possibilité de restauration
+- **Interface Material Design** : UI moderne avec le thème Material.Avalonia
 
 ## Technologies
 
 - .NET 10 / Avalonia UI
+- Material.Avalonia (Material Design)
 - SQLite (locale)
-- QuestPDF
+- QuestPDF / ClosedXML
 - MVVM (CommunityToolkit.Mvvm)
 
 ## Installation

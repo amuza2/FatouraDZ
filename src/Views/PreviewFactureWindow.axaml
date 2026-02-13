@@ -67,7 +67,7 @@
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
                 <Button Content="Imprimer" 
                         Command="{Binding ImprimerCommand}"
-                        Padding="20,12"/>
+                        Padding="20,12" Foreground="White"/>
                 <Button Content="Enregistrer en PDF" 
                         Classes="primary"
                         Command="{Binding EnregistrerPdfCommand}"
@@ -80,7 +80,7 @@
                         Padding="20,12"/>
                 <Button Content="Annuler" 
                         Command="{Binding AnnulerCommand}"
-                        Padding="20,12"/>
+                        Padding="20,12" Foreground="White"/>
             </StackPanel>
         </Border>
         <!-- Message de succès - overlay -->
