@@ -109,7 +109,7 @@
                                             <Button Content="✏️ Modifier"
                                                     Command="{Binding $parent[ItemsControl].DataContext.ModifierClientCommand}"
                                                     CommandParameter="{Binding}"
-                                                    Padding="12,8"/>
+                                                    Padding="12,8" Foreground="White"/>
                                             <Button Content="🗑️"
                                                     Background="#FEE2E2"
                                                     Command="{Binding $parent[ItemsControl].DataContext.SupprimerClientCommand}"
@@ -138,7 +138,7 @@
                                 <Button Content="✏️ Modifier" 
                                         Command="{Binding ModifierClientCommand}"
                                         CommandParameter="{Binding ClientDetail}"
-                                        Padding="15,10"/>
+                                        Padding="15,10" Foreground="White"/>
                                 <Button Content="← Retour" 
                                         Command="{Binding FermerDetailsCommand}"
                                         Padding="15,10"

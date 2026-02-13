@@ -1,47 +1,18 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <!-- Base TextBox Style -->
-    <Style Selector="TextBox">
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
-            </Transitions>
-        </Setter>
-    </Style>
-    <Style Selector="TextBox:focus">
-        <Setter Property="BorderBrush" Value="{StaticResource BorderFocusBrush}"/>
-        <Setter Property="BorderThickness" Value="2"/>
-    </Style>
-    <Style Selector="TextBox:pointerover">
-        <Setter Property="BorderBrush" Value="{StaticResource BorderHoverBrush}"/>
-    </Style>
-    
     <!-- Error State -->
     <Style Selector="TextBox.error">
         <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
-        <Setter Property="BorderThickness" Value="2"/>
-    </Style>
-    <Style Selector="TextBox.error:focus">
-        <Setter Property="BorderBrush" Value="{StaticResource ErrorHoverBrush}"/>
     </Style>
 
     <!-- Large TextBox -->
     <Style Selector="TextBox.large">
-        <Setter Property="Padding" Value="16,14"/>
         <Setter Property="FontSize" Value="16"/>
     </Style>
 
     <!-- Search TextBox -->
     <Style Selector="TextBox.search">
-        <Setter Property="CornerRadius" Value="20"/>
-        <Setter Property="Padding" Value="16,10"/>
         <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
     </Style>
     

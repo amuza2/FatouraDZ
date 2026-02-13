@@ -267,7 +267,7 @@
                         </StackPanel>
                         <Button Grid.Column="1" Content="Ajouter une ligne" 
                                 Command="{Binding AjouterLigneCommand}"
-                                Padding="15,8"/>
+                                Padding="15,8" Foreground="White"/>
                     </Grid>
 
                     <!-- En-tête du tableau -->
@@ -455,10 +455,10 @@
             <StackPanel Orientation="Horizontal" Spacing="15" HorizontalAlignment="Center" Margin="0,20,0,80">
                 <Button Content="Réinitialiser" 
                         Command="{Binding ReinitialiserCommand}"
-                        Padding="20,12"/>
+                        Padding="20,12" Foreground="White"/>
                 <Button Content="Prévisualiser" 
                         Command="{Binding PrevisualiserCommand}"
-                        Padding="20,12"/>
+                        Padding="20,12" Foreground="White"/>
                 <Button Content="Enregistrer la facture" 
                         Classes="primary"
                         Command="{Binding SauvegarderCommand}"

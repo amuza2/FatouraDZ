@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:material="using:Material.Styles.Themes"
              x:Class="FatouraDZ.App"
              xmlns:local="using:FatouraDZ"
              xmlns:converters="using:FatouraDZ.Converters"
@@ -19,7 +20,7 @@
     </Application.DataTemplates>
   
     <Application.Styles>
-        <FluentTheme />
+        <material:MaterialTheme BaseTheme="Light" PrimaryColor="Blue" SecondaryColor="Amber" />
         <StyleInclude Source="avares://FatouraDZ/Styles/ButtonStyles.axaml"/>
         <StyleInclude Source="avares://FatouraDZ/Styles/TextBoxStyles.axaml"/>
         <StyleInclude Source="avares://FatouraDZ/Styles/ComboBoxStyles.axaml"/>

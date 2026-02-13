@@ -1,47 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <!-- Base Button Style -->
-    <Style Selector="Button">
-        <Setter Property="Background" Value="{StaticResource ButtonBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ButtonBorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16,10"/>
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Transitions">
-            <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.15"/>
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1"/>
-            </Transitions>
-        </Setter>
-    </Style>
-    <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource ButtonBackgroundBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ButtonBorderBrush}"/>
-    </Style>
-    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource ButtonHoverBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderHoverBrush}"/>
-        
-        
-    </Style>
-    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource ButtonPressedBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource SecondaryBrush}"/>
-    </Style>
-    <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-    </Style>
-    <Style Selector="Button:disabled">
-        <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
-    </Style>
-    
-    <!-- Navigation Button Style (Light sidebar) -->
+    <!-- Navigation Button Style (sidebar) -->
     <Style Selector="Button.nav-button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
@@ -49,96 +9,54 @@
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="Padding" Value="16,12"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Margin" Value="0,2"/>
     </Style>
-    <Style Selector="Button.nav-button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-    </Style>
-    <Style Selector="Button.nav-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource ButtonBackgroundBrush}"/>
-    </Style>
     <Style Selector="Button.nav-button:pointerover">
+        <Setter Property="Background" Value="{StaticResource ButtonBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
     </Style>
-    <Style Selector="Button.nav-button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.nav-button:pressed">
         <Setter Property="Background" Value="{StaticResource ButtonHoverBrush}"/>
     </Style>
     
     <!-- Primary/Accent Button Style -->
     <Style Selector="Button.primary, Button.accent">
         <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
         <Setter Property="Padding" Value="20,12"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
-    <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter, Button.accent /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource PrimaryHoverBrush}"/>
-    </Style>
-    <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.primary:pointerover, Button.accent:pointerover">
         <Setter Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource PrimaryPressedBrush}"/>
-        <Setter Property="Foreground" Value="white"/>
     </Style>
-    <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter, Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.primary:pressed, Button.accent:pressed">
         <Setter Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource PrimaryPressedBrush}"/>
-    </Style>
-    <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource PrimaryDisabledBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource PrimaryDisabledBrush}"/>
-    </Style>
-    <Style Selector="Button.primary:disabled, Button.accent:disabled">
-        <Setter Property="Foreground" Value="#DBEAFE"/>
     </Style>
     
     <!-- Success Button Style -->
     <Style Selector="Button.success">
         <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource SuccessHoverBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
         <Setter Property="Padding" Value="20,12"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
-    <Style Selector="Button.success /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource SuccessBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource SuccessHoverBrush}"/>
-    </Style>
-    <Style Selector="Button.success:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.success:pointerover">
         <Setter Property="Background" Value="{StaticResource SuccessHoverBrush}"/>
-        <Setter Property="BorderBrush" Value="#047857"/>
-        <Setter Property="Foreground" Value="white"/>
-    </Style>
-    <Style Selector="Button.success:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#047857"/>
-        <Setter Property="BorderBrush" Value="#065F46"/>
     </Style>
     
     <!-- Danger Button Style -->
     <Style Selector="Button.danger">
         <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ErrorHoverBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
         <Setter Property="Padding" Value="20,12"/>
-        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
-    <Style Selector="Button.danger /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource ErrorBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ErrorHoverBrush}"/>
-    </Style>
-    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.danger:pointerover">
         <Setter Property="Background" Value="{StaticResource ErrorHoverBrush}"/>
-        <Setter Property="BorderBrush" Value="#B91C1C"/>
-    </Style>
-    <Style Selector="Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#B91C1C"/>
-        <Setter Property="BorderBrush" Value="#991B1B"/>
     </Style>
     
     <!-- Business Type Card Button Style -->
@@ -147,13 +65,6 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="CornerRadius" Value="12"/>
-    </Style>
-    <Style Selector="Button.business-type-card /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="Transparent"/>
-    </Style>
-    <Style Selector="Button.business-type-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="Transparent"/>
     </Style>
     <Style Selector="Button.business-type-card:pointerover Border">
         <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>

@@ -1,19 +1,9 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     
-    <!-- Base ComboBox Style -->
-    <Style Selector="ComboBox">
-        <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
-    </Style>
-    
     <!-- Error State -->
     <Style Selector="ComboBox.error">
         <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
-        <Setter Property="BorderThickness" Value="2"/>
     </Style>
     
 </Styles>

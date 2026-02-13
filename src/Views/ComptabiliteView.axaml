@@ -48,11 +48,11 @@
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
                 <!-- Quick period buttons -->
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                    <Button Content="Ce mois" Padding="14,8"
+                    <Button Content="Ce mois" Padding="14,8" Foreground="White"
                             Tag="0" Click="OnPeriodeClick"/>
-                    <Button Content="Mois dernier" Padding="14,8"
+                    <Button Content="Mois dernier" Padding="14,8" Foreground="White"
                             Tag="1" Click="OnPeriodeClick"/>
-                    <Button Content="Cette année" Padding="14,8"
+                    <Button Content="Cette année" Padding="14,8" Foreground="White"
                             Tag="2" Click="OnPeriodeClick"/>
                 </StackPanel>
 
@@ -100,11 +100,11 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <!-- Type filter buttons -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0">
-                        <Button Content="Tous" Padding="14,8" CornerRadius="6,0,0,6"
+                        <Button Content="Tous" Padding="14,8" CornerRadius="6,0,0,6" Foreground="White"
                                 Tag="0" Click="OnTypeFiltreClick"/>
-                        <Button Content="Recettes" Padding="14,8" CornerRadius="0"
+                        <Button Content="Recettes" Padding="14,8" CornerRadius="0" Foreground="White"
                                 Tag="1" Click="OnTypeFiltreClick"/>
-                        <Button Content="Dépenses" Padding="14,8" CornerRadius="0,6,6,0"
+                        <Button Content="Dépenses" Padding="14,8" CornerRadius="0,6,6,0" Foreground="White"
                                 Tag="2" Click="OnTypeFiltreClick"/>
                     </StackPanel>
                     
