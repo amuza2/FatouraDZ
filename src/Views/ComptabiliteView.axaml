@@ -137,50 +137,66 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Transaction items -->
+                    <!-- Table header -->
+                    <Grid ColumnDefinitions="100,100,120,*,140,80" Background="#F1F5F9" Margin="0,0,0,4">
+                        <TextBlock Grid.Column="0" Text="Date" FontWeight="SemiBold" Foreground="#64748B" Padding="12,10" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" Foreground="#64748B" Padding="8,10" FontSize="12"/>
+                        <TextBlock Grid.Column="2" Text="Catégorie" FontWeight="SemiBold" Foreground="#64748B" Padding="8,10" FontSize="12"/>
+                        <TextBlock Grid.Column="3" Text="Commentaire" FontWeight="SemiBold" Foreground="#64748B" Padding="8,10" FontSize="12"/>
+                        <TextBlock Grid.Column="4" Text="Montant" FontWeight="SemiBold" Foreground="#64748B" Padding="8,10" FontSize="12" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="5" Text="Actions" FontWeight="SemiBold" Foreground="#64748B" Padding="8,10" FontSize="12" HorizontalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Transaction rows -->
                     <ItemsControl ItemsSource="{Binding Transactions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="models:Transaction">
-                                <Border Classes="transaction-row" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,4"
-                                        BorderBrush="#E2E8F0" BorderThickness="1">
-                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <Border Classes="transaction-row" Background="White" Padding="0" Margin="0,0,0,2"
+                                        BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <Grid ColumnDefinitions="100,100,120,*,140,80">
                                         <!-- Date -->
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,15,0" Width="70">
-                                            <TextBlock Text="{Binding Date, StringFormat={}{0:dd/MM}}" 
-                                                       FontWeight="SemiBold" Foreground="#64748B" FontSize="13" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Date, StringFormat={}{0:yyyy}}" 
-                                                       Foreground="#94A3B8" FontSize="11" HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat={}{0:dd/MM/yyyy}}" 
+                                                   VerticalAlignment="Center" Padding="12,10" Foreground="#1E293B" FontSize="13"/>
+
+                                        <!-- Type -->
+                                        <Border Grid.Column="1" VerticalAlignment="Center" Margin="8,0" HorizontalAlignment="Left"
+                                                Background="{Binding Type, Converter={x:Static conv:TransactionTypeToBackgroundConverter.Instance}}"
+                                                CornerRadius="4" Padding="8,3">
+                                            <TextBlock Text="{Binding Type, Converter={x:Static conv:TransactionTypeToLabelConverter.Instance}}" 
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{Binding Type, Converter={x:Static conv:TransactionTypeToColorConverter.Instance}}"/>
+                                        </Border>
+
+                                        <!-- Category -->
+                                        <TextBlock Grid.Column="2" Text="{Binding Categorie}" 
+                                                   VerticalAlignment="Center" Padding="8,10" Foreground="#64748B" FontSize="13"/>
+
+                                        <!-- Commentary (Description) -->
+                                        <StackPanel Grid.Column="3" VerticalAlignment="Center" Orientation="Horizontal" Spacing="6" Margin="8,0">
+                                            <TextBlock Text="{Binding Description}" Foreground="#1E293B" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                            <Border Background="#F1F5F9" CornerRadius="4" Padding="6,2"
+                                                    IsVisible="{Binding NumeroFacture, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="{Binding NumeroFacture}" FontSize="10" Foreground="#64748B"/>
+                                            </Border>
                                         </StackPanel>
-                                        
-                                        <!-- Description & category -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding Description}" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B"/>
-                                                <Border Background="#F1F5F9" CornerRadius="4" Padding="6,2"
-                                                        IsVisible="{Binding NumeroFacture, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <TextBlock Text="{Binding NumeroFacture}" FontSize="10" Foreground="#64748B"/>
-                                                </Border>
-                                            </StackPanel>
-                                            <TextBlock Text="{Binding Categorie}" Foreground="#94A3B8" FontSize="12"/>
-                                        </StackPanel>
-                                        
+
                                         <!-- Amount -->
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,8,0">
                                             <TextBlock Text="{Binding Type, Converter={x:Static conv:TransactionTypeToSignConverter.Instance}}"
-                                                       FontWeight="Bold" FontSize="15"
+                                                       FontWeight="Bold" FontSize="14"
                                                        Foreground="{Binding Type, Converter={x:Static conv:TransactionTypeToColorConverter.Instance}}"/>
                                             <TextBlock Text="{Binding Montant, StringFormat={}{0:N2} DA}"
-                                                       FontWeight="Bold" FontSize="15"
+                                                       FontWeight="Bold" FontSize="14"
                                                        Foreground="{Binding Type, Converter={x:Static conv:TransactionTypeToColorConverter.Instance}}"/>
                                         </StackPanel>
 
                                         <!-- Action buttons (visible on hover) -->
-                                        <StackPanel Classes="action-buttons" Grid.Column="3" Orientation="Horizontal" Spacing="4" 
-                                                    VerticalAlignment="Center" Margin="10,0,0,0">
+                                        <StackPanel Classes="action-buttons" Grid.Column="5" Orientation="Horizontal" Spacing="4" 
+                                                    VerticalAlignment="Center" HorizontalAlignment="Center">
                                             <Button Content="✏️" Padding="6,4" Background="Transparent"
                                                     FontSize="14" Cursor="Hand"
                                                     Click="OnEditTransactionClick"/>
-                                            <Button Content="�" Padding="6,4" Background="Transparent"
+                                            <Button Content="📦" Padding="6,4" Background="Transparent"
                                                     FontSize="14" Cursor="Hand"
                                                     Click="OnArchiveTransactionClick"/>
                                         </StackPanel>

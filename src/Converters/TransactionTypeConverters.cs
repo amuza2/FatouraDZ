@@ -48,3 +48,46 @@ public class TransactionTypeToSignConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+public class TransactionTypeToLabelConverter : IValueConverter
+{
+    public static readonly TransactionTypeToLabelConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is TypeTransaction type)
+        {
+            return type == TypeTransaction.Recette ? "Recette" : "Dépense";
+        }
+        return "";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class TransactionTypeToBackgroundConverter : IValueConverter
+{
+    public static readonly TransactionTypeToBackgroundConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is TypeTransaction type)
+        {
+            return type switch
+            {
+                TypeTransaction.Recette => new SolidColorBrush(Color.Parse("#DCFCE7")),
+                TypeTransaction.Depense => new SolidColorBrush(Color.Parse("#FEE2E2")),
+                _ => new SolidColorBrush(Color.Parse("#F1F5F9"))
+            };
+        }
+        return new SolidColorBrush(Color.Parse("#F1F5F9"));
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
