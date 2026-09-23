@@ -328,8 +328,6 @@ public partial class BusinessDetailViewModel : ViewModelBase
         }
     }
 
-    public event Action<Facture>? ConvertToInvoiceRequested;
-
     [RelayCommand]
     private async Task ConvertToInvoiceAsync(Facture proforma)
     {

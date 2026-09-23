@@ -28,5 +28,11 @@
     <PackageReference Include="Material.Icons.Avalonia" Version="2.4.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
     <PackageReference Include="QuestPDF" Version="2024.12.2" />
+
+    <!-- Security overrides: pin patched versions of vulnerable transitive dependencies -->
+    <!-- GHSA-2m69-gcr7-jv3q (CVE-2025-6965): SQLitePCLRaw.lib.e_sqlite3 <= 2.1.11 -> via Microsoft.EntityFrameworkCore.Sqlite -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+    <!-- GHSA-xrw6-gwf8-vvr9 (CVE-2026-39959): Tmds.DBus.Protocol < 0.21.3 -> via Avalonia.FreeDesktop -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
   </ItemGroup>
 </Project>

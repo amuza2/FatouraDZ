@@ -94,8 +94,10 @@ public class CalculationService : ICalculationService
 
         foreach (var ligne in lignes)
         {
-            // Use line total which already includes line-level discount
-            var ligneHT = ligne.TotalHT;
+            // Compute the line total from its own fields (including line-level discount)
+            // so the service does not depend on callers pre-populating LigneFacture.TotalHT.
+            var (ligneHT, _) = CalculerTotalHTLigneAvecRemise(
+                ligne.Quantite, ligne.PrixUnitaire, ligne.Remise, ligne.TypeRemise);
             totalHTBrut += ligneHT;
 
             switch (ligne.TauxTVA)
