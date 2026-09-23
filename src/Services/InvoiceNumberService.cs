@@ -14,36 +14,19 @@ public class InvoiceNumberService : IInvoiceNumberService
 
     public async Task<string> GenererProchainNumeroAsync()
     {
-        var anneeActuelle = DateTime.Now.Year.ToString();
-        var derniereAnnee = await _databaseService.GetConfigurationAsync("derniere_annee_facture");
-        var prochainNumeroStr = await _databaseService.GetConfigurationAsync("prochain_numero");
-
-        int prochainNumero;
-
-        if (derniereAnnee != anneeActuelle)
-        {
-            // Nouvelle année : réinitialiser le compteur
-            prochainNumero = 1;
-            await _databaseService.SetConfigurationAsync("derniere_annee_facture", anneeActuelle);
-        }
-        else
-        {
-            prochainNumero = int.TryParse(prochainNumeroStr, out var num) ? num : 1;
-        }
-
-        // Formater le numéro : FAC-YYYY-NNN (sans incrémenter)
-        var numeroFacture = $"FAC-{anneeActuelle}-{prochainNumero:D3}";
-
-        return numeroFacture;
+        var annee = DateTime.Now.Year;
+        var numero = await _databaseService.LireProchainNumeroFactureAsync(annee);
+        return Formater(annee, numero);
     }
 
-    public async Task ConfirmerNumeroFactureAsync()
+    public async Task<string> AllouerNumeroFactureAsync()
     {
-        var anneeActuelle = DateTime.Now.Year.ToString();
-        var prochainNumeroStr = await _databaseService.GetConfigurationAsync("prochain_numero");
-        var prochainNumero = int.TryParse(prochainNumeroStr, out var num) ? num : 1;
-
-        // Incrémenter pour la prochaine facture
-        await _databaseService.SetConfigurationAsync("prochain_numero", (prochainNumero + 1).ToString());
+        var annee = DateTime.Now.Year;
+        var numero = await _databaseService.ReserverProchainNumeroFactureAsync(annee);
+        return Formater(annee, numero);
     }
+
+    // Format : FAC-YYYY-NNN (ex. FAC-2026-001). Au-delà de 999, le numéro s'allonge
+    // naturellement (FAC-2026-1234) grâce au formatage D3.
+    private static string Formater(int annee, int numero) => $"FAC-{annee}-{numero:D3}";
 }

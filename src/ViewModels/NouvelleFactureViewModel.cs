@@ -407,45 +407,25 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     public async Task InitialiserEditionAsync()
     {
-        Console.WriteLine($"[DEBUG] InitialiserEditionAsync called. BusinessId={_businessId}, ClientNom='{ClientNom}', ClientTelephone='{ClientTelephone}'");
-        
         await ChargerClientsDisponiblesAsync();
-        
-        Console.WriteLine($"[DEBUG] TousLesClients count: {TousLesClients.Count}");
-        foreach (var c in TousLesClients)
-        {
-            Console.WriteLine($"[DEBUG]   Client: '{c.Nom}' / '{c.Telephone}'");
-        }
-        
-        // Try to match the client from invoice data
+
+        // Essayer de rattacher le client enregistré sur la facture à la liste des clients
         if (!string.IsNullOrEmpty(ClientNom))
         {
-            // Try exact match first (name + phone)
-            var match = TousLesClients.FirstOrDefault(c => 
-                string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase) && 
+            // Correspondance exacte d'abord (nom + téléphone)
+            var match = TousLesClients.FirstOrDefault(c =>
+                string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(c.Telephone?.Trim(), ClientTelephone?.Trim(), StringComparison.OrdinalIgnoreCase));
-            
-            Console.WriteLine($"[DEBUG] Name+Phone match: {match != null}");
-            
-            // Fallback: match by name only
-            match ??= TousLesClients.FirstOrDefault(c => 
+
+            // Sinon, correspondance par nom uniquement
+            match ??= TousLesClients.FirstOrDefault(c =>
                 string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase));
-            
-            Console.WriteLine($"[DEBUG] Final match: {match != null} -> {match?.Nom}");
-            
+
             if (match != null)
             {
-                // Defer to next UI frame so ComboBox finishes updating ItemsSource
-                Dispatcher.UIThread.Post(() =>
-                {
-                    ClientSelectionne = match;
-                    Console.WriteLine($"[DEBUG] ClientSelectionne set to: {ClientSelectionne?.Nom}");
-                });
+                // Différer au frame suivant pour laisser le ComboBox finir de mettre à jour son ItemsSource
+                Dispatcher.UIThread.Post(() => ClientSelectionne = match);
             }
-        }
-        else
-        {
-            Console.WriteLine("[DEBUG] ClientNom is empty - no matching attempted");
         }
     }
 
@@ -572,6 +552,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             estValide = false;
         }
 
+        // Validation du téléphone du client via le service de validation
+        if (!string.IsNullOrWhiteSpace(ClientTelephone) && !_validationService.EstTelephoneValide(ClientTelephone))
+        {
+            ErreurClientTelephone = "Le numéro de téléphone du client est invalide (mobile: 05/06/07XX XX XX XX, fixe: 0XX XX XX XX)";
+            estValide = false;
+        }
+
         // Validation de la date d'échéance
         if (DateEcheance < DateFacture)
         {
@@ -579,12 +566,28 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             estValide = false;
         }
 
-        // Validation des lignes
-        var lignesValides = Lignes.Any(l => !string.IsNullOrWhiteSpace(l.Designation) && l.Quantite > 0);
-        if (!lignesValides)
+        // Validation des lignes renseignées via le service de validation
+        var lignesRenseignees = Lignes
+            .Where(l => !string.IsNullOrWhiteSpace(l.Designation) || l.Quantite > 0 || l.PrixUnitaire > 0)
+            .ToList();
+
+        if (lignesRenseignees.Count == 0)
         {
             ErreurLignes = "Au moins une ligne avec désignation et quantité est requise";
             estValide = false;
+        }
+        else
+        {
+            foreach (var ligne in lignesRenseignees)
+            {
+                var resultatLigne = _validationService.ValiderLigneFacture(ligne.ToModel());
+                if (!resultatLigne.EstValide)
+                {
+                    ErreurLignes = string.Join(" ; ", resultatLigne.Erreurs);
+                    estValide = false;
+                    break;
+                }
+            }
         }
 
         return estValide;
@@ -617,16 +620,26 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
         var facture = CreerFacture();
 
+        // Contrôle final via le service de validation (règles obligatoires / formats)
+        var validation = _validationService.ValiderFacture(facture);
+        if (!validation.EstValide)
+        {
+            ErreurMessage = string.Join(Environment.NewLine, validation.Erreurs);
+            return;
+        }
+
         try
         {
-            await _databaseService.SaveFactureAsync(facture);
-            
-            // Incrémenter le numéro de facture seulement après sauvegarde réussie
+            // Réserver un numéro unique au moment de la sauvegarde : deux formulaires ouverts
+            // en parallèle ne peuvent plus produire le même numéro de facture.
             if (!EstModeEdition)
             {
-                await _invoiceNumberService.ConfirmerNumeroFactureAsync();
+                facture.NumeroFacture = await _invoiceNumberService.AllouerNumeroFactureAsync();
+                NumeroFacture = facture.NumeroFacture;
             }
-            
+
+            await _databaseService.SaveFactureAsync(facture);
+
             EstSauvegarde = true;
             FactureSauvegardee?.Invoke();
         }

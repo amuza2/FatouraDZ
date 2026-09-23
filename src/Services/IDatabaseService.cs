@@ -16,6 +16,15 @@ public interface IDatabaseService
     // Factures
     Task<List<Facture>> GetFacturesAsync();
     Task<List<Facture>> GetFacturesByBusinessIdAsync(int businessId);
+    /// <summary>
+    /// Factures d'une entreprise filtrées côté base de données (année, archivage, type,
+    /// statut, recherche). Les lignes ne sont pas chargées : inutiles pour la liste.
+    /// </summary>
+    Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche);
+    /// <summary>Années (distinctes) pour lesquelles l'entreprise possède des factures.</summary>
+    Task<List<int>> GetAnneesFacturesAsync(int businessId);
+    /// <summary>Agrégats (nombre, CA, statuts) pour une entreprise et une année.</summary>
+    Task<StatistiquesFactures> GetStatistiquesFacturesAsync(int businessId, int annee);
     Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche);
     Task<Facture?> GetFactureByIdAsync(int id);
     Task<Facture?> GetFactureByNumeroAsync(string numero);
@@ -52,7 +61,16 @@ public interface IDatabaseService
     // Configuration
     Task<string?> GetConfigurationAsync(string cle);
     Task SetConfigurationAsync(string cle, string valeur);
-    
+
+    // Numérotation des factures (persistée dans la table Configuration)
+    /// <summary>Retourne (sans écrire) le prochain numéro de facture pour l'année donnée.</summary>
+    Task<int> LireProchainNumeroFactureAsync(int annee);
+    /// <summary>
+    /// Réserve atomiquement le prochain numéro de facture pour l'année donnée.
+    /// Réinitialise le compteur à 1 lors d'un changement d'année.
+    /// </summary>
+    Task<int> ReserverProchainNumeroFactureAsync(int annee);
+
     // Initialisation
     Task InitializeDatabaseAsync();
     

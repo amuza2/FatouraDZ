@@ -13,6 +13,7 @@ namespace FatouraDZ.ViewModels;
 public partial class BusinessDetailViewModel : ViewModelBase
 {
     private readonly IDatabaseService _databaseService;
+    private readonly IInvoiceNumberService _invoiceNumberService;
 
     [ObservableProperty]
     private Business _business = new Business();
@@ -79,6 +80,7 @@ public partial class BusinessDetailViewModel : ViewModelBase
 
     public BusinessDetailViewModel()
     {
+        _invoiceNumberService = ServiceLocator.InvoiceNumberService;
         _databaseService = ServiceLocator.DatabaseService;
     }
 
@@ -96,63 +98,43 @@ public partial class BusinessDetailViewModel : ViewModelBase
 
         try
         {
-            var factures = await _databaseService.GetFacturesByBusinessIdAsync(Business.Id);
-            
-            // Update available years from all invoices
-            MettreAJourAnneesDisponibles(factures);
-            
-            // Filter by selected year
-            var yearFiltered = factures.Where(f => f.DateFacture.Year == AnneeSelectionnee).ToList();
-            
-            // Apply archive filter
+            var type = TypeFactureIndex switch
+            {
+                1 => TypeFacture.Normale,
+                2 => TypeFacture.Avoir,
+                3 => TypeFacture.Proforma,
+                _ => (TypeFacture?)null
+            };
+
+            var statut = StatutIndex switch
+            {
+                1 => StatutFacture.EnAttente,
+                2 => StatutFacture.Payee,
+                3 => StatutFacture.Annulee,
+                _ => (StatutFacture?)null
+            };
+
             var showArchived = ArchiveFilterIndex == 1;
-            var filtered = yearFiltered.Where(f => f.IsArchived == showArchived);
 
-            if (TypeFactureIndex > 0)
-            {
-                var type = TypeFactureIndex switch
-                {
-                    1 => TypeFacture.Normale,
-                    2 => TypeFacture.Avoir,
-                    3 => TypeFacture.Proforma,
-                    _ => (TypeFacture?)null
-                };
-                if (type.HasValue)
-                    filtered = filtered.Where(f => f.TypeFacture == type.Value);
-            }
+            // Filtrage effectué côté base de données : on ne charge ni toutes les factures
+            // ni leurs lignes, uniquement ce qui est affiché.
+            var factures = await _databaseService.GetFacturesFiltreesAsync(
+                Business.Id, AnneeSelectionnee, showArchived, type, statut, Recherche);
 
-            if (StatutIndex > 0)
-            {
-                var statut = StatutIndex switch
-                {
-                    1 => StatutFacture.EnAttente,
-                    2 => StatutFacture.Payee,
-                    3 => StatutFacture.Annulee,
-                    _ => (StatutFacture?)null
-                };
-                if (statut.HasValue)
-                    filtered = filtered.Where(f => f.Statut == statut.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(Recherche))
-            {
-                var search = Recherche.ToLower();
-                filtered = filtered.Where(f =>
-                    f.NumeroFacture.ToLower().Contains(search) ||
-                    f.ClientNom.ToLower().Contains(search));
-            }
+            MettreAJourAnneesDisponibles(await _databaseService.GetAnneesFacturesAsync(Business.Id));
 
             Factures.Clear();
-            foreach (var facture in filtered)
+            foreach (var facture in factures)
             {
                 Factures.Add(facture);
             }
 
-            // Update statistics for selected year (all invoices in that year, not just filtered by type/status)
-            NombreFactures = yearFiltered.Count;
-            ChiffreAffaires = yearFiltered.Where(f => f.Statut != StatutFacture.Annulee && !f.IsArchived).Sum(f => f.MontantTotal);
-            FacturesEnAttente = yearFiltered.Count(f => f.Statut == StatutFacture.EnAttente && !f.IsArchived);
-            FacturesPayees = yearFiltered.Count(f => f.Statut == StatutFacture.Payee && !f.IsArchived);
+            // Statistiques agrégées côté base de données (année sélectionnée).
+            var statistiques = await _databaseService.GetStatistiquesFacturesAsync(Business.Id, AnneeSelectionnee);
+            NombreFactures = statistiques.NombreFactures;
+            ChiffreAffaires = statistiques.ChiffreAffaires;
+            FacturesEnAttente = statistiques.FacturesEnAttente;
+            FacturesPayees = statistiques.FacturesPayees;
         }
         catch (Exception ex)
         {
@@ -164,10 +146,9 @@ public partial class BusinessDetailViewModel : ViewModelBase
         }
     }
 
-    private void MettreAJourAnneesDisponibles(List<Facture> factures)
+    private void MettreAJourAnneesDisponibles(IEnumerable<int> annees)
     {
-        var years = factures
-            .Select(f => f.DateFacture.Year)
+        var years = annees
             .Distinct()
             .OrderByDescending(y => y)
             .ToList();
@@ -337,6 +318,9 @@ public partial class BusinessDetailViewModel : ViewModelBase
             var newInvoice = await _databaseService.DupliquerFactureAsync(proforma.Id);
             if (newInvoice != null)
             {
+                // La copie n'a pas de numéro : en réserver un unique avant l'enregistrement.
+                newInvoice.NumeroFacture = await _invoiceNumberService.AllouerNumeroFactureAsync();
+
                 // Change type to Normale and clear validity date
                 newInvoice.TypeFacture = TypeFacture.Normale;
                 newInvoice.DateValidite = null;

@@ -8,20 +8,23 @@ namespace FatouraDZ.Tests.Integration;
 public class DatabaseServiceTests : IDisposable
 {
     private readonly string _testDbPath;
+    private readonly string _originalDbPath;
     private readonly DatabaseService _service;
 
     public DatabaseServiceTests()
     {
-        // Create a unique test database for each test run
+        // Base de données temporaire et isolée : les tests ne doivent JAMAIS toucher
+        // la base de données réelle de l'utilisateur.
         _testDbPath = Path.Combine(Path.GetTempPath(), $"fatouradz_test_{Guid.NewGuid()}.db");
-        Environment.SetEnvironmentVariable("FATOURADZ_TEST_DB", _testDbPath);
+        _originalDbPath = AppSettings.Instance.DatabasePath;
+        AppSettings.Instance.DatabasePath = _testDbPath;
         _service = new DatabaseService();
     }
 
     public void Dispose()
     {
-        // Clean up test database
-        Environment.SetEnvironmentVariable("FATOURADZ_TEST_DB", null);
+        // Restaurer le chemin d'origine et nettoyer la base de test.
+        AppSettings.Instance.DatabasePath = _originalDbPath;
         if (File.Exists(_testDbPath))
         {
             try { File.Delete(_testDbPath); } catch { }
@@ -446,6 +449,263 @@ public class DatabaseServiceTests : IDisposable
                 }
             }
         };
+    }
+
+    #endregion
+
+    #region Numérotation des factures (réservation atomique)
+
+    [Fact]
+    public async Task LireProchainNumeroFactureAsync_DoesNotConsumeNumber()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var annee = DateTime.Now.Year;
+
+        // Act
+        var premier = await _service.LireProchainNumeroFactureAsync(annee);
+        var second = await _service.LireProchainNumeroFactureAsync(annee);
+
+        // Assert : la lecture ne consomme jamais de numéro
+        Assert.Equal(1, premier);
+        Assert.Equal(1, second);
+
+        var reserve = await _service.ReserverProchainNumeroFactureAsync(annee);
+        Assert.Equal(1, reserve);
+    }
+
+    [Fact]
+    public async Task ReserverProchainNumeroFactureAsync_ReturnsSequentialNumbers()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var annee = DateTime.Now.Year;
+
+        // Act
+        var premier = await _service.ReserverProchainNumeroFactureAsync(annee);
+        var second = await _service.ReserverProchainNumeroFactureAsync(annee);
+        var troisieme = await _service.ReserverProchainNumeroFactureAsync(annee);
+
+        // Assert : chaque réservation retourne un numéro distinct et croissant
+        Assert.Equal(1, premier);
+        Assert.Equal(2, second);
+        Assert.Equal(3, troisieme);
+    }
+
+    [Fact]
+    public async Task ReserverProchainNumeroFactureAsync_NewYear_ResetsCounter()
+    {
+        // Arrange : l'année précédente s'est terminée au numéro 50
+        await _service.InitializeDatabaseAsync();
+        await _service.SetConfigurationAsync("derniere_annee_facture", (DateTime.Now.Year - 1).ToString());
+        await _service.SetConfigurationAsync("prochain_numero", "50");
+
+        // Act
+        var premier = await _service.ReserverProchainNumeroFactureAsync(DateTime.Now.Year);
+        var second = await _service.ReserverProchainNumeroFactureAsync(DateTime.Now.Year);
+
+        // Assert : réinitialisation à 1 puis 2 (et non 50 -> 51 comme avant le correctif)
+        Assert.Equal(1, premier);
+        Assert.Equal(2, second);
+    }
+
+    [Fact]
+    public async Task ReserverProchainNumeroFactureAsync_SameYear_ContinuesCounter()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        await _service.SetConfigurationAsync("derniere_annee_facture", DateTime.Now.Year.ToString());
+        await _service.SetConfigurationAsync("prochain_numero", "7");
+
+        // Act
+        var numero = await _service.ReserverProchainNumeroFactureAsync(DateTime.Now.Year);
+
+        // Assert
+        Assert.Equal(7, numero);
+    }
+
+    #endregion
+
+    #region Filtrage et statistiques des factures (côté base de données)
+
+    [Fact]
+    public async Task GetFacturesFiltreesAsync_ReturnsOnlyMatchingYear()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture2025 = CreateTestFacture("F2025", business.Id);
+        facture2025.DateFacture = new DateTime(2025, 6, 15);
+        await _service.SaveFactureAsync(facture2025);
+
+        var facture2026 = CreateTestFacture("F2026", business.Id);
+        facture2026.DateFacture = new DateTime(2026, 6, 15);
+        await _service.SaveFactureAsync(facture2026);
+
+        // Act
+        var resultat = await _service.GetFacturesFiltreesAsync(
+            business.Id, 2025, archived: false, type: null, statut: null, recherche: null);
+
+        // Assert
+        Assert.Single(resultat);
+        Assert.Equal(facture2025.NumeroFacture, resultat[0].NumeroFacture);
+    }
+
+    [Fact]
+    public async Task GetFacturesFiltreesAsync_FiltersByStatutAndRecherche()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var payee = CreateTestFacture("RECH-PAYEE", business.Id);
+        payee.DateFacture = new DateTime(2026, 2, 1);
+        payee.Statut = StatutFacture.Payee;
+        await _service.SaveFactureAsync(payee);
+
+        var attente = CreateTestFacture("RECH-ATTENTE", business.Id);
+        attente.DateFacture = new DateTime(2026, 3, 1);
+        attente.Statut = StatutFacture.EnAttente;
+        await _service.SaveFactureAsync(attente);
+
+        // Act : filtre par statut + recherche sur le numéro
+        var resultat = await _service.GetFacturesFiltreesAsync(
+            business.Id, 2026, archived: false, type: null, statut: StatutFacture.Payee, recherche: "RECH-");
+
+        // Assert
+        Assert.Single(resultat);
+        Assert.Equal(payee.NumeroFacture, resultat[0].NumeroFacture);
+    }
+
+    [Fact]
+    public async Task GetAnneesFacturesAsync_ReturnsDistinctYearsDescending()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var f2024a = CreateTestFacture("A", business.Id);
+        f2024a.DateFacture = new DateTime(2024, 3, 1);
+        await _service.SaveFactureAsync(f2024a);
+
+        var f2026 = CreateTestFacture("B", business.Id);
+        f2026.DateFacture = new DateTime(2026, 3, 1);
+        await _service.SaveFactureAsync(f2026);
+
+        var f2024b = CreateTestFacture("C", business.Id);
+        f2024b.DateFacture = new DateTime(2024, 9, 1);
+        await _service.SaveFactureAsync(f2024b);
+
+        // Act
+        var annees = await _service.GetAnneesFacturesAsync(business.Id);
+
+        // Assert
+        Assert.Equal(new List<int> { 2026, 2024 }, annees);
+    }
+
+    [Fact]
+    public async Task GetStatistiquesFacturesAsync_AggregatesYearData()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var payee = CreateTestFacture("P", business.Id);
+        payee.DateFacture = new DateTime(2026, 2, 1);
+        payee.Statut = StatutFacture.Payee;
+        payee.MontantTotal = 1000;
+        await _service.SaveFactureAsync(payee);
+
+        var enAttente = CreateTestFacture("W", business.Id);
+        enAttente.DateFacture = new DateTime(2026, 3, 1);
+        enAttente.Statut = StatutFacture.EnAttente;
+        enAttente.MontantTotal = 500;
+        await _service.SaveFactureAsync(enAttente);
+
+        var annulee = CreateTestFacture("X", business.Id);
+        annulee.DateFacture = new DateTime(2026, 4, 1);
+        annulee.Statut = StatutFacture.Annulee;
+        annulee.MontantTotal = 700;
+        await _service.SaveFactureAsync(annulee);
+
+        // Act
+        var stats = await _service.GetStatistiquesFacturesAsync(business.Id, 2026);
+
+        // Assert
+        Assert.Equal(3, stats.NombreFactures);
+        Assert.Equal(1500m, stats.ChiffreAffaires); // payée + en attente, hors annulée
+        Assert.Equal(1, stats.FacturesPayees);
+        Assert.Equal(1, stats.FacturesEnAttente);
+    }
+
+    [Fact]
+    public async Task GetStatistiquesFacturesAsync_ExcludesOtherYears()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture2025 = CreateTestFacture("Y", business.Id);
+        facture2025.DateFacture = new DateTime(2025, 5, 1);
+        await _service.SaveFactureAsync(facture2025);
+
+        // Act
+        var stats = await _service.GetStatistiquesFacturesAsync(business.Id, 2026);
+
+        // Assert
+        Assert.Equal(0, stats.NombreFactures);
+        Assert.Equal(0m, stats.ChiffreAffaires);
+    }
+
+    #endregion
+
+    #region Version de schéma et sauvegarde avant migration
+
+    [Fact]
+    public async Task InitializeDatabaseAsync_OnFreshDatabase_WritesSchemaVersion()
+    {
+        await _service.InitializeDatabaseAsync();
+
+        Assert.Equal("1", await _service.GetConfigurationAsync("schema_version"));
+    }
+
+    [Fact]
+    public async Task InitializeDatabaseAsync_IsIdempotent()
+    {
+        await _service.InitializeDatabaseAsync();
+        await _service.InitializeDatabaseAsync(); // ne doit pas lever d'exception
+
+        Assert.Equal("1", await _service.GetConfigurationAsync("schema_version"));
+    }
+
+    [Fact]
+    public async Task InitializeDatabaseAsync_LegacyDatabase_BacksUpBeforeMigrating()
+    {
+        // Arrange : simuler une base existante sans version de schéma (ancienne installation)
+        await _service.InitializeDatabaseAsync();
+        await _service.SetConfigurationAsync("schema_version", "0");
+
+        // Act
+        await _service.InitializeDatabaseAsync();
+
+        // Assert : version mise à jour
+        Assert.Equal("1", await _service.GetConfigurationAsync("schema_version"));
+
+        // Assert : une sauvegarde de sécurité a été créée avant la migration
+        var sauvegardes = Directory.GetFiles(
+            Path.GetTempPath(), Path.GetFileName(_testDbPath) + ".backup-*");
+        Assert.NotEmpty(sauvegardes);
+
+        foreach (var sauvegarde in sauvegardes)
+        {
+            try { File.Delete(sauvegarde); } catch { }
+        }
     }
 
     #endregion

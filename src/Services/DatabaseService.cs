@@ -11,15 +11,82 @@ namespace FatouraDZ.Services;
 
 public class DatabaseService : IDatabaseService
 {
+    // Version du schéma applicatif. À incrémenter à chaque nouvelle migration.
+    private const int VersionSchemaActuelle = 1;
+    private const string CleVersionSchema = "schema_version";
+
     public async Task InitializeDatabaseAsync()
     {
+        var cheminBase = AppSettings.Instance.DatabasePath;
+        var fichierExistait = File.Exists(cheminBase);
+
         await using var context = new AppDbContext();
-        await context.Database.EnsureCreatedAsync();
-        
-        // Run migrations
+        var baseCreee = await context.Database.EnsureCreatedAsync();
+
+        if (baseCreee)
+        {
+            // Base neuve : le schéma correspond déjà à la version courante.
+            await EcrireVersionSchemaAsync(context, VersionSchemaActuelle);
+            return;
+        }
+
+        var versionActuelle = await LireVersionSchemaAsync(context);
+        if (versionActuelle >= VersionSchemaActuelle)
+            return;
+
+        // Base existante à mettre à niveau : sauvegarde de sécurité obligatoire avant altération.
+        if (fichierExistait)
+            SauvegarderAvantMigration(cheminBase);
+
+        // Migrations idempotentes, appliquées dans l'ordre.
         await MigrateColumnsAsync(context);
         await MigrateClientTableAsync(context);
         await MigrateTransactionTablesAsync(context);
+
+        await EcrireVersionSchemaAsync(context, VersionSchemaActuelle);
+    }
+
+    private static async Task<int> LireVersionSchemaAsync(AppDbContext context)
+    {
+        var config = await context.Configurations.FindAsync(CleVersionSchema);
+        return config != null && int.TryParse(config.Valeur, out var version) ? version : 0;
+    }
+
+    private static async Task EcrireVersionSchemaAsync(AppDbContext context, int version)
+    {
+        var config = await context.Configurations.FindAsync(CleVersionSchema);
+        if (config != null)
+        {
+            config.Valeur = version.ToString();
+        }
+        else
+        {
+            context.Configurations.Add(new Configuration { Cle = CleVersionSchema, Valeur = version.ToString() });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Copie la base de données avant une migration de schéma afin de pouvoir restaurer
+    /// les données de l'utilisateur en cas de problème.
+    /// </summary>
+    private static void SauvegarderAvantMigration(string cheminBase)
+    {
+        try
+        {
+            if (!File.Exists(cheminBase))
+                return;
+
+            var cheminSauvegarde = $"{cheminBase}.backup-{DateTime.Now:yyyyMMdd_HHmmss}";
+            File.Copy(cheminBase, cheminSauvegarde, overwrite: true);
+            ServiceLocator.Logger.Info($"Sauvegarde de la base avant migration : {cheminSauvegarde}");
+        }
+        catch (Exception ex)
+        {
+            // Une sauvegarde impossible ne doit pas empêcher le démarrage, mais doit être tracée.
+            ServiceLocator.Logger.Warning("Impossible de créer la sauvegarde avant migration", ex);
+        }
     }
 
     private async Task MigrateColumnsAsync(AppDbContext context)
@@ -261,6 +328,73 @@ public class DatabaseService : IDatabaseService
             .Where(f => f.BusinessId == businessId)
             .OrderByDescending(f => f.DateCreation)
             .ToListAsync();
+    }
+
+    public async Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche)
+    {
+        await using var context = new AppDbContext();
+
+        var debutAnnee = new DateTime(annee, 1, 1);
+        var finAnnee = debutAnnee.AddYears(1);
+
+        // Filtrage effectué côté SQLite : on ne rapatrie que les factures utiles (sans les lignes).
+        var query = context.Factures
+            .Where(f => f.BusinessId == businessId
+                     && f.DateFacture >= debutAnnee
+                     && f.DateFacture < finAnnee
+                     && f.IsArchived == archived);
+
+        if (type.HasValue)
+            query = query.Where(f => f.TypeFacture == type.Value);
+
+        if (statut.HasValue)
+            query = query.Where(f => f.Statut == statut.Value);
+
+        if (!string.IsNullOrWhiteSpace(recherche))
+        {
+            var search = recherche.ToLower();
+            query = query.Where(f => f.NumeroFacture.ToLower().Contains(search)
+                                  || f.ClientNom.ToLower().Contains(search));
+        }
+
+        return await query
+            .OrderByDescending(f => f.DateFacture)
+            .ThenByDescending(f => f.Id)
+            .ToListAsync();
+    }
+
+    public async Task<List<int>> GetAnneesFacturesAsync(int businessId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Factures
+            .Where(f => f.BusinessId == businessId)
+            .Select(f => f.DateFacture.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToListAsync();
+    }
+
+    public async Task<StatistiquesFactures> GetStatistiquesFacturesAsync(int businessId, int annee)
+    {
+        await using var context = new AppDbContext();
+
+        var debutAnnee = new DateTime(annee, 1, 1);
+        var finAnnee = debutAnnee.AddYears(1);
+
+        var deLAnnee = context.Factures
+            .Where(f => f.BusinessId == businessId
+                     && f.DateFacture >= debutAnnee
+                     && f.DateFacture < finAnnee);
+
+        return new StatistiquesFactures
+        {
+            NombreFactures = await deLAnnee.CountAsync(),
+            ChiffreAffaires = await deLAnnee
+                .Where(f => f.Statut != StatutFacture.Annulee && !f.IsArchived)
+                .SumAsync(f => (decimal?)f.MontantTotal) ?? 0m,
+            FacturesEnAttente = await deLAnnee.CountAsync(f => f.Statut == StatutFacture.EnAttente && !f.IsArchived),
+            FacturesPayees = await deLAnnee.CountAsync(f => f.Statut == StatutFacture.Payee && !f.IsArchived)
+        };
     }
 
     public async Task<Facture?> GetFactureByIdAsync(int id)
@@ -646,6 +780,66 @@ public class DatabaseService : IDatabaseService
         }
         
         await context.SaveChangesAsync();
+    }
+
+    // Numérotation des factures : lecture et réservation atomique du compteur annuel.
+    private const string CleDerniereAnnee = "derniere_annee_facture";
+    private const string CleProchainNumero = "prochain_numero";
+
+    public async Task<int> LireProchainNumeroFactureAsync(int annee)
+    {
+        await using var context = new AppDbContext();
+        var anneeStr = annee.ToString();
+
+        var derniereAnnee = await context.Configurations.FindAsync(CleDerniereAnnee);
+        if (derniereAnnee?.Valeur != anneeStr)
+            return 1; // Nouvelle année (ou première facture) : on repart à 1
+
+        var compteur = await context.Configurations.FindAsync(CleProchainNumero);
+        return int.TryParse(compteur?.Valeur, out var numero) && numero > 0 ? numero : 1;
+    }
+
+    public async Task<int> ReserverProchainNumeroFactureAsync(int annee)
+    {
+        await using var context = new AppDbContext();
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        var anneeStr = annee.ToString();
+        var derniereAnnee = await context.Configurations.FindAsync(CleDerniereAnnee);
+        var compteur = await context.Configurations.FindAsync(CleProchainNumero);
+
+        int numero;
+        if (derniereAnnee?.Valeur != anneeStr)
+        {
+            // Changement d'année : réinitialisation du compteur (001) + persistance de l'année.
+            numero = 1;
+            UpsertConfiguration(context, CleDerniereAnnee, anneeStr);
+        }
+        else
+        {
+            numero = int.TryParse(compteur?.Valeur, out var n) && n > 0 ? n : 1;
+        }
+
+        // Le compteur pointe désormais vers le numéro suivant, persisté dans la même transaction.
+        UpsertConfiguration(context, CleProchainNumero, (numero + 1).ToString());
+
+        await context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        return numero;
+    }
+
+    private static void UpsertConfiguration(AppDbContext context, string cle, string valeur)
+    {
+        var config = context.Configurations.Find(cle);
+        if (config != null)
+        {
+            config.Valeur = valeur;
+        }
+        else
+        {
+            context.Configurations.Add(new Configuration { Cle = cle, Valeur = valeur });
+        }
     }
 
     public string GetDatabasePath()

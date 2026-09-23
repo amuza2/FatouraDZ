@@ -1,33 +1,75 @@
+using System;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace FatouraDZ.Services;
 
+/// <summary>
+/// Point d'accès unique aux services de l'application.
+/// Les services sont résolus par un conteneur d'injection de dépendances
+/// (Microsoft.Extensions.DependencyInjection) construit au premier accès.
+/// Ce "locator" sert de passerelle : il permet une migration progressive des ViewModels
+/// vers l'injection par constructeur, et d'injecter des doublures dans les tests via
+/// <see cref="SetProvider"/>.
+/// </summary>
 public static class ServiceLocator
 {
-    private static IDatabaseService? _databaseService;
-    private static ICalculationService? _calculationService;
-    private static IInvoiceNumberService? _invoiceNumberService;
-    private static INumberToWordsService? _numberToWordsService;
-    private static IPdfService? _pdfService;
-    private static IExcelService? _excelService;
-    private static IValidationService? _validationService;
+    private static readonly object Verrou = new();
+    private static IServiceProvider? _provider;
 
-    public static IDatabaseService DatabaseService => 
-        _databaseService ??= new DatabaseService();
+    /// <summary>
+    /// Remplace le conteneur de services (utilisé par les tests pour injecter des doubles).
+    /// </summary>
+    public static void SetProvider(IServiceProvider provider)
+    {
+        lock (Verrou)
+        {
+            _provider = provider;
+        }
+    }
 
-    public static ICalculationService CalculationService => 
-        _calculationService ??= new CalculationService();
+    private static IServiceProvider Provider
+    {
+        get
+        {
+            if (_provider != null)
+                return _provider;
 
-    public static IInvoiceNumberService InvoiceNumberService => 
-        _invoiceNumberService ??= new InvoiceNumberService(DatabaseService);
+            lock (Verrou)
+            {
+                return _provider ??= ConstruireConteneurParDefaut();
+            }
+        }
+    }
 
-    public static INumberToWordsService NumberToWordsService => 
-        _numberToWordsService ??= new NumberToWordsService();
+    private static IServiceProvider ConstruireConteneurParDefaut()
+    {
+        var services = new ServiceCollection();
 
-    public static IPdfService PdfService => 
-        _pdfService ??= new PdfService(NumberToWordsService);
+        services.AddSingleton<IDatabaseService, DatabaseService>();
+        services.AddSingleton<ICalculationService, CalculationService>();
+        services.AddSingleton<INumberToWordsService, NumberToWordsService>();
+        services.AddSingleton<IValidationService, ValidationService>();
+        services.AddSingleton<IAppLogger, FileLogger>();
+        services.AddSingleton<IInvoiceNumberService, InvoiceNumberService>();
+        services.AddSingleton<IPdfService, PdfService>();
+        services.AddSingleton<IExcelService, ExcelService>();
 
-    public static IExcelService ExcelService => 
-        _excelService ??= new ExcelService(NumberToWordsService);
+        return services.BuildServiceProvider();
+    }
 
-    public static IValidationService ValidationService => 
-        _validationService ??= new ValidationService();
+    public static IDatabaseService DatabaseService => Provider.GetRequiredService<IDatabaseService>();
+
+    public static ICalculationService CalculationService => Provider.GetRequiredService<ICalculationService>();
+
+    public static IInvoiceNumberService InvoiceNumberService => Provider.GetRequiredService<IInvoiceNumberService>();
+
+    public static INumberToWordsService NumberToWordsService => Provider.GetRequiredService<INumberToWordsService>();
+
+    public static IPdfService PdfService => Provider.GetRequiredService<IPdfService>();
+
+    public static IExcelService ExcelService => Provider.GetRequiredService<IExcelService>();
+
+    public static IValidationService ValidationService => Provider.GetRequiredService<IValidationService>();
+
+    public static IAppLogger Logger => Provider.GetRequiredService<IAppLogger>();
 }

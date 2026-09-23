@@ -27,6 +27,7 @@
     <PackageReference Include="Material.Avalonia" Version="3.13.4" />
     <PackageReference Include="Material.Icons.Avalonia" Version="2.4.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="QuestPDF" Version="2024.12.2" />
 
     <!-- Security overrides: pin patched versions of vulnerable transitive dependencies -->

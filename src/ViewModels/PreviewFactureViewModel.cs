@@ -18,6 +18,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
 {
     private readonly IPdfService _pdfService;
     private readonly IDatabaseService _databaseService;
+    private readonly IAppLogger _logger;
 
     [ObservableProperty]
     private Facture _facture;
@@ -44,6 +45,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
     {
         _pdfService = ServiceLocator.PdfService;
         _databaseService = ServiceLocator.DatabaseService;
+        _logger = ServiceLocator.Logger;
         _facture = facture;
         _business = business;
     }
@@ -64,7 +66,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] GenererPreviewAsync: {ex}");
+            _logger.Error("Échec de la génération de l'aperçu PDF", ex);
             ErreurMessage = $"Erreur lors de la génération de l'aperçu : {ex.Message}";
         }
         finally
@@ -514,7 +516,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] EnregistrerPdfAsync: {ex}");
+            _logger.Error("Échec de l'enregistrement du PDF", ex);
             ErreurMessage = $"Erreur lors de l'enregistrement : {ex.Message}";
         }
     }
@@ -540,7 +542,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] ImprimerAsync: {ex}");
+            _logger.Error("Échec de l'impression", ex);
             ErreurMessage = $"Erreur lors de l'impression : {ex.Message}";
         }
     }
@@ -605,7 +607,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] EnregistrerExcelAsync: {ex}");
+            _logger.Error("Échec de l'export Excel", ex);
             ErreurMessage = $"Erreur lors de l'enregistrement Excel : {ex.Message}";
         }
     }
