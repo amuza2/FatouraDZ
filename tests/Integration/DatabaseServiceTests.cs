@@ -665,7 +665,7 @@ public class DatabaseServiceTests : IDisposable
 
     #endregion
 
-    #region Version de schéma et sauvegarde avant migration
+    #region Version de schéma, migrations EF et sauvegarde avant migration
 
     [Fact]
     public async Task InitializeDatabaseAsync_OnFreshDatabase_WritesSchemaVersion()
@@ -676,28 +676,43 @@ public class DatabaseServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task InitializeDatabaseAsync_IsIdempotent()
+    public async Task InitializeDatabaseAsync_CreatesEfMigrationsHistory()
+    {
+        await _service.InitializeDatabaseAsync();
+
+        Assert.True(TableExiste("__EFMigrationsHistory"));
+    }
+
+    [Fact]
+    public async Task InitializeDatabaseAsync_IsIdempotentAndDoesNotBackUpUnnecessarily()
     {
         await _service.InitializeDatabaseAsync();
         await _service.InitializeDatabaseAsync(); // ne doit pas lever d'exception
 
         Assert.Equal("1", await _service.GetConfigurationAsync("schema_version"));
+
+        // Aucune migration en attente : aucune sauvegarde ne doit être créée à chaque démarrage.
+        var sauvegardes = Directory.GetFiles(
+            Path.GetTempPath(), Path.GetFileName(_testDbPath) + ".backup-*");
+        Assert.Empty(sauvegardes);
     }
 
     [Fact]
-    public async Task InitializeDatabaseAsync_LegacyDatabase_BacksUpBeforeMigrating()
+    public async Task InitializeDatabaseAsync_LegacyDatabase_IsBaselinedAndBackedUp()
     {
-        // Arrange : simuler une base existante sans version de schéma (ancienne installation)
+        // Arrange : base « ancienne » = tables présentes mais aucun historique de migrations
+        // (cas des bases créées par l'ancien mécanisme EnsureCreated).
         await _service.InitializeDatabaseAsync();
-        await _service.SetConfigurationAsync("schema_version", "0");
+        ExecuterSql("DROP TABLE __EFMigrationsHistory");
+        Assert.False(TableExiste("__EFMigrationsHistory"));
 
         // Act
         await _service.InitializeDatabaseAsync();
 
-        // Assert : version mise à jour
-        Assert.Equal("1", await _service.GetConfigurationAsync("schema_version"));
+        // Assert : historique recréé (baseline) sans toucher aux données
+        Assert.True(TableExiste("__EFMigrationsHistory"));
 
-        // Assert : une sauvegarde de sécurité a été créée avant la migration
+        // Assert : sauvegarde de sécurité effectuée avant l'opération
         var sauvegardes = Directory.GetFiles(
             Path.GetTempPath(), Path.GetFileName(_testDbPath) + ".backup-*");
         Assert.NotEmpty(sauvegardes);
@@ -706,6 +721,28 @@ public class DatabaseServiceTests : IDisposable
         {
             try { File.Delete(sauvegarde); } catch { }
         }
+    }
+
+    private void ExecuterSql(string sql)
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_testDbPath}");
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.ExecuteNonQuery();
+    }
+
+    private bool TableExiste(string nom)
+    {
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_testDbPath}");
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=$nom";
+        command.Parameters.AddWithValue("$nom", nom);
+
+        return Convert.ToInt64(command.ExecuteScalar()) > 0;
     }
 
     #endregion

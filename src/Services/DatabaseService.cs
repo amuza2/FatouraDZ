@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using FatouraDZ.Database;
 using FatouraDZ.Models;
 
@@ -11,9 +13,11 @@ namespace FatouraDZ.Services;
 
 public class DatabaseService : IDatabaseService
 {
-    // Version du schéma applicatif. À incrémenter à chaque nouvelle migration.
+    // Version applicative du schéma (simple marqueur de diagnostic).
     private const int VersionSchemaActuelle = 1;
     private const string CleVersionSchema = "schema_version";
+    private const string TableHistoriqueMigrations = "__EFMigrationsHistory";
+    private const string VersionProduitEf = "10.0.0";
 
     public async Task InitializeDatabaseAsync()
     {
@@ -21,24 +25,30 @@ public class DatabaseService : IDatabaseService
         var fichierExistait = File.Exists(cheminBase);
 
         await using var context = new AppDbContext();
-        var baseCreee = await context.Database.EnsureCreatedAsync();
 
-        if (baseCreee)
+        var tablesExistantes = fichierExistait && await DesTablesExistantesAsync(context);
+
+        if (tablesExistantes)
         {
-            // Base neuve : le schéma correspond déjà à la version courante.
-            await EcrireVersionSchemaAsync(context, VersionSchemaActuelle);
-            return;
+            // On ne crée une sauvegarde que s'il y a réellement quelque chose à faire
+            // (pour ne pas générer un fichier à chaque démarrage).
+            var baselineNecessaire = !await HistoriqueMigrationsExisteAsync(context);
+            var migrationsEnAttente = (await context.Database.GetPendingMigrationsAsync()).ToList();
+
+            if (baselineNecessaire || migrationsEnAttente.Count > 0)
+                SauvegarderAvantMigration(cheminBase);
+
+            // Base créée par l'ancien mécanisme (EnsureCreated) : on la déclare déjà au niveau
+            // de la migration initiale, sinon Migrate() tenterait de recréer les tables.
+            if (baselineNecessaire)
+                await AppliquerBaselineAsync(context);
         }
 
-        var versionActuelle = await LireVersionSchemaAsync(context);
-        if (versionActuelle >= VersionSchemaActuelle)
-            return;
+        // Applique les migrations EF Core (crée la base si nécessaire).
+        await context.Database.MigrateAsync();
 
-        // Base existante à mettre à niveau : sauvegarde de sécurité obligatoire avant altération.
-        if (fichierExistait)
-            SauvegarderAvantMigration(cheminBase);
-
-        // Migrations idempotentes, appliquées dans l'ordre.
+        // Rattrapage pour les très anciennes bases dont certaines colonnes avaient été
+        // ajoutées à la main avant l'adoption des migrations.
         await MigrateColumnsAsync(context);
         await MigrateClientTableAsync(context);
         await MigrateTransactionTablesAsync(context);
@@ -46,22 +56,117 @@ public class DatabaseService : IDatabaseService
         await EcrireVersionSchemaAsync(context, VersionSchemaActuelle);
     }
 
-    private static async Task<int> LireVersionSchemaAsync(AppDbContext context)
+    private static async Task<bool> DesTablesExistantesAsync(AppDbContext context)
     {
-        var config = await context.Configurations.FindAsync(CleVersionSchema);
-        return config != null && int.TryParse(config.Valeur, out var version) ? version : 0;
+        var connection = context.Database.GetDbConnection();
+        var ouvertParNous = connection.State != System.Data.ConnectionState.Open;
+        if (ouvertParNous)
+            await connection.OpenAsync();
+
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+            var resultat = await command.ExecuteScalarAsync();
+            return Convert.ToInt64(resultat) > 0;
+        }
+        finally
+        {
+            if (ouvertParNous)
+                await connection.CloseAsync();
+        }
+    }
+
+    private static async Task<bool> HistoriqueMigrationsExisteAsync(AppDbContext context)
+    {
+        var connection = context.Database.GetDbConnection();
+        var ouvertParNous = connection.State != System.Data.ConnectionState.Open;
+        if (ouvertParNous)
+            await connection.OpenAsync();
+
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                $"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{TableHistoriqueMigrations}'";
+            var resultat = await command.ExecuteScalarAsync();
+            return Convert.ToInt64(resultat) > 0;
+        }
+        finally
+        {
+            if (ouvertParNous)
+                await connection.CloseAsync();
+        }
+    }
+
+    /// <summary>
+    /// Marque la plus ancienne migration EF comme déjà appliquée, sans toucher aux données.
+    /// Indispensable pour les bases existantes créées par l'ancien mécanisme.
+    /// </summary>
+    private static async Task AppliquerBaselineAsync(AppDbContext context)
+    {
+        var migrationInitiale = ObtenirIdMigrationLaPlusAncienne();
+
+        var connection = context.Database.GetDbConnection();
+        var ouvertParNous = connection.State != System.Data.ConnectionState.Open;
+        if (ouvertParNous)
+            await connection.OpenAsync();
+
+        try
+        {
+            using (var creation = connection.CreateCommand())
+            {
+                creation.CommandText =
+                    $"CREATE TABLE IF NOT EXISTS \"{TableHistoriqueMigrations}\" (" +
+                    "\"MigrationId\" TEXT NOT NULL CONSTRAINT \"PK___EFMigrationsHistory\" PRIMARY KEY, " +
+                    "\"ProductVersion\" TEXT NOT NULL);";
+                await creation.ExecuteNonQueryAsync();
+            }
+
+            using (var insertion = connection.CreateCommand())
+            {
+                insertion.CommandText =
+                    $"INSERT OR IGNORE INTO \"{TableHistoriqueMigrations}\" (\"MigrationId\", \"ProductVersion\") " +
+                    $"VALUES ('{migrationInitiale}', '{VersionProduitEf}');";
+                await insertion.ExecuteNonQueryAsync();
+            }
+
+            ServiceLocator.Logger.Info(
+                $"Base existante marquée au niveau de la migration {migrationInitiale} (baseline).");
+        }
+        finally
+        {
+            if (ouvertParNous)
+                await connection.CloseAsync();
+        }
+    }
+
+    private static string ObtenirIdMigrationLaPlusAncienne()
+    {
+        var assembly = typeof(AppDbContext).Assembly;
+
+        return assembly.GetTypes()
+            .Select(t => t.GetCustomAttribute<MigrationAttribute>()?.Id)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .First()!;
     }
 
     private static async Task EcrireVersionSchemaAsync(AppDbContext context, int version)
     {
+        var valeur = version.ToString();
         var config = await context.Configurations.FindAsync(CleVersionSchema);
+
         if (config != null)
         {
-            config.Valeur = version.ToString();
+            if (config.Valeur == valeur)
+                return;
+            config.Valeur = valeur;
         }
         else
         {
-            context.Configurations.Add(new Configuration { Cle = CleVersionSchema, Valeur = version.ToString() });
+            context.Configurations.Add(new Configuration { Cle = CleVersionSchema, Valeur = valeur });
         }
 
         await context.SaveChangesAsync();
