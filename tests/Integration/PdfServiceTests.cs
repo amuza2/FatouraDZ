@@ -10,8 +10,7 @@ public class PdfServiceTests : IDisposable
 
     public PdfServiceTests()
     {
-        var numberToWordsService = new NumberToWordsService();
-        _service = new PdfService(numberToWordsService);
+        _service = new PdfService();
         _testOutputDir = Path.Combine(Path.GetTempPath(), $"fatouradz_pdf_test_{Guid.NewGuid()}");
         Directory.CreateDirectory(_testOutputDir);
     }

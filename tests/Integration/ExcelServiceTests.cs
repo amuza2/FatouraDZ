@@ -10,8 +10,7 @@ public class ExcelServiceTests : IDisposable
 
     public ExcelServiceTests()
     {
-        var numberToWordsService = new NumberToWordsService();
-        _service = new ExcelService(numberToWordsService);
+        _service = new ExcelService();
         _testOutputDir = Path.Combine(Path.GetTempPath(), $"fatouradz_excel_test_{Guid.NewGuid()}");
         Directory.CreateDirectory(_testOutputDir);
     }

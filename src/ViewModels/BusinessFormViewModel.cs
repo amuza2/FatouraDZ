@@ -245,6 +245,22 @@ public partial class BusinessFormViewModel : ViewModelBase
             var fichier = fichiers[0];
             var cheminSource = fichier.Path.LocalPath;
 
+            // Règles du cahier des charges : PNG/JPG, 2 Mo maximum.
+            const long tailleMaximale = 2 * 1024 * 1024;
+            var taille = new FileInfo(cheminSource).Length;
+            if (taille > tailleMaximale)
+            {
+                ErreurMessage = "Le logo ne doit pas dépasser 2 Mo.";
+                return;
+            }
+
+            var extension = Path.GetExtension(cheminSource).ToLowerInvariant();
+            if (extension != ".png" && extension != ".jpg" && extension != ".jpeg")
+            {
+                ErreurMessage = "Le logo doit être une image au format PNG ou JPG.";
+                return;
+            }
+
             var appDataPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "FatouraDZ", "logos"

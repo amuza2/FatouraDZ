@@ -11,33 +11,50 @@ namespace FatouraDZ.Services;
 
 public class PdfService : IPdfService
 {
-    private readonly INumberToWordsService _numberToWordsService;
-
-    public PdfService(INumberToWordsService numberToWordsService)
+    public PdfService()
     {
-        _numberToWordsService = numberToWordsService;
-        QuestPDF.Settings.License = LicenseType.Community;
+        // Sécurité : garantit que la licence est définie même hors démarrage normal de l'app.
+        QuestPdfSetup.EnsureLicense();
     }
 
     public Task<string> GenererPdfAsync(Facture facture, Business business, string cheminDestination)
     {
         return Task.Run(() =>
         {
-            Document.Create(container =>
-            {
-                container.Page(page =>
-                {
-                    page.Size(PageSizes.A4);
-                    page.Margin(30);
-                    page.DefaultTextStyle(x => x.FontSize(10));
-
-                    page.Header().Element(c => ComposeHeader(c, facture, business));
-                    page.Content().Element(c => ComposeContent(c, facture, business));
-                    page.Footer().Element(c => ComposeFooter(c, facture));
-                });
-            }).GeneratePdf(cheminDestination);
-
+            CreerDocument(facture, business).GeneratePdf(cheminDestination);
             return cheminDestination;
+        });
+    }
+
+    public Task<byte[]> GenererApercuPngAsync(Facture facture, Business business)
+    {
+        return Task.Run(() => CreerDocument(facture, business)
+            .GenerateImages(new ImageGenerationSettings
+            {
+                ImageFormat = ImageFormat.Png,
+                RasterDpi = 120
+            })
+            .First());
+    }
+
+    /// <summary>
+    /// Construit le document de facture : source unique du rendu, partagée par le PDF
+    /// et par l'aperçu à l'écran (évite toute divergence entre les deux).
+    /// </summary>
+    private Document CreerDocument(Facture facture, Business business)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30);
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                page.Header().Element(c => ComposeHeader(c, facture, business));
+                page.Content().Element(c => ComposeContent(c, facture, business));
+                page.Footer().Element(c => ComposeFooter(c, facture));
+            });
         });
     }
 

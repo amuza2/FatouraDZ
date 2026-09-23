@@ -12,6 +12,9 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // La licence QuestPDF doit être définie avant toute génération de document.
+        Services.QuestPdfSetup.EnsureLicense();
+
         // Journaliser les exceptions non gérées plutôt que de laisser l'application
         // se fermer silencieusement sans trace exploitable.
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>

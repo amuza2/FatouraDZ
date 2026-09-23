@@ -221,17 +221,50 @@ public partial class ClientListViewModel : ViewModelBase
         AfficherDetails = false;
     }
 
+    // Confirmation avant suppression définitive
+    [ObservableProperty]
+    private bool _showConfirmDialog;
+
+    [ObservableProperty]
+    private string _confirmDialogMessage = string.Empty;
+
+    private Client? _clientASupprimer;
+
     [RelayCommand]
-    private async Task SupprimerClientAsync(Client client)
+    private void SupprimerClient(Client client)
     {
+        // La suppression n'est jamais immédiate : l'utilisateur doit confirmer.
+        _clientASupprimer = client;
+        ConfirmDialogMessage = $"Voulez-vous vraiment supprimer le client « {client.Nom} » ? Cette action est définitive.";
+        ShowConfirmDialog = true;
+    }
+
+    [RelayCommand]
+    private void AnnulerSuppression()
+    {
+        ShowConfirmDialog = false;
+        _clientASupprimer = null;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmerSuppressionAsync()
+    {
+        if (_clientASupprimer == null)
+            return;
+
         try
         {
-            await _databaseService.DeleteClientAsync(client.Id);
-            Clients.Remove(client);
+            await _databaseService.DeleteClientAsync(_clientASupprimer.Id);
+            Clients.Remove(_clientASupprimer);
         }
         catch (Exception ex)
         {
             MessageErreur = $"Erreur lors de la suppression : {ex.Message}";
+        }
+        finally
+        {
+            ShowConfirmDialog = false;
+            _clientASupprimer = null;
         }
     }
 

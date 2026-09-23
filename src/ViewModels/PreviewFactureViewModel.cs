@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -8,9 +7,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FatouraDZ.Models;
 using FatouraDZ.Services;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
 
 namespace FatouraDZ.ViewModels;
 
@@ -57,12 +53,10 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
         try
         {
-            await Task.Run(() =>
-            {
-                var imageBytes = GeneratePdfPreviewImage();
-                using var stream = new MemoryStream(imageBytes);
-                PreviewImage = new Bitmap(stream);
-            });
+            // Rendu partagé avec le PDF : plus aucune divergence possible entre l'aperçu et le fichier.
+            var imageBytes = await _pdfService.GenererApercuPngAsync(Facture, Business);
+            using var stream = new MemoryStream(imageBytes);
+            PreviewImage = new Bitmap(stream);
         }
         catch (Exception ex)
         {
@@ -75,381 +69,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
         }
     }
 
-    private byte[] GeneratePdfPreviewImage()
-    {
-        var document = Document.Create(container =>
-        {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(30);
-                page.DefaultTextStyle(x => x.FontSize(10));
 
-                page.Header().Element(c => ComposeHeader(c));
-                page.Content().Element(c => ComposeContent(c));
-                page.Footer().Element(c => ComposeFooter(c));
-            });
-        });
-
-        return document.GenerateImages(new ImageGenerationSettings
-        {
-            ImageFormat = ImageFormat.Png,
-            RasterDpi = 120
-        }).First();
-    }
-
-    private void ComposeHeader(IContainer container)
-    {
-        container.Column(column =>
-        {
-            // 1. SELLER INFO (top) - Left | Logo Center | Right
-            column.Item().Row(row =>
-            {
-                // Left column - Company name and address
-                row.RelativeItem().Column(col =>
-                {
-                    if (Business.TypeEntreprise == BusinessType.Reel)
-                    {
-                        col.Item().Text(Business.RaisonSociale ?? Business.Nom).Bold().FontSize(14);
-                        if (!string.IsNullOrEmpty(Business.CapitalSocial))
-                            col.Item().Text($"Capital : {Business.CapitalSocial}").FontSize(9);
-                    }
-                    else
-                    {
-                        col.Item().Text(Business.NomComplet).Bold().FontSize(14);
-                        if (!string.IsNullOrEmpty(Business.RaisonSociale))
-                            col.Item().Text($"Nom commercial : {Business.RaisonSociale}").FontSize(9);
-                    }
-                    
-                    col.Item().Text($"{Business.Adresse}").FontSize(9);
-                    col.Item().Text($"{Business.CodePostal} {Business.Ville}, {Business.Wilaya}").FontSize(9);
-                    col.Item().Text($"Tél : {Business.Telephone}").FontSize(9);
-                    if (!string.IsNullOrEmpty(Business.Email))
-                        col.Item().Text($"Email : {Business.Email}").FontSize(9);
-                });
-
-                // Center - Logo
-                if (!string.IsNullOrEmpty(Business.CheminLogo) && File.Exists(Business.CheminLogo))
-                {
-                    try
-                    {
-                        var logoBytes = File.ReadAllBytes(Business.CheminLogo);
-                        row.ConstantItem(100).AlignCenter().AlignMiddle().Height(70).Image(logoBytes).FitArea();
-                    }
-                    catch
-                    {
-                        row.ConstantItem(100);
-                    }
-                }
-                else
-                {
-                    row.ConstantItem(100);
-                }
-
-                // Right column - Fiscal info
-                row.RelativeItem().AlignRight().Column(col =>
-                {
-                    if (!string.IsNullOrEmpty(Business.Activite))
-                        col.Item().Text($"Activité : {Business.Activite}").FontSize(9);
-                    if (Business.TypeEntreprise == BusinessType.AutoEntrepreneur)
-                        col.Item().Text($"N° Immatriculation : {Business.NumeroImmatriculation}").FontSize(9);
-                    else
-                        col.Item().Text($"RC : {Business.RC}").FontSize(9);
-                    col.Item().Text($"NIF : {Business.NIF}").FontSize(9);
-                    col.Item().Text($"AI : {Business.AI}").FontSize(9);
-                    col.Item().Text($"NIS : {Business.NIS}").FontSize(9);
-                });
-            });
-
-            column.Item().PaddingVertical(10).LineHorizontal(1);
-            
-            // Add proforma notice if applicable
-            if (Facture.TypeFacture == TypeFacture.Proforma)
-            {
-                column.Item().PaddingVertical(5).AlignCenter().Text("Document sans valeur comptable ni fiscale").FontSize(9).Italic();
-            }
-        });
-    }
-
-    private void ComposeContent(IContainer container)
-    {
-        container.Column(column =>
-        {
-            // 3. CLIENT INFO - Split into two columns like seller section
-            column.Item().Border(1).Padding(10).Row(row =>
-            {
-                // Left column - Client name and contact info
-                row.RelativeItem().Column(col =>
-                {
-                    col.Item().Text("CLIENT").Bold().FontSize(11);
-                    col.Item().PaddingTop(5);
-                    col.Item().Text(Facture.ClientNom).Bold().FontSize(12);
-                    if (Facture.ClientBusinessType == BusinessType.Reel && !string.IsNullOrEmpty(Facture.ClientCapitalSocial))
-                        col.Item().Text($"Capital : {Facture.ClientCapitalSocial}").FontSize(9);
-                    col.Item().Text(Facture.ClientAdresse).FontSize(9);
-                    col.Item().Text($"Tél : {Facture.ClientTelephone}").FontSize(9);
-                    if (!string.IsNullOrEmpty(Facture.ClientEmail))
-                        col.Item().Text($"Email : {Facture.ClientEmail}").FontSize(9);
-                    if (!string.IsNullOrEmpty(Facture.ClientFax))
-                        col.Item().Text($"Fax : {Facture.ClientFax}").FontSize(9);
-                });
-
-                // Center - Invoice number and date
-                row.ConstantItem(150).AlignCenter().Column(col =>
-                {
-                    var titreFacture = Facture.TypeFacture switch
-                    {
-                        TypeFacture.Avoir => "AVOIR",
-                        TypeFacture.Proforma => "PROFORMA",
-                        _ => "FACTURE"
-                    };
-                    col.Item().AlignCenter().Text(titreFacture).Bold().FontSize(14);
-                    col.Item().AlignCenter().Text($"N° {Facture.NumeroFacture}").Bold().FontSize(11);
-                    col.Item().AlignCenter().Text($"{Facture.DateFacture:dd/MM/yyyy}").FontSize(10);
-                    
-                    if (Facture.TypeFacture == TypeFacture.Proforma && Facture.DateValidite.HasValue)
-                        col.Item().AlignCenter().PaddingTop(3).Text($"Valide jusqu'au : {Facture.DateValidite.Value:dd/MM/yyyy}").FontSize(8).Italic();
-                    
-                    if (!string.IsNullOrEmpty(Facture.NumeroFactureOrigine))
-                        col.Item().AlignCenter().PaddingTop(3).Text($"Réf: {Facture.NumeroFactureOrigine}").FontSize(8).Italic();
-                });
-
-                // Right column - Fiscal info
-                row.RelativeItem().AlignRight().Column(col =>
-                {
-                    col.Item().Text("INFORMATIONS FISCALES").Bold().FontSize(9);
-                    col.Item().PaddingTop(5);
-                    if (!string.IsNullOrEmpty(Facture.ClientActivite))
-                        col.Item().Text($"Activité : {Facture.ClientActivite}").FontSize(9);
-                    
-                    if (Facture.ClientBusinessType == BusinessType.AutoEntrepreneur)
-                    {
-                        if (!string.IsNullOrEmpty(Facture.ClientNumeroImmatriculation))
-                            col.Item().Text($"N° Immat. : {Facture.ClientNumeroImmatriculation}").FontSize(9);
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(Facture.ClientRC))
-                            col.Item().Text($"RC : {Facture.ClientRC}").FontSize(9);
-                    }
-                    if (!string.IsNullOrEmpty(Facture.ClientNIF))
-                        col.Item().Text($"NIF : {Facture.ClientNIF}").FontSize(9);
-                    if (!string.IsNullOrEmpty(Facture.ClientAI))
-                        col.Item().Text($"AI : {Facture.ClientAI}").FontSize(9);
-                    if (!string.IsNullOrEmpty(Facture.ClientNIS))
-                        col.Item().Text($"NIS : {Facture.ClientNIS}").FontSize(9);
-                });
-            });
-
-            column.Item().PaddingVertical(15);
-
-            // Check if any line has discount
-            var hasLineDiscount = Facture.Lignes.Any(l => l.MontantRemise > 0);
-
-            // Tableau des lignes - Réf, Désignation, Qté, Unité, Prix H.T, TVA, [Remise], Total H.T
-            column.Item().Table(table =>
-            {
-                if (hasLineDiscount)
-                {
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.ConstantColumn(35);   // Réf
-                        columns.RelativeColumn(2.5f); // Désignation
-                        columns.RelativeColumn(0.7f); // Qté
-                        columns.RelativeColumn(0.6f); // Unité
-                        columns.RelativeColumn(1f);   // Prix H.T
-                        columns.RelativeColumn(0.5f); // TVA
-                        columns.RelativeColumn(0.8f); // Remise
-                        columns.RelativeColumn(1.1f); // Total H.T
-                    });
-                }
-                else
-                {
-                    table.ColumnsDefinition(columns =>
-                    {
-                        columns.ConstantColumn(40);   // Réf
-                        columns.RelativeColumn(3);    // Désignation
-                        columns.RelativeColumn(0.8f); // Qté
-                        columns.RelativeColumn(0.7f); // Unité
-                        columns.RelativeColumn(1.2f); // Prix H.T
-                        columns.RelativeColumn(0.6f); // TVA
-                        columns.RelativeColumn(1.3f); // Total H.T
-                    });
-                }
-
-                table.Header(header =>
-                {
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Réf").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).Text("Désignation").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Qté").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("Unité").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Prix H.T").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text("TVA").Bold();
-                    if (hasLineDiscount)
-                        header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Remise").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Padding(5).AlignRight().Text("Total H.T").Bold();
-                });
-
-                var lignesOrdonnees = Facture.Lignes.OrderBy(l => l.NumeroLigne).ToList();
-                for (int i = 0; i < lignesOrdonnees.Count; i++)
-                {
-                    var ligne = lignesOrdonnees[i];
-                    var bgColor = i % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
-
-                    table.Cell().Background(bgColor).Padding(5).Text(ligne.Reference ?? (i + 1).ToString());
-                    table.Cell().Background(bgColor).Padding(5).Text(ligne.Designation);
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text(ligne.Quantite.ToString("N2"));
-                    table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatUnite(ligne.Unite));
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.PrixUnitaire:N2}");
-                    table.Cell().Background(bgColor).Padding(5).AlignCenter().Text(FormatTauxTVA(ligne.TauxTVA));
-                    if (hasLineDiscount)
-                    {
-                        var remiseText = ligne.MontantRemise > 0 
-                            ? $"-{ligne.MontantRemise:N2}" 
-                            : "-";
-                        table.Cell().Background(bgColor).Padding(5).AlignRight().Text(remiseText);
-                    }
-                    table.Cell().Background(bgColor).Padding(5).AlignRight().Text($"{ligne.TotalHT:N2}");
-                }
-            });
-
-            column.Item().PaddingVertical(15);
-
-            // Récapitulatif
-            column.Item().AlignRight().Width(250).Border(1).Padding(10).Column(col =>
-            {
-                col.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Total HT :");
-                    row.RelativeItem().AlignRight().Text($"{Facture.TotalHT:N2} DZD");
-                });
-                if (Facture.MontantRemiseGlobale > 0)
-                {
-                    col.Item().Row(row =>
-                    {
-                        var typeRemise = Facture.TypeRemiseGlobale == TypeRemise.Pourcentage 
-                            ? $"Remise globale ({Facture.RemiseGlobale}%) :" 
-                            : "Remise globale :";
-                        row.RelativeItem().Text(typeRemise);
-                        row.RelativeItem().AlignRight().Text($"-{Facture.MontantRemiseGlobale:N2} DZD");
-                    });
-                }
-                if (Facture.TotalTVA19 > 0)
-                {
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text($"TVA {AppSettings.Instance.TauxTVAStandard}% :");
-                        row.RelativeItem().AlignRight().Text($"{Facture.TotalTVA19:N2} DZD");
-                    });
-                }
-                if (Facture.TotalTVA9 > 0)
-                {
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text($"TVA {AppSettings.Instance.TauxTVAReduit}% :");
-                        row.RelativeItem().AlignRight().Text($"{Facture.TotalTVA9:N2} DZD");
-                    });
-                }
-                col.Item().Row(row =>
-                {
-                    row.RelativeItem().Text("Total TTC :");
-                    row.RelativeItem().AlignRight().Text($"{Facture.TotalTTC:N2} DZD");
-                });
-                if (Facture.EstTimbreApplique)
-                {
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text("Timbre fiscal :");
-                        row.RelativeItem().AlignRight().Text($"{Facture.TimbreFiscal:N2} DZD");
-                    });
-                }
-                if (Facture.TauxRetenueSource.HasValue && Facture.RetenueSource > 0)
-                {
-                    col.Item().Row(row =>
-                    {
-                        row.RelativeItem().Text($"Retenue source ({Facture.TauxRetenueSource}% du HT) :");
-                        row.RelativeItem().AlignRight().Text($"-{Facture.RetenueSource:N2} DZD");
-                    });
-                }
-                col.Item().PaddingTop(5).LineHorizontal(1);
-                var labelTotal = Facture.TypeFacture switch
-                {
-                    TypeFacture.Avoir => "NET À DÉDUIRE :",
-                    TypeFacture.Proforma => "NET À PAYER :",
-                    _ => "NET À PAYER :"
-                };
-                col.Item().PaddingTop(5).Row(row =>
-                {
-                    row.RelativeItem().Text(labelTotal).Bold();
-                    row.RelativeItem().AlignRight().Text($"{Facture.MontantTotal:N2} DZD").Bold();
-                });
-            });
-
-            column.Item().PaddingTop(10);
-            column.Item().Text($"Montant en lettres : {Facture.MontantEnLettres}").Italic();
-
-            column.Item().PaddingTop(15);
-
-            // Tableau Mode de règlement
-            column.Item().Table(table =>
-            {
-                table.ColumnsDefinition(columns =>
-                {
-                    columns.RelativeColumn(1.5f); // Mode règlement
-                    columns.RelativeColumn(1.5f); // Valeur
-                    columns.RelativeColumn(1.5f); // N° Pièce
-                });
-
-                table.Header(header =>
-                {
-                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text("Mode règlement").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("Valeur").Bold();
-                    header.Cell().Background(Colors.Grey.Lighten2).Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text("N° Pièce").Bold();
-                });
-
-                // Payment row
-                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).Text(Facture.ModePaiement);
-                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignRight().Text($"{Facture.MontantTotal:N2} DZD");
-                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1).Padding(5).AlignCenter().Text(Facture.PaiementNumeroPiece ?? "-");
-            });
-        });
-    }
-
-    private void ComposeFooter(IContainer container)
-    {
-        container.Column(column =>
-        {
-            column.Item().LineHorizontal(1);
-            column.Item().PaddingTop(5).Row(row =>
-            {
-                row.RelativeItem().Text($"Date d'échéance : {Facture.DateEcheance:dd/MM/yyyy}");
-            });
-           
-        });
-    }
-
-    private static string FormatTauxTVA(TauxTVA taux) => taux switch
-    {
-        TauxTVA.TVA19 => "19%",
-        TauxTVA.TVA9 => "9%",
-        TauxTVA.Exonere => "Exonéré",
-        _ => ""
-    };
-
-    private static string FormatUnite(Unite unite) => unite switch
-    {
-        Unite.PCS => "PCS",
-        Unite.BOIT => "BOIT",
-        Unite.KG => "KG",
-        Unite.L => "L",
-        Unite.M => "M",
-        Unite.M2 => "M²",
-        Unite.M3 => "M³",
-        Unite.H => "H",
-        Unite.J => "J",
-        Unite.FORF => "FORF",
-        _ => "PCS"
-    };
 
     [RelayCommand]
     private void Modifier()
@@ -528,10 +148,17 @@ public partial class PreviewFactureViewModel : ViewModelBase
 
         try
         {
-            // Générer un PDF temporaire et l'ouvrir avec l'application par défaut
-            var tempPath = Path.Combine(Path.GetTempPath(), $"FatouraDZ_{Facture.NumeroFacture}.pdf");
+            // Dossier temporaire dédié : permet de nettoyer les impressions précédentes
+            // sans toucher aux autres fichiers temporaires du système.
+            var dossierTemp = Path.Combine(Path.GetTempPath(), "FatouraDZ");
+            Directory.CreateDirectory(dossierTemp);
+            NettoyerImpressionsAnciennes(dossierTemp);
+
+            var numeroNettoye = string.Join("_", Facture.NumeroFacture.Split(Path.GetInvalidFileNameChars()));
+            var tempPath = Path.Combine(dossierTemp, $"FatouraDZ_{numeroNettoye}.pdf");
+
             await _pdfService.GenererPdfAsync(Facture, Business, tempPath);
-            
+
             // Ouvrir le PDF avec l'application par défaut (qui permet d'imprimer)
             var psi = new System.Diagnostics.ProcessStartInfo
             {
@@ -544,6 +171,27 @@ public partial class PreviewFactureViewModel : ViewModelBase
         {
             _logger.Error("Échec de l'impression", ex);
             ErreurMessage = $"Erreur lors de l'impression : {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Supprime les PDF d'impression des sessions précédentes (plus d'un jour) pour
+    /// qu'ils ne s'accumulent pas indéfiniment dans le dossier temporaire.
+    /// </summary>
+    private void NettoyerImpressionsAnciennes(string dossierTemp)
+    {
+        try
+        {
+            var limite = DateTime.Now.AddDays(-1);
+            foreach (var fichier in Directory.GetFiles(dossierTemp, "FatouraDZ_*.pdf"))
+            {
+                if (File.GetLastWriteTime(fichier) < limite)
+                    File.Delete(fichier);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("Nettoyage des impressions temporaires impossible", ex);
         }
     }
 

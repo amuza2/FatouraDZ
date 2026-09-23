@@ -15,13 +15,6 @@ public interface IExcelService
 
 public class ExcelService : IExcelService
 {
-    private readonly INumberToWordsService _numberToWordsService;
-
-    public ExcelService(INumberToWordsService numberToWordsService)
-    {
-        _numberToWordsService = numberToWordsService;
-    }
-
     public Task<string> GenererExcelAsync(Facture facture, Business business, string cheminDestination)
     {
         return Task.Run(() =>
