@@ -56,134 +56,134 @@ public class ValidationServiceTests
 
     #endregion
 
-    #region ValiderEntrepreneur Tests
+    #region ValiderBusiness Tests
 
     [Fact]
-    public void ValiderEntrepreneur_ValidData_ReturnsNoErrors()
+    public void ValiderBusiness_ValidData_ReturnsNoErrors()
     {
-        var entrepreneur = CreateValidEntrepreneur();
+        var business = CreateValidBusiness();
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.True(result.EstValide);
         Assert.Empty(result.Erreurs);
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingNomComplet_ReturnsError()
+    public void ValiderBusiness_MissingNomComplet_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.NomComplet = "";
+        var business = CreateValidBusiness();
+        business.NomComplet = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("nom complet"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingAdresse_ReturnsError()
+    public void ValiderBusiness_MissingAdresse_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.Adresse = "";
+        var business = CreateValidBusiness();
+        business.Adresse = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("adresse"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_InvalidTelephone_ReturnsError()
+    public void ValiderBusiness_InvalidTelephone_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.Telephone = "123456";
+        var business = CreateValidBusiness();
+        business.Telephone = "123456";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("téléphone"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_InvalidNIS_ReturnsError()
+    public void ValiderBusiness_InvalidNIS_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.NIS = "12345"; // Too short
+        var business = CreateValidBusiness();
+        business.NIS = "12345"; // Too short
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("NIS"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_InvalidEmail_ReturnsError()
+    public void ValiderBusiness_InvalidEmail_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.Email = "invalid-email";
+        var business = CreateValidBusiness();
+        business.Email = "invalid-email";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("email"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_EmptyEmail_IsValid()
+    public void ValiderBusiness_EmptyEmail_IsValid()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.Email = "";
+        var business = CreateValidBusiness();
+        business.Email = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.True(result.EstValide);
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingRC_ReturnsError_ForForfait()
+    public void ValiderBusiness_MissingRC_ReturnsError_ForForfait()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.TypeEntreprise = BusinessType.Forfait; // RC required for Forfait
-        entrepreneur.RC = "";
+        var business = CreateValidBusiness();
+        business.TypeEntreprise = BusinessType.Forfait; // RC required for Forfait
+        business.RC = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("RC"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingNIF_ReturnsError()
+    public void ValiderBusiness_MissingNIF_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.NIF = "";
+        var business = CreateValidBusiness();
+        business.NIF = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("NIF"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingAI_ReturnsError()
+    public void ValiderBusiness_MissingAI_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.AI = "";
+        var business = CreateValidBusiness();
+        business.AI = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("AI"));
     }
 
     [Fact]
-    public void ValiderEntrepreneur_MissingNumeroImmatriculation_ReturnsError()
+    public void ValiderBusiness_MissingNumeroImmatriculation_ReturnsError()
     {
-        var entrepreneur = CreateValidEntrepreneur();
-        entrepreneur.NumeroImmatriculation = "";
+        var business = CreateValidBusiness();
+        business.NumeroImmatriculation = "";
 
-        var result = _service.ValiderEntrepreneur(entrepreneur);
+        var result = _service.ValiderBusiness(business);
 
         Assert.False(result.EstValide);
         Assert.Contains(result.Erreurs, e => e.Contains("immatriculation"));
@@ -404,9 +404,9 @@ public class ValidationServiceTests
 
     #region Helper Methods
 
-    private static Entrepreneur CreateValidEntrepreneur()
+    private static Business CreateValidBusiness()
     {
-        return new Entrepreneur
+        return new Business
         {
             TypeEntreprise = BusinessType.AutoEntrepreneur,
             NomComplet = "Mohammed Chami",

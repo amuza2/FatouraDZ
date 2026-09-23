@@ -13,6 +13,7 @@ namespace FatouraDZ.ViewModels;
 public partial class BusinessFormViewModel : ViewModelBase
 {
     private readonly IDatabaseService _databaseService;
+    private readonly IValidationService _validationService;
     private int _businessId;
 
     [ObservableProperty]
@@ -113,6 +114,7 @@ public partial class BusinessFormViewModel : ViewModelBase
     public BusinessFormViewModel()
     {
         _databaseService = ServiceLocator.DatabaseService;
+        _validationService = ServiceLocator.ValidationService;
     }
 
     public void ChargerBusiness(Business business)
@@ -204,6 +206,14 @@ public partial class BusinessFormViewModel : ViewModelBase
             CapitalSocial = CapitalSocial,
             CheminLogo = CheminLogo
         };
+
+        // Validation métier (format du téléphone, NIS, NIF, AI, email, champs selon le type)
+        var validationMetier = _validationService.ValiderBusiness(business);
+        if (!validationMetier.EstValide)
+        {
+            ErreurMessage = string.Join(Environment.NewLine, validationMetier.Erreurs);
+            return;
+        }
 
         try
         {

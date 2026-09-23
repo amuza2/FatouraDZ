@@ -6,70 +6,70 @@ namespace FatouraDZ.Services;
 
 public class ValidationService : IValidationService
 {
-    public ValidationResult ValiderEntrepreneur(Entrepreneur entrepreneur)
+    public ValidationResult ValiderBusiness(Business business)
     {
         var result = new ValidationResult();
 
-        // Nom complet required for Auto-Entrepreneur and Forfait
-        if (entrepreneur.TypeEntreprise != BusinessType.Reel)
+        // Nom complet requis pour Auto-Entrepreneur et Forfait
+        if (business.TypeEntreprise != BusinessType.Reel)
         {
-            if (string.IsNullOrWhiteSpace(entrepreneur.NomComplet))
+            if (string.IsNullOrWhiteSpace(business.NomComplet))
                 result.AjouterErreur("Le nom complet est obligatoire");
         }
 
-        // Raison sociale required for Reel (Company)
-        if (entrepreneur.TypeEntreprise == BusinessType.Reel)
+        // Raison sociale requise pour Reel (société)
+        if (business.TypeEntreprise == BusinessType.Reel)
         {
-            if (string.IsNullOrWhiteSpace(entrepreneur.RaisonSociale))
+            if (string.IsNullOrWhiteSpace(business.RaisonSociale))
                 result.AjouterErreur("La raison sociale est obligatoire pour une société");
-            if (string.IsNullOrWhiteSpace(entrepreneur.CapitalSocial))
+            if (string.IsNullOrWhiteSpace(business.CapitalSocial))
                 result.AjouterErreur("Le capital social est obligatoire pour une société");
         }
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.Activite))
+        if (string.IsNullOrWhiteSpace(business.Activite))
             result.AjouterErreur("L'activité est obligatoire");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.Adresse))
+        if (string.IsNullOrWhiteSpace(business.Adresse))
             result.AjouterErreur("L'adresse est obligatoire");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.Ville))
+        if (string.IsNullOrWhiteSpace(business.Ville))
             result.AjouterErreur("La ville est obligatoire");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.Wilaya))
+        if (string.IsNullOrWhiteSpace(business.Wilaya))
             result.AjouterErreur("La wilaya est obligatoire");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.Telephone))
+        if (string.IsNullOrWhiteSpace(business.Telephone))
             result.AjouterErreur("Le téléphone est obligatoire");
-        else if (!EstTelephoneValide(entrepreneur.Telephone))
+        else if (!EstTelephoneValide(business.Telephone))
             result.AjouterErreur("Le numéro de téléphone est invalide (mobile: 05/06/07XX XX XX XX, fixe: 0XX XX XX XX)");
 
-        // N° Immatriculation required only for Auto-Entrepreneur
-        if (entrepreneur.TypeEntreprise == BusinessType.AutoEntrepreneur)
+        // N° Immatriculation requis uniquement pour Auto-Entrepreneur
+        if (business.TypeEntreprise == BusinessType.AutoEntrepreneur)
         {
-            if (string.IsNullOrWhiteSpace(entrepreneur.NumeroImmatriculation))
+            if (string.IsNullOrWhiteSpace(business.NumeroImmatriculation))
                 result.AjouterErreur("Le numéro d'immatriculation est obligatoire");
         }
 
-        // RC required for Forfait and Reel
-        if (entrepreneur.TypeEntreprise != BusinessType.AutoEntrepreneur)
+        // RC requis pour Forfait et Reel
+        if (business.TypeEntreprise != BusinessType.AutoEntrepreneur)
         {
-            if (string.IsNullOrWhiteSpace(entrepreneur.RC))
+            if (string.IsNullOrWhiteSpace(business.RC))
                 result.AjouterErreur("Le numéro RC est obligatoire");
         }
 
-        // Common fiscal fields required for all types
-        if (string.IsNullOrWhiteSpace(entrepreneur.NIS))
+        // Champs fiscaux communs à tous les types
+        if (string.IsNullOrWhiteSpace(business.NIS))
             result.AjouterErreur("Le numéro NIS est obligatoire");
-        else if (!EstNISValide(entrepreneur.NIS))
+        else if (!EstNISValide(business.NIS))
             result.AjouterErreur("Le NIS doit contenir 15 chiffres");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.NIF))
+        if (string.IsNullOrWhiteSpace(business.NIF))
             result.AjouterErreur("Le numéro NIF est obligatoire");
 
-        if (string.IsNullOrWhiteSpace(entrepreneur.AI))
+        if (string.IsNullOrWhiteSpace(business.AI))
             result.AjouterErreur("Le numéro AI est obligatoire");
 
-        if (!string.IsNullOrWhiteSpace(entrepreneur.Email) && !EstEmailValide(entrepreneur.Email))
+        if (!string.IsNullOrWhiteSpace(business.Email) && !EstEmailValide(business.Email))
             result.AjouterErreur("Le format de l'email est invalide");
 
         return result;

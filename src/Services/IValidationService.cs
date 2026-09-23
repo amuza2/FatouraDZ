@@ -5,7 +5,7 @@ namespace FatouraDZ.Services;
 
 public interface IValidationService
 {
-    ValidationResult ValiderEntrepreneur(Entrepreneur entrepreneur);
+    ValidationResult ValiderBusiness(Business business);
     ValidationResult ValiderFacture(Facture facture);
     ValidationResult ValiderLigneFacture(LigneFacture ligne);
     bool EstTelephoneValide(string telephone);

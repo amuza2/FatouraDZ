@@ -41,24 +41,42 @@ public class AppSettings
     private static AppSettings? _instance;
     public static AppSettings Instance => _instance ??= Load();
 
+    /// <summary>
+    /// Variable d'environnement utilisée par les tests pour rediriger la base de données vers un
+    /// dossier temporaire : la base réelle de l'utilisateur ne doit jamais être touchée.
+    /// </summary>
+    public const string TestDatabaseDirVariable = "FATOURADZ_TEST_DB_DIR";
+
     private static AppSettings Load()
     {
+        AppSettings settings;
+
         try
         {
             if (File.Exists(SettingsFilePath))
             {
                 var json = File.ReadAllText(SettingsFilePath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                if (settings != null)
-                    return settings;
+                settings = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            }
+            else
+            {
+                settings = new AppSettings();
             }
         }
         catch
         {
             // If loading fails, use defaults
+            settings = new AppSettings();
         }
 
-        return new AppSettings();
+        // Redirection vers une base temporaire pendant les tests.
+        var dossierTest = Environment.GetEnvironmentVariable(TestDatabaseDirVariable);
+        if (!string.IsNullOrWhiteSpace(dossierTest))
+        {
+            settings.DatabasePath = Path.Combine(dossierTest, "fatouradz.db");
+        }
+
+        return settings;
     }
 
     public void Save()
