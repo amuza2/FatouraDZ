@@ -31,12 +31,27 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private decimal _tauxTVAReduit;
 
-    // Fiscal settings - Timbre
+    // Fiscal settings - Timbre (barème progressif - LF 2025, art. 100 code du timbre)
     [ObservableProperty]
-    private decimal _tauxTimbreFiscal;
+    private decimal _timbreSeuilExoneration;
 
     [ObservableProperty]
-    private decimal _montantMaxTimbre;
+    private decimal _timbreSeuil1;
+
+    [ObservableProperty]
+    private decimal _timbreTaux1;
+
+    [ObservableProperty]
+    private decimal _timbreSeuil2;
+
+    [ObservableProperty]
+    private decimal _timbreTaux2;
+
+    [ObservableProperty]
+    private decimal _timbreTaux3;
+
+    [ObservableProperty]
+    private decimal _timbreMinimum;
 
     // Fiscal settings - Retenue
     [ObservableProperty]
@@ -78,8 +93,13 @@ public partial class SettingsViewModel : ViewModelBase
         CheminBaseDeDonnees = settings.DatabasePath;
         TauxTVAStandard = settings.TauxTVAStandard;
         TauxTVAReduit = settings.TauxTVAReduit;
-        TauxTimbreFiscal = settings.TauxTimbreFiscal;
-        MontantMaxTimbre = settings.MontantMaxTimbre;
+        TimbreSeuilExoneration = settings.TimbreSeuilExoneration;
+        TimbreSeuil1 = settings.TimbreSeuil1;
+        TimbreTaux1 = settings.TimbreTaux1;
+        TimbreSeuil2 = settings.TimbreSeuil2;
+        TimbreTaux2 = settings.TimbreTaux2;
+        TimbreTaux3 = settings.TimbreTaux3;
+        TimbreMinimum = settings.TimbreMinimum;
         TauxRetenueSourceDefaut = settings.TauxRetenueSourceDefaut;
         FormatNumeroFacture = settings.FormatNumeroFacture;
         DelaiPaiementDefaut = settings.DelaiPaiementDefaut;
@@ -259,8 +279,13 @@ public partial class SettingsViewModel : ViewModelBase
             var settings = AppSettings.Instance;
             settings.TauxTVAStandard = TauxTVAStandard;
             settings.TauxTVAReduit = TauxTVAReduit;
-            settings.TauxTimbreFiscal = TauxTimbreFiscal;
-            settings.MontantMaxTimbre = MontantMaxTimbre;
+            settings.TimbreSeuilExoneration = TimbreSeuilExoneration;
+            settings.TimbreSeuil1 = TimbreSeuil1;
+            settings.TimbreTaux1 = TimbreTaux1;
+            settings.TimbreSeuil2 = TimbreSeuil2;
+            settings.TimbreTaux2 = TimbreTaux2;
+            settings.TimbreTaux3 = TimbreTaux3;
+            settings.TimbreMinimum = TimbreMinimum;
             settings.TauxRetenueSourceDefaut = TauxRetenueSourceDefaut;
             settings.FormatNumeroFacture = FormatNumeroFacture;
             settings.DelaiPaiementDefaut = DelaiPaiementDefaut;
@@ -282,8 +307,13 @@ public partial class SettingsViewModel : ViewModelBase
 
         TauxTVAStandard = 19m;
         TauxTVAReduit = 9m;
-        TauxTimbreFiscal = 1m;
-        MontantMaxTimbre = 2500m;
+        TimbreSeuilExoneration = 300m;
+        TimbreSeuil1 = 30000m;
+        TimbreTaux1 = 1m;
+        TimbreSeuil2 = 100000m;
+        TimbreTaux2 = 1.5m;
+        TimbreTaux3 = 2m;
+        TimbreMinimum = 5m;
         TauxRetenueSourceDefaut = 5m;
         FormatNumeroFacture = "FAC-{ANNEE}-{NUM}";
         DelaiPaiementDefaut = 30;

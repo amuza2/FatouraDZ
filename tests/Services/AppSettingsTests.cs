@@ -37,23 +37,73 @@ public class AppSettingsTests
     }
 
     [Fact]
-    public void DefaultTauxTimbreFiscal_Is1()
+    public void DefaultTimbreSeuilExoneration_Is300()
     {
         // Arrange
         var settings = new AppSettings();
 
         // Assert
-        Assert.Equal(1m, settings.TauxTimbreFiscal);
+        Assert.Equal(300m, settings.TimbreSeuilExoneration);
     }
 
     [Fact]
-    public void DefaultMontantMaxTimbre_Is2500()
+    public void DefaultTimbreSeuil1_Is30000()
     {
         // Arrange
         var settings = new AppSettings();
 
         // Assert
-        Assert.Equal(2500m, settings.MontantMaxTimbre);
+        Assert.Equal(30000m, settings.TimbreSeuil1);
+    }
+
+    [Fact]
+    public void DefaultTimbreTaux1_Is1()
+    {
+        // Arrange
+        var settings = new AppSettings();
+
+        // Assert
+        Assert.Equal(1m, settings.TimbreTaux1);
+    }
+
+    [Fact]
+    public void DefaultTimbreSeuil2_Is100000()
+    {
+        // Arrange
+        var settings = new AppSettings();
+
+        // Assert
+        Assert.Equal(100000m, settings.TimbreSeuil2);
+    }
+
+    [Fact]
+    public void DefaultTimbreTaux2_Is1Point5()
+    {
+        // Arrange
+        var settings = new AppSettings();
+
+        // Assert
+        Assert.Equal(1.5m, settings.TimbreTaux2);
+    }
+
+    [Fact]
+    public void DefaultTimbreTaux3_Is2()
+    {
+        // Arrange
+        var settings = new AppSettings();
+
+        // Assert
+        Assert.Equal(2m, settings.TimbreTaux3);
+    }
+
+    [Fact]
+    public void DefaultTimbreMinimum_Is5()
+    {
+        // Arrange
+        var settings = new AppSettings();
+
+        // Assert
+        Assert.Equal(5m, settings.TimbreMinimum);
     }
 
     [Fact]
@@ -117,29 +167,28 @@ public class AppSettingsTests
     }
 
     [Fact]
-    public void TauxTimbreFiscal_CanBeModified()
+    public void TimbreSeuilsEtTaux_CanBeModified()
     {
         // Arrange
         var settings = new AppSettings();
 
         // Act
-        settings.TauxTimbreFiscal = 1.5m;
+        settings.TimbreSeuilExoneration = 500m;
+        settings.TimbreSeuil1 = 50000m;
+        settings.TimbreTaux1 = 1.25m;
+        settings.TimbreSeuil2 = 150000m;
+        settings.TimbreTaux2 = 1.75m;
+        settings.TimbreTaux3 = 2.5m;
+        settings.TimbreMinimum = 10m;
 
         // Assert
-        Assert.Equal(1.5m, settings.TauxTimbreFiscal);
-    }
-
-    [Fact]
-    public void MontantMaxTimbre_CanBeModified()
-    {
-        // Arrange
-        var settings = new AppSettings();
-
-        // Act
-        settings.MontantMaxTimbre = 3000m;
-
-        // Assert
-        Assert.Equal(3000m, settings.MontantMaxTimbre);
+        Assert.Equal(500m, settings.TimbreSeuilExoneration);
+        Assert.Equal(50000m, settings.TimbreSeuil1);
+        Assert.Equal(1.25m, settings.TimbreTaux1);
+        Assert.Equal(150000m, settings.TimbreSeuil2);
+        Assert.Equal(1.75m, settings.TimbreTaux2);
+        Assert.Equal(2.5m, settings.TimbreTaux3);
+        Assert.Equal(10m, settings.TimbreMinimum);
     }
 
     [Fact]

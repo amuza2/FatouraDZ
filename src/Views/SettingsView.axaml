@@ -172,16 +172,48 @@
                                     <TextBlock Text="Timbre Fiscal" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
                                 </StackPanel>
                                 
-                                <Grid ColumnDefinitions="*,20,*">
-                                    <StackPanel Grid.Column="0" Spacing="5">
-                                        <TextBlock Text="Taux (%)" FontWeight="Medium" FontSize="12"/>
-                                        <NumericUpDown Value="{Binding TauxTimbreFiscal}" Minimum="0" Maximum="10" Increment="0.1" FormatString="0.##"/>
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Barème progressif appliqué au montant TTC des factures réglées en espèces (Loi de Finances 2025, art. 100 du code du timbre)." 
+                                               Foreground="#64748B" FontSize="11" TextWrapping="Wrap"/>
+
+                                    <Grid ColumnDefinitions="*,20,*">
+                                        <StackPanel Grid.Column="0" Spacing="5">
+                                            <TextBlock Text="Seuil d'exonération (DZD)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreSeuilExoneration}" Minimum="0" Maximum="100000" Increment="50" FormatString="N0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="Minimum de perception (DZD)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreMinimum}" Minimum="0" Maximum="10000" Increment="1" FormatString="N0"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,20,*">
+                                        <StackPanel Grid.Column="0" Spacing="5">
+                                            <TextBlock Text="Tranche 1 — jusqu'à (DZD)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreSeuil1}" Minimum="0" Maximum="1000000" Increment="1000" FormatString="N0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="Taux tranche 1 (%)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreTaux1}" Minimum="0" Maximum="100" Increment="0.1" FormatString="0.##"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,20,*">
+                                        <StackPanel Grid.Column="0" Spacing="5">
+                                            <TextBlock Text="Tranche 2 — jusqu'à (DZD)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreSeuil2}" Minimum="0" Maximum="10000000" Increment="1000" FormatString="N0"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="Taux tranche 2 (%)" FontWeight="Medium" FontSize="12"/>
+                                            <NumericUpDown Value="{Binding TimbreTaux2}" Minimum="0" Maximum="100" Increment="0.1" FormatString="0.##"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Spacing="5" MaxWidth="200" HorizontalAlignment="Left">
+                                        <TextBlock Text="Taux au-delà de la tranche 2 (%)" FontWeight="Medium" FontSize="12"/>
+                                        <NumericUpDown Value="{Binding TimbreTaux3}" Minimum="0" Maximum="100" Increment="0.1" FormatString="0.##"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Column="2" Spacing="5">
-                                        <TextBlock Text="Montant Maximum (DZD)" FontWeight="Medium" FontSize="12"/>
-                                        <NumericUpDown Value="{Binding MontantMaxTimbre}" Minimum="0" Maximum="100000" Increment="100" FormatString="N0"/>
-                                    </StackPanel>
-                                </Grid>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 

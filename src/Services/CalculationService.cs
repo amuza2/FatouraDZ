@@ -72,17 +72,24 @@ public class CalculationService : ICalculationService
     public decimal CalculerTimbreFiscal(decimal montantTTC)
     {
         var settings = AppSettings.Instance;
-        
-        if (montantTTC <= 0)
+
+        // Droit de timbre sur les règlements en espèces, calculé sur le montant TTC.
+        // Barème progressif (Loi de Finances 2025, art. 100 du code du timbre) :
+        //   <= 300 DA             : exonéré
+        //   300 DA  -> 30 000 DA  : 1 %
+        //   30 000  -> 100 000 DA : 1,5 %
+        //   > 100 000 DA          : 2 %
+        // Minimum de perception : 5 DA. Aucun plafond.
+        if (montantTTC <= settings.TimbreSeuilExoneration)
             return 0m;
 
-        var timbre = Math.Round(montantTTC * (settings.TauxTimbreFiscal / 100m), 2);
-        
-        // Apply maximum limit from settings
-        timbre = Math.Min(timbre, settings.MontantMaxTimbre);
-        
-        // Minimum légal : 5 DA
-        return Math.Max(timbre, 5m);
+        var taux = montantTTC <= settings.TimbreSeuil1 ? settings.TimbreTaux1
+                 : montantTTC <= settings.TimbreSeuil2 ? settings.TimbreTaux2
+                 : settings.TimbreTaux3;
+
+        var timbre = Math.Round(montantTTC * (taux / 100m), 2);
+
+        return Math.Max(timbre, settings.TimbreMinimum);
     }
 
     public (decimal TotalHT, decimal TVA19, decimal TVA9, decimal TotalTTC, decimal TimbreFiscal, decimal MontantTotal, decimal MontantRemiseGlobale) 

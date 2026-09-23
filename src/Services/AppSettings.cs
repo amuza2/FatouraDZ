@@ -21,8 +21,15 @@ public class AppSettings
     public decimal TauxTVAReduit { get; set; } = 9m;
 
     // Fiscal Settings - Timbre Fiscal
-    public decimal TauxTimbreFiscal { get; set; } = 1m; // Percentage
-    public decimal MontantMaxTimbre { get; set; } = 2500m; // Maximum amount in DZD
+    // Barème progressif (Loi de Finances 2025, art. 100 du code du timbre).
+    // Applicable aux factures réglées en espèces, calculé sur le montant TTC.
+    public decimal TimbreSeuilExoneration { get; set; } = 300m; // Montants <= ce seuil : exonérés
+    public decimal TimbreSeuil1 { get; set; } = 30000m;         // Borne haute de la tranche à 1 %
+    public decimal TimbreTaux1 { get; set; } = 1m;              // Taux (%) jusqu'à TimbreSeuil1
+    public decimal TimbreSeuil2 { get; set; } = 100000m;        // Borne haute de la tranche à 1,5 %
+    public decimal TimbreTaux2 { get; set; } = 1.5m;            // Taux (%) jusqu'à TimbreSeuil2
+    public decimal TimbreTaux3 { get; set; } = 2m;              // Taux (%) au-delà de TimbreSeuil2
+    public decimal TimbreMinimum { get; set; } = 5m;            // Minimum de perception (DZD)
 
     // Fiscal Settings - Retenue à la Source
     public decimal TauxRetenueSourceDefaut { get; set; } = 5m;

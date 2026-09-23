@@ -69,16 +69,25 @@ public class CalculationServiceTests
 
     #region CalculerTimbreFiscal Tests
 
+    // Barème progressif (Loi de Finances 2025, art. 100 du code du timbre) :
+    //   <= 300 DA             : exonéré
+    //   300 DA  -> 30 000 DA  : 1 %
+    //   30 000  -> 100 000 DA : 1,5 %
+    //   > 100 000 DA          : 2 %
+    // Minimum de perception : 5 DA. Aucun plafond.
     [Theory]
-    [InlineData(0, 0)]           // Zero amount
-    [InlineData(100, 5)]         // Small amount, minimum 5 DA
-    [InlineData(500, 5)]         // 500 * 1% = 5 DA (minimum)
-    [InlineData(1000, 10)]       // 1000 * 1% = 10 DA
-    [InlineData(30000, 300)]     // 30000 * 1% = 300 DA
-    [InlineData(50000, 500)]     // 50000 * 1% = 500 DA
-    [InlineData(100000, 1000)]   // 100000 * 1% = 1000 DA
-    [InlineData(250000, 2500)]   // 250000 * 1% = 2500 DA (max limit)
-    [InlineData(500000, 2500)]   // 500000 * 1% = 5000 DA but capped at 2500 DA max
+    [InlineData(0, 0)]            // Montant nul
+    [InlineData(100, 0)]          // <= 300 DA : exonéré
+    [InlineData(300, 0)]          // Au seuil d'exonération
+    [InlineData(350, 5)]          // 1 % de 350 = 3,50 DA -> minimum 5 DA
+    [InlineData(500, 5)]          // 1 % = 5 DA
+    [InlineData(1000, 10)]        // 1 % = 10 DA
+    [InlineData(30000, 300)]      // 1 % = 300 DA (borne haute tranche 1)
+    [InlineData(50000, 750)]      // 1,5 % = 750 DA
+    [InlineData(100000, 1500)]    // 1,5 % = 1500 DA (borne haute tranche 2)
+    [InlineData(200000, 4000)]    // 2 % = 4000 DA
+    [InlineData(250000, 5000)]    // 2 % = 5000 DA (plus de plafond)
+    [InlineData(500000, 10000)]   // 2 % = 10 000 DA (plus de plafond)
     public void CalculerTimbreFiscal_ReturnsCorrectAmount(decimal montantTTC, decimal expected)
     {
         var result = _service.CalculerTimbreFiscal(montantTTC);
@@ -93,11 +102,19 @@ public class CalculationServiceTests
     }
 
     [Fact]
+    public void CalculerTimbreFiscal_BelowExonerationThreshold_ReturnsZero()
+    {
+        // Les montants <= 300 DA ne donnent pas lieu au droit de timbre
+        var result = _service.CalculerTimbreFiscal(250);
+        Assert.Equal(0m, result);
+    }
+
+    [Fact]
     public void CalculerTimbreFiscal_MinimumIs5DA()
     {
-        // Very small amount should still return minimum 5 DA
-        var result = _service.CalculerTimbreFiscal(100);
-        Assert.True(result >= 5);
+        // Montant juste au-dessus du seuil : 1 % < 5 DA -> minimum 5 DA
+        var result = _service.CalculerTimbreFiscal(350);
+        Assert.Equal(5m, result);
     }
 
     #endregion
@@ -176,9 +193,9 @@ public class CalculationServiceTests
     }
 
     [Fact]
-    public void CalculerTotaux_LargeAmount_CorrectTimbreRate()
+    public void CalculerTotaux_HighAmount_UsesTopTimbreBracket()
     {
-        // Test with amount > 250,000 DA to verify max cap at 2500 DA
+        // Montant TTC > 100 000 DA : tranche à 2 % (plus de plafond depuis la LF 2025)
         var lignes = new List<LigneFacture>
         {
             new() { Quantite = 1, PrixUnitaire = 100000, TauxTVA = TauxTVA.TVA19 }
@@ -189,9 +206,9 @@ public class CalculationServiceTests
         Assert.Equal(100000m, result.TotalHT);
         Assert.Equal(19000m, result.TVA19);
         Assert.Equal(119000m, result.TotalTTC);
-        // Timbre: 119000 * 1% = 1190 DA
-        Assert.Equal(1190m, result.TimbreFiscal);
-        Assert.Equal(120190m, result.MontantTotal);
+        // Timbre : 119000 * 2 % = 2380 DA
+        Assert.Equal(2380m, result.TimbreFiscal);
+        Assert.Equal(121380m, result.MontantTotal);
     }
 
     #endregion
