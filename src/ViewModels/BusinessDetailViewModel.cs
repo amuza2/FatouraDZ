@@ -207,6 +207,14 @@ public partial class BusinessDetailViewModel : ViewModelBase
     [RelayCommand]
     private void EditInvoice(Facture facture)
     {
+        // Traçabilité : une facture payée ou annulée ne doit plus être modifiable.
+        if (facture.Statut is StatutFacture.Payee or StatutFacture.Annulee)
+        {
+            var etat = facture.Statut == StatutFacture.Payee ? "payée" : "annulée";
+            MessageErreur = $"La facture {facture.NumeroFacture} est {etat} et ne peut plus être modifiée.";
+            return;
+        }
+
         EditInvoiceRequested?.Invoke(facture);
     }
 
@@ -326,7 +334,7 @@ public partial class BusinessDetailViewModel : ViewModelBase
                 newInvoice.DateValidite = null;
                 newInvoice.NumeroFactureOrigine = proforma.NumeroFacture;
                 newInvoice.DateFacture = DateTime.Today;
-                newInvoice.DateEcheance = DateTime.Today.AddDays(30);
+                newInvoice.DateEcheance = DateTime.Today.AddDays(AppSettings.Instance.DelaiPaiementDefaut);
                 
                 await _databaseService.SaveFactureAsync(newInvoice);
                 await ChargerFacturesAsync();

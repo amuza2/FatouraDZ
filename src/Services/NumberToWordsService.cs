@@ -15,17 +15,34 @@ public class NumberToWordsService : INumberToWordsService
         "", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante", "quatre-vingt", "quatre-vingt"
     };
 
+    /// <summary>
+    /// Montant maximum convertible en lettres (borné par la capacité de Int64).
+    /// </summary>
+    public const decimal MontantMaximum = 999_999_999_999_999_999m;
+
     public string ConvertirEnLettres(decimal montant)
     {
         if (montant == 0)
             return "zéro dinar algérien";
 
-        var partieEntiere = (long)Math.Floor(montant);
-        var centimes = (int)Math.Round((montant - partieEntiere) * 100);
+        if (Math.Abs(montant) > MontantMaximum)
+            throw new ArgumentOutOfRangeException(
+                nameof(montant),
+                $"Le montant dépasse la limite convertible en lettres ({MontantMaximum:N0} DZD).");
 
-        var resultat = ConvertirNombre(partieEntiere);
-        
-        if (partieEntiere == 1)
+        var partieEntiere = decimal.Floor(montant);
+        var centimes = (int)Math.Round((montant - partieEntiere) * 100m, MidpointRounding.AwayFromZero);
+
+        // Retenue des centimes : 1 190,999 DA -> 1 191 DA (jamais « cent centimes »).
+        if (centimes >= 100)
+        {
+            partieEntiere += 1m;
+            centimes -= 100;
+        }
+
+        var resultat = ConvertirNombre((long)partieEntiere);
+
+        if (partieEntiere == 1m || partieEntiere == -1m)
             resultat += " dinar algérien";
         else
             resultat += " dinars algériens";
@@ -33,10 +50,7 @@ public class NumberToWordsService : INumberToWordsService
         if (centimes > 0)
         {
             resultat += " et " + ConvertirNombre(centimes);
-            if (centimes == 1)
-                resultat += " centime";
-            else
-                resultat += " centimes";
+            resultat += centimes == 1 ? " centime" : " centimes";
         }
 
         // Première lettre en majuscule
@@ -82,7 +96,14 @@ public class NumberToWordsService : INumberToWordsService
             if (milliers == 1)
                 resultat += "mille ";
             else
-                resultat += ConvertirNombre(milliers) + " mille ";
+            {
+                var groupe = ConvertirNombre(milliers);
+                // « mille » est invariable : on retire le « s » final
+                // (quatre-vingts mille -> quatre-vingt mille, deux cents mille -> deux cent mille).
+                if (groupe.EndsWith("s", StringComparison.Ordinal))
+                    groupe = groupe[..^1];
+                resultat += groupe + " mille ";
+            }
             nombre %= 1000;
         }
 

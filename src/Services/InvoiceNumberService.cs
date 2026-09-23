@@ -26,7 +26,15 @@ public class InvoiceNumberService : IInvoiceNumberService
         return Formater(annee, numero);
     }
 
-    // Format : FAC-YYYY-NNN (ex. FAC-2026-001). Au-delà de 999, le numéro s'allonge
-    // naturellement (FAC-2026-1234) grâce au formatage D3.
-    private static string Formater(int annee, int numero) => $"FAC-{annee}-{numero:D3}";
+    // Format configurable via les paramètres ({ANNEE} et {NUM}), « FAC-YYYY-NNN » par défaut.
+    private static string Formater(int annee, int numero)
+    {
+        var format = AppSettings.Instance.FormatNumeroFacture;
+        if (string.IsNullOrWhiteSpace(format))
+            format = "FAC-{ANNEE}-{NUM}";
+
+        return format
+            .Replace("{ANNEE}", annee.ToString(), StringComparison.Ordinal)
+            .Replace("{NUM}", numero.ToString("D3"), StringComparison.Ordinal);
+    }
 }

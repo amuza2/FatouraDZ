@@ -14,9 +14,8 @@ public class TypeFactureToLabelConverter : IValueConverter
         {
             return index switch
             {
-                0 => "NET À PAYER",
                 1 => "NET À DÉDUIRE",
-                2 => "MONTANT ANNULÉ",
+                // 0 = facture normale, 2 = facture proforma : même libellé que celui du PDF.
                 _ => "NET À PAYER"
             };
         }

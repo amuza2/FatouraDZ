@@ -12,6 +12,8 @@ public interface IDatabaseService
     Task<Business?> GetBusinessByIdAsync(int id);
     Task SaveBusinessAsync(Business business);
     Task DeleteBusinessAsync(int id);
+    /// <summary>Bascule le statut d'archivage d'une entreprise (sans passer par SaveBusinessAsync).</summary>
+    Task ArchiveBusinessAsync(int id);
     
     // Factures
     Task<List<Facture>> GetFacturesAsync();
@@ -48,6 +50,15 @@ public interface IDatabaseService
     
     // Transactions
     Task<List<Transaction>> GetTransactionsByBusinessIdAsync(int businessId);
+    /// <summary>
+    /// Transactions filtrées et paginées côté base de données (archivage, plage de dates,
+    /// type, catégorie). La plage de dates inclut le jour de fin.
+    /// </summary>
+    Task<List<Transaction>> GetTransactionsFiltreesAsync(int businessId, bool afficherArchivees, DateTime debut, DateTime fin, TypeTransaction? type, string? categorie, int skip, int take);
+    /// <summary>Nombre de transactions correspondant aux mêmes filtres (pour la pagination).</summary>
+    Task<int> GetNombreTransactionsFiltreesAsync(int businessId, bool afficherArchivees, DateTime debut, DateTime fin, TypeTransaction? type, string? categorie);
+    /// <summary>Totaux des recettes et dépenses non archivées sur une plage de dates.</summary>
+    Task<(decimal Recettes, decimal Depenses)> GetTotauxTransactionsAsync(int businessId, DateTime debut, DateTime fin);
     Task SaveTransactionAsync(Transaction transaction);
     Task DeleteTransactionAsync(int id);
     Task ArchiveTransactionAsync(int id);

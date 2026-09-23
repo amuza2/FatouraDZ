@@ -40,7 +40,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private DateTimeOffset _dateFacture = DateTimeOffset.Now.Date;
 
     [ObservableProperty]
-    private DateTimeOffset _dateEcheance = DateTimeOffset.Now.Date.AddDays(30);
+    private DateTimeOffset _dateEcheance = DateTimeOffset.Now.Date.AddDays(AppSettings.Instance.DelaiPaiementDefaut);
 
     [ObservableProperty]
     private DateTimeOffset _dateValidite = DateTimeOffset.Now.Date.AddDays(30);
@@ -267,7 +267,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private bool _appliquerRetenueSource;
 
     [ObservableProperty]
-    private decimal _tauxRetenueSource = 30m;
+    private decimal _tauxRetenueSource = AppSettings.Instance.TauxRetenueSourceDefaut;
 
     [ObservableProperty]
     private decimal _retenueSource;
@@ -313,6 +313,10 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _estSauvegarde;
+
+    // Empêche un second enregistrement tant que le premier n'est pas terminé (double-clic).
+    [ObservableProperty]
+    private bool _estEnregistrementEnCours;
 
     // Erreurs de validation par champ
     [ObservableProperty]
@@ -498,7 +502,24 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
         // Net à payer = Total TTC + Timbre - Retenue source
         MontantTotal = totaux.MontantTotal - RetenueSource;
-        MontantEnLettres = _numberToWordsService.ConvertirEnLettres(MontantTotal);
+        MontantEnLettres = ConvertirMontantEnLettres(MontantTotal);
+    }
+
+    /// <summary>
+    /// Conversion en lettres tolérante aux montants hors limites : un montant saisi par
+    /// l'utilisateur ne doit jamais faire planter l'interface.
+    /// </summary>
+    private string ConvertirMontantEnLettres(decimal montant)
+    {
+        try
+        {
+            return _numberToWordsService.ConvertirEnLettres(montant);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            ServiceLocator.Logger.Warning("Montant trop élevé pour la conversion en lettres", ex);
+            return "Montant trop élevé pour être converti en lettres";
+        }
     }
 
     partial void OnAppliquerTimbreChanged(bool value)
@@ -590,6 +611,13 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             }
         }
 
+        // Le montant doit rester convertible en lettres (évite un dépassement de capacité)
+        if (MontantTotal > NumberToWordsService.MontantMaximum)
+        {
+            ErreurMessage = "Le montant total est trop élevé pour être facturé.";
+            estValide = false;
+        }
+
         return estValide;
     }
 
@@ -598,7 +626,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     {
         if (!ValiderChamps())
         {
-            ErreurMessage = "Veuillez corriger les erreurs avant de prévisualiser";
+            ErreurMessage ??= "Veuillez corriger les erreurs avant de prévisualiser";
             return;
         }
 
@@ -610,11 +638,15 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     [RelayCommand]
     private async Task SauvegarderAsync()
     {
+        // Un double-clic ne doit pas créer deux factures (et consommer deux numéros).
+        if (EstEnregistrementEnCours)
+            return;
+
         EstSauvegarde = false;
 
         if (!ValiderChamps())
         {
-            ErreurMessage = "Veuillez corriger les erreurs avant de sauvegarder";
+            ErreurMessage ??= "Veuillez corriger les erreurs avant de sauvegarder";
             return;
         }
 
@@ -628,6 +660,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             return;
         }
 
+        EstEnregistrementEnCours = true;
         try
         {
             // Réserver un numéro unique au moment de la sauvegarde : deux formulaires ouverts
@@ -647,6 +680,10 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         {
             ErreurMessage = $"Erreur lors de la sauvegarde : {ex.Message}";
         }
+        finally
+        {
+            EstEnregistrementEnCours = false;
+        }
     }
 
     [RelayCommand]
@@ -657,7 +694,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         TitreFormulaire = "Nouvelle facture";
         TypeFactureIndex = 0;
         DateFacture = DateTimeOffset.Now.Date;
-        DateEcheance = DateTimeOffset.Now.Date.AddDays(30);
+        DateEcheance = DateTimeOffset.Now.Date.AddDays(AppSettings.Instance.DelaiPaiementDefaut);
         ModePaiement = "Espèces";
         ClientBusinessTypeIndex = 0;
         ClientNom = string.Empty;
@@ -675,7 +712,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientCapitalSocial = null;
         AppliquerTimbre = true;
         AppliquerRetenueSource = false;
-        TauxRetenueSource = 30m;
+        TauxRetenueSource = AppSettings.Instance.TauxRetenueSourceDefaut;
         RemiseGlobale = 0;
         TypeRemiseGlobaleIndex = 0;
         NumeroFactureOrigine = null;
@@ -745,7 +782,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         
         AppliquerTimbre = facture.EstTimbreApplique;
         AppliquerRetenueSource = facture.TauxRetenueSource.HasValue;
-        TauxRetenueSource = facture.TauxRetenueSource ?? 30m;
+        TauxRetenueSource = facture.TauxRetenueSource ?? AppSettings.Instance.TauxRetenueSourceDefaut;
         RemiseGlobale = facture.RemiseGlobale;
         TypeRemiseGlobaleIndex = (int)facture.TypeRemiseGlobale;
 

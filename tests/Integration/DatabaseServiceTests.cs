@@ -709,4 +709,209 @@ public class DatabaseServiceTests : IDisposable
     }
 
     #endregion
+
+    #region Préservation des champs gérés par l'application
+
+    [Fact]
+    public async Task SaveBusinessAsync_EditingRebuiltBusiness_KeepsArchiveFlagAndCreationDate()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var dateCreation = business.DateCreation;
+        await _service.ArchiveBusinessAsync(business.Id);
+
+        // Act : édition via un objet reconstruit, comme le fait le formulaire
+        var edition = new Business
+        {
+            Id = business.Id,
+            TypeEntreprise = business.TypeEntreprise,
+            Nom = "Nom modifié",
+            NomComplet = business.NomComplet,
+            Adresse = business.Adresse,
+            Ville = business.Ville,
+            Wilaya = business.Wilaya,
+            Telephone = business.Telephone,
+            RC = business.RC,
+            NIS = business.NIS,
+            NIF = business.NIF,
+            AI = business.AI,
+            NumeroImmatriculation = business.NumeroImmatriculation
+        };
+        await _service.SaveBusinessAsync(edition);
+
+        // Assert : l'édition ne doit ni désarchiver ni réinitialiser la date de création
+        var recharge = await _service.GetBusinessByIdAsync(business.Id);
+        Assert.NotNull(recharge);
+        Assert.Equal("Nom modifié", recharge!.Nom);
+        Assert.True(recharge.IsArchived);
+        Assert.Equal(dateCreation, recharge.DateCreation);
+    }
+
+    [Fact]
+    public async Task SaveClientAsync_EditingRebuiltClient_KeepsCreationDate()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var client = new Client
+        {
+            BusinessId = business.Id,
+            Nom = "Client Test",
+            Adresse = "Rue 1",
+            Telephone = "0550123456"
+        };
+        await _service.SaveClientAsync(client);
+        var dateCreation = client.DateCreation;
+
+        // Act
+        var edition = new Client
+        {
+            Id = client.Id,
+            BusinessId = business.Id,
+            Nom = "Client Modifié",
+            Adresse = "Rue 2",
+            Telephone = "0660123456"
+        };
+        await _service.SaveClientAsync(edition);
+
+        // Assert
+        var recharge = await _service.GetClientByIdAsync(client.Id);
+        Assert.NotNull(recharge);
+        Assert.Equal("Client Modifié", recharge!.Nom);
+        Assert.Equal(dateCreation, recharge.DateCreation);
+    }
+
+    #endregion
+
+    #region Transactions : filtrage, pagination et totaux côté base
+
+    [Fact]
+    public async Task GetTransactionsFiltreesAsync_FiltersByTypeAndPaginates()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        for (int i = 0; i < 5; i++)
+        {
+            await _service.SaveTransactionAsync(new Transaction
+            {
+                BusinessId = business.Id,
+                Date = new DateTime(2026, 3, 10).AddDays(i),
+                Description = $"Recette {i}",
+                Montant = 100 + i,
+                Type = TypeTransaction.Recette,
+                Categorie = "Ventes"
+            });
+        }
+
+        await _service.SaveTransactionAsync(new Transaction
+        {
+            BusinessId = business.Id,
+            Date = new DateTime(2026, 3, 10),
+            Description = "Dépense",
+            Montant = 999,
+            Type = TypeTransaction.Depense,
+            Categorie = "Achats"
+        });
+
+        var debut = new DateTime(2026, 3, 1);
+        var fin = new DateTime(2026, 3, 31);
+
+        // Act
+        var total = await _service.GetNombreTransactionsFiltreesAsync(
+            business.Id, afficherArchivees: false, debut, fin, TypeTransaction.Recette, null);
+        var page = await _service.GetTransactionsFiltreesAsync(
+            business.Id, afficherArchivees: false, debut, fin, TypeTransaction.Recette, null, skip: 0, take: 2);
+
+        // Assert
+        Assert.Equal(5, total);
+        Assert.Equal(2, page.Count);
+        Assert.All(page, t => Assert.Equal(TypeTransaction.Recette, t.Type));
+    }
+
+    [Fact]
+    public async Task GetTransactionsFiltreesAsync_IncludesWholeEndDay()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        await _service.SaveTransactionAsync(new Transaction
+        {
+            BusinessId = business.Id,
+            Date = new DateTime(2026, 3, 31, 23, 59, 0), // dernier moment du jour de fin
+            Description = "En fin de journée",
+            Montant = 50,
+            Type = TypeTransaction.Recette,
+            Categorie = "Ventes"
+        });
+
+        // Act : la borne de fin est un jour entier, pas un instant à minuit
+        var page = await _service.GetTransactionsFiltreesAsync(
+            business.Id, afficherArchivees: false,
+            new DateTime(2026, 3, 1), new DateTime(2026, 3, 31),
+            type: null, categorie: null, skip: 0, take: 10);
+
+        // Assert
+        Assert.Single(page);
+    }
+
+    [Fact]
+    public async Task GetTotauxTransactionsAsync_ExcludesArchivedAndSplitsByType()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        await _service.SaveTransactionAsync(new Transaction
+        {
+            BusinessId = business.Id,
+            Date = new DateTime(2026, 3, 5),
+            Description = "Recette",
+            Montant = 1000,
+            Type = TypeTransaction.Recette,
+            Categorie = "Ventes"
+        });
+
+        await _service.SaveTransactionAsync(new Transaction
+        {
+            BusinessId = business.Id,
+            Date = new DateTime(2026, 3, 6),
+            Description = "Dépense",
+            Montant = 400,
+            Type = TypeTransaction.Depense,
+            Categorie = "Achats"
+        });
+
+        var annulee = new Transaction
+        {
+            BusinessId = business.Id,
+            Date = new DateTime(2026, 3, 7),
+            Description = "Recette annulée",
+            Montant = 5000,
+            Type = TypeTransaction.Recette,
+            Categorie = "Ventes"
+        };
+        await _service.SaveTransactionAsync(annulee);
+        await _service.ArchiveTransactionAsync(annulee.Id);
+
+        // Act
+        var (recettes, depenses) = await _service.GetTotauxTransactionsAsync(
+            business.Id, new DateTime(2026, 3, 1), new DateTime(2026, 3, 31));
+
+        // Assert
+        Assert.Equal(1000m, recettes);
+        Assert.Equal(400m, depenses);
+    }
+
+    #endregion
 }

@@ -16,8 +16,8 @@ public partial class ComptabiliteViewModel : ViewModelBase
     private int _businessId;
     private bool _suppressFilters;
 
-    // All transactions (unfiltered)
-    private List<Transaction> _toutesTransactions = new();
+    // Numéro de version de la dernière requête de filtrage (ignore les réponses obsolètes)
+    private int _versionFiltres;
 
     // Displayed transactions
     public ObservableCollection<Transaction> Transactions { get; } = new();
@@ -168,11 +168,8 @@ public partial class ComptabiliteViewModel : ViewModelBase
             CategorieFiltre = "Toutes";
             MettreAJourCategoriesNoms();
 
-            // Load all transactions
-            _toutesTransactions = await _databaseService.GetTransactionsByBusinessIdAsync(_businessId);
-
             _suppressFilters = false;
-            AppliquerFiltres();
+            await AppliquerFiltresAsync();
         }
         catch (Exception ex)
         {
@@ -184,54 +181,62 @@ public partial class ComptabiliteViewModel : ViewModelBase
         }
     }
 
-    private void AppliquerFiltres()
+    private async Task AppliquerFiltresAsync()
     {
-        var filtered = _toutesTransactions.AsEnumerable();
+        // Seule la dernière requête lancée peut appliquer son résultat
+        // (une réponse plus lente ne doit pas écraser une plus récente).
+        var version = ++_versionFiltres;
 
-        // Show archived or active
-        if (AfficherArchivees)
-            filtered = filtered.Where(t => t.IsArchived);
-        else
-            filtered = filtered.Where(t => !t.IsArchived);
+        try
+        {
+            var debut = DateDebut.Date;
+            var fin = DateFin.Date;
 
-        // Date range filter
-        var debut = DateDebut.Date;
-        var fin = DateFin.Date;
-        filtered = filtered.Where(t => t.Date.Date >= debut && t.Date.Date <= fin);
+            TypeTransaction? type = TypeFiltre switch
+            {
+                1 => TypeTransaction.Recette,
+                2 => TypeTransaction.Depense,
+                _ => null
+            };
 
-        // Type filter
-        if (TypeFiltre == 1)
-            filtered = filtered.Where(t => t.Type == TypeTransaction.Recette);
-        else if (TypeFiltre == 2)
-            filtered = filtered.Where(t => t.Type == TypeTransaction.Depense);
+            var categorie = CategorieFiltre == "Toutes" ? null : CategorieFiltre;
 
-        // Category filter
-        if (CategorieFiltre != "Toutes")
-            filtered = filtered.Where(t => t.Categorie == CategorieFiltre);
+            // Comptage et totaux calculés côté base de données.
+            var total = await _databaseService.GetNombreTransactionsFiltreesAsync(
+                _businessId, AfficherArchivees, debut, fin, type, categorie);
 
-        var list = filtered.ToList();
-        TotalResultats = list.Count;
-        TotalPages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)TaillePage));
-        if (PageActuelle > TotalPages) PageActuelle = TotalPages;
+            if (version != _versionFiltres) return;
 
-        var paged = list.Skip((PageActuelle - 1) * TaillePage).Take(TaillePage).ToList();
+            TotalResultats = total;
+            TotalPages = Math.Max(1, (int)Math.Ceiling(total / (double)TaillePage));
 
-        Transactions.Clear();
-        foreach (var t in paged)
-            Transactions.Add(t);
+            if (PageActuelle > TotalPages)
+            {
+                PageActuelle = TotalPages; // déclenche un nouveau chargement
+                return;
+            }
 
-        // Statistics based on date range — always exclude archived (canceled)
-        var dateFiltered = _toutesTransactions
-            .Where(t => !t.IsArchived && t.Date.Date >= debut && t.Date.Date <= fin)
-            .ToList();
+            // Une seule page est rapatriée depuis la base.
+            var page = await _databaseService.GetTransactionsFiltreesAsync(
+                _businessId, AfficherArchivees, debut, fin, type, categorie,
+                (PageActuelle - 1) * TaillePage, TaillePage);
 
-        ChiffreAffaires = dateFiltered
-            .Where(t => t.Type == TypeTransaction.Recette)
-            .Sum(t => t.Montant);
-        Depenses = dateFiltered
-            .Where(t => t.Type == TypeTransaction.Depense)
-            .Sum(t => t.Montant);
-        BeneficeNet = ChiffreAffaires - Depenses;
+            var (recettes, depenses) = await _databaseService.GetTotauxTransactionsAsync(_businessId, debut, fin);
+
+            if (version != _versionFiltres) return;
+
+            Transactions.Clear();
+            foreach (var t in page)
+                Transactions.Add(t);
+
+            ChiffreAffaires = recettes;
+            Depenses = depenses;
+            BeneficeNet = recettes - depenses;
+        }
+        catch (Exception ex)
+        {
+            ErreurMessage = $"Erreur lors du chargement : {ex.Message}";
+        }
     }
 
     // Quick period filters
@@ -256,16 +261,16 @@ public partial class ComptabiliteViewModel : ViewModelBase
             case 3: // Personnalisé - don't change dates
                 break;
         }
-        AppliquerFiltres();
+        _ = AppliquerFiltresAsync();
     }
 
-    partial void OnDateDebutChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
-    partial void OnDateFinChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
-    partial void OnTypeFiltreChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
-    partial void OnCategorieFiltreChanged(string value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
-    partial void OnAfficherArchiveesChanged(bool value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
-    partial void OnPageActuelleChanged(int value) { if (!_suppressFilters) AppliquerFiltres(); }
-    partial void OnTaillePageChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; AppliquerFiltres(); } }
+    partial void OnDateDebutChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
+    partial void OnDateFinChanged(DateTimeOffset value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
+    partial void OnTypeFiltreChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
+    partial void OnCategorieFiltreChanged(string value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
+    partial void OnAfficherArchiveesChanged(bool value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
+    partial void OnPageActuelleChanged(int value) { if (!_suppressFilters) _ = AppliquerFiltresAsync(); }
+    partial void OnTaillePageChanged(int value) { if (!_suppressFilters) { PageActuelle = 1; _ = AppliquerFiltresAsync(); } }
 
     [RelayCommand]
     private void PagePrecedente()

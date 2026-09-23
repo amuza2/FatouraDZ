@@ -120,7 +120,7 @@ public class NumberToWordsServiceTests
     [Theory]
     [InlineData(1000000, "Un million dinars algériens")]
     [InlineData(2000000, "Deux millions dinars algériens")]
-    [InlineData(1500000, "Un million cinq cents mille dinars algériens")]
+    [InlineData(1500000, "Un million cinq cent mille dinars algériens")]
     public void ConvertirEnLettres_Millions_ReturnsCorrectText(decimal amount, string expected)
     {
         var result = _service.ConvertirEnLettres(amount);
@@ -129,7 +129,31 @@ public class NumberToWordsServiceTests
 
     #endregion
 
+    #region Invariabilité de « mille » Tests
+
+    [Theory]
+    [InlineData(80000, "Quatre-vingt mille dinars algériens")]
+    [InlineData(200000, "Deux cent mille dinars algériens")]
+    [InlineData(300000, "Trois cent mille dinars algériens")]
+    [InlineData(250000, "Deux cent cinquante mille dinars algériens")]
+    [InlineData(80000000, "Quatre-vingts millions dinars algériens")]
+    public void ConvertirEnLettres_MilleIsInvariable_ReturnsCorrectText(decimal amount, string expected)
+    {
+        var result = _service.ConvertirEnLettres(amount);
+        Assert.Equal(expected, result);
+    }
+
+    #endregion
+
     #region Decimal (Centimes) Tests
+
+    [Fact]
+    public void ConvertirEnLettres_CentimeRoundingCarriesToDinar()
+    {
+        // 1 190,999 DA -> 1 191 DA et non « mille cent quatre-vingt-dix dinars et cent centimes »
+        var result = _service.ConvertirEnLettres(1190.999m);
+        Assert.Equal("Mille cent quatre-vingt-onze dinars algériens", result);
+    }
 
     [Fact]
     public void ConvertirEnLettres_WithCentimes_ReturnsCorrectText()
@@ -189,6 +213,14 @@ public class NumberToWordsServiceTests
     {
         var result = _service.ConvertirEnLettres(1000);
         Assert.Contains("dinars algériens", result.ToLower());
+    }
+
+    [Fact]
+    public void ConvertirEnLettres_AboveMaximum_Throws()
+    {
+        // Au-delà de la capacité de Int64, on lève une exception claire au lieu d'un OverflowException
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _service.ConvertirEnLettres(NumberToWordsService.MontantMaximum + 1m));
     }
 
     #endregion

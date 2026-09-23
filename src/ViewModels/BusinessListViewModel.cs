@@ -86,8 +86,7 @@ public partial class BusinessListViewModel : ViewModelBase
     {
         try
         {
-            business.IsArchived = !business.IsArchived;
-            await _databaseService.SaveBusinessAsync(business);
+            await _databaseService.ArchiveBusinessAsync(business.Id);
             Businesses.Remove(business);
         }
         catch (System.Exception ex)

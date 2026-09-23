@@ -155,4 +155,32 @@ public class InvoiceNumberServiceTests
     }
 
     #endregion
+
+    #region Format configurable
+
+    [Fact]
+    public async Task GenererProchainNumeroAsync_UsesConfiguredFormat()
+    {
+        // Arrange
+        var formatOriginal = AppSettings.Instance.FormatNumeroFacture;
+        AppSettings.Instance.FormatNumeroFacture = "INV/{ANNEE}/{NUM}";
+        try
+        {
+            var currentYear = DateTime.Now.Year;
+            _mockDatabaseService.Setup(x => x.LireProchainNumeroFactureAsync(currentYear))
+                .ReturnsAsync(7);
+
+            // Act
+            var result = await _service.GenererProchainNumeroAsync();
+
+            // Assert
+            Assert.Equal($"INV/{currentYear}/007", result);
+        }
+        finally
+        {
+            AppSettings.Instance.FormatNumeroFacture = formatOriginal;
+        }
+    }
+
+    #endregion
 }

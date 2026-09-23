@@ -288,15 +288,35 @@ public class DatabaseService : IDatabaseService
         }
         else
         {
-            business.DateModification = DateTime.Now;
             var existing = await context.Businesses.FindAsync(business.Id);
             if (existing != null)
             {
+                // Conserver les champs gérés par l'application et non par le formulaire :
+                // sinon une simple édition désarchiverait l'entreprise et réinitialiserait sa date de création.
+                var isArchived = existing.IsArchived;
+                var dateCreation = existing.DateCreation;
+
                 context.Entry(existing).CurrentValues.SetValues(business);
+
+                existing.IsArchived = isArchived;
+                existing.DateCreation = dateCreation;
+                existing.DateModification = DateTime.Now;
             }
         }
         
         await context.SaveChangesAsync();
+    }
+
+    public async Task ArchiveBusinessAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var business = await context.Businesses.FindAsync(id);
+        if (business != null)
+        {
+            business.IsArchived = !business.IsArchived;
+            business.DateModification = DateTime.Now;
+            await context.SaveChangesAsync();
+        }
     }
 
     public async Task DeleteBusinessAsync(int id)
@@ -521,7 +541,7 @@ public class DatabaseService : IDatabaseService
         {
             BusinessId = original.BusinessId,
             DateFacture = DateTime.Today,
-            DateEcheance = DateTime.Today.AddDays(30),
+            DateEcheance = DateTime.Today.AddDays(AppSettings.Instance.DelaiPaiementDefaut),
             TypeFacture = original.TypeFacture,
             ModePaiement = original.ModePaiement,
             ClientBusinessType = original.ClientBusinessType,
@@ -599,11 +619,16 @@ public class DatabaseService : IDatabaseService
         }
         else
         {
-            client.DateModification = DateTime.Now;
             var existing = await context.Clients.FindAsync(client.Id);
             if (existing != null)
             {
+                // Ne pas écraser la date de création d'origine avec la valeur par défaut du modèle.
+                var dateCreation = existing.DateCreation;
+
                 context.Entry(existing).CurrentValues.SetValues(client);
+
+                existing.DateCreation = dateCreation;
+                existing.DateModification = DateTime.Now;
             }
         }
         
@@ -665,6 +690,70 @@ public class DatabaseService : IDatabaseService
             .OrderByDescending(t => t.Date)
             .ThenByDescending(t => t.DateCreation)
             .ToListAsync();
+    }
+
+    public async Task<List<Transaction>> GetTransactionsFiltreesAsync(int businessId, bool afficherArchivees, DateTime debut, DateTime fin, TypeTransaction? type, string? categorie, int skip, int take)
+    {
+        await using var context = new AppDbContext();
+        return await ConstruireRequeteTransactions(context, businessId, afficherArchivees, debut, fin, type, categorie)
+            .OrderByDescending(t => t.Date)
+            .ThenByDescending(t => t.Id)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetNombreTransactionsFiltreesAsync(int businessId, bool afficherArchivees, DateTime debut, DateTime fin, TypeTransaction? type, string? categorie)
+    {
+        await using var context = new AppDbContext();
+        return await ConstruireRequeteTransactions(context, businessId, afficherArchivees, debut, fin, type, categorie)
+            .CountAsync();
+    }
+
+    public async Task<(decimal Recettes, decimal Depenses)> GetTotauxTransactionsAsync(int businessId, DateTime debut, DateTime fin)
+    {
+        await using var context = new AppDbContext();
+
+        // Borne de fin exclusive pour inclure toute la journée de fin.
+        var debutInclus = debut.Date;
+        var finExclue = fin.Date.AddDays(1);
+
+        var requete = context.Transactions
+            .Where(t => t.BusinessId == businessId
+                     && !t.IsArchived
+                     && t.Date >= debutInclus
+                     && t.Date < finExclue);
+
+        var recettes = await requete
+            .Where(t => t.Type == TypeTransaction.Recette)
+            .SumAsync(t => (decimal?)t.Montant) ?? 0m;
+
+        var depenses = await requete
+            .Where(t => t.Type == TypeTransaction.Depense)
+            .SumAsync(t => (decimal?)t.Montant) ?? 0m;
+
+        return (recettes, depenses);
+    }
+
+    private static IQueryable<Transaction> ConstruireRequeteTransactions(AppDbContext context, int businessId, bool afficherArchivees, DateTime debut, DateTime fin, TypeTransaction? type, string? categorie)
+    {
+        // Borne de fin exclusive pour inclure toute la journée de fin.
+        var debutInclus = debut.Date;
+        var finExclue = fin.Date.AddDays(1);
+
+        var query = context.Transactions.Where(t =>
+            t.BusinessId == businessId
+            && t.IsArchived == afficherArchivees
+            && t.Date >= debutInclus
+            && t.Date < finExclue);
+
+        if (type.HasValue)
+            query = query.Where(t => t.Type == type.Value);
+
+        if (!string.IsNullOrWhiteSpace(categorie) && categorie != "Toutes")
+            query = query.Where(t => t.Categorie == categorie);
+
+        return query;
     }
 
     public async Task SaveTransactionAsync(Transaction transaction)
