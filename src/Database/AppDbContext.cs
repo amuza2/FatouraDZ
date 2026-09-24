@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Configuration> Configurations { get; set; } = null!;
     public DbSet<Transaction> Transactions { get; set; } = null!;
     public DbSet<CategorieTransaction> CategoriesTransaction { get; set; } = null!;
+    public DbSet<JournalAudit> JournalAudit { get; set; } = null!;
 
     private readonly string _dbPath;
 
@@ -63,6 +64,13 @@ public class AppDbContext : DbContext
                   .WithOne(l => l.Facture)
                   .HasForeignKey(l => l.FactureId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            // La suppression d'un client ne doit pas supprimer ses factures : on rompt
+            // simplement le lien (les informations client restent figées sur la facture).
+            entity.HasOne(e => e.Client)
+                  .WithMany(c => c.Factures)
+                  .HasForeignKey(e => e.ClientId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<LigneFacture>(entity =>
@@ -107,6 +115,15 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.BusinessId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<JournalAudit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EntiteType).IsRequired();
+            entity.Property(e => e.Action).IsRequired();
+            // Recherche rapide de l'historique d'une entité donnée.
+            entity.HasIndex(e => new { e.EntiteType, e.EntiteId });
         });
     }
 }

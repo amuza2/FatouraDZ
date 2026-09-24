@@ -83,11 +83,18 @@ public class CalculationService : ICalculationService
         if (montantTTC <= settings.TimbreSeuilExoneration)
             return 0m;
 
-        var taux = montantTTC <= settings.TimbreSeuil1 ? settings.TimbreTaux1
-                 : montantTTC <= settings.TimbreSeuil2 ? settings.TimbreTaux2
+        // Libellé littéral du barème : « par tranche de 100 DA ou fraction de tranche ».
+        // Quand l'option est activée, l'assiette est portée au palier de 100 DA supérieur
+        // avant application du taux (ex. 250 DA -> 300 DA).
+        var assiette = settings.TimbreArrondiTrancheCent
+            ? Math.Ceiling(montantTTC / 100m) * 100m
+            : montantTTC;
+
+        var taux = assiette <= settings.TimbreSeuil1 ? settings.TimbreTaux1
+                 : assiette <= settings.TimbreSeuil2 ? settings.TimbreTaux2
                  : settings.TimbreTaux3;
 
-        var timbre = Math.Round(montantTTC * (taux / 100m), 2);
+        var timbre = Math.Round(assiette * (taux / 100m), 2);
 
         return Math.Max(timbre, settings.TimbreMinimum);
     }

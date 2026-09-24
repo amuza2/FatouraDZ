@@ -223,6 +223,37 @@
                                 <Run Text="Créé le: "/><Run Text="{Binding ClientDetail.DateCreation, StringFormat={}{0:dd/MM/yyyy}, Mode=OneWay}"/>
                             </TextBlock>
                         </StackPanel>
+
+                        <!-- Historique des factures du client -->
+                        <Separator Background="#E2E8F0"/>
+                        <StackPanel Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Text="Historique des factures" FontSize="16" FontWeight="SemiBold" Foreground="#2563EB"/>
+                                <Border Background="#EFF6FF" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding NombreFacturesClient, StringFormat='{}{0} facture(s)'}" FontSize="11" Foreground="#2563EB"/>
+                                </Border>
+                                <Border Background="#F0FDF4" CornerRadius="10" Padding="8,2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding TotalFactureClient, StringFormat='Total : {0:N2} DA'}" FontSize="11" Foreground="#16A34A"/>
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock Text="Aucune facture rattachée à ce client." Foreground="#94A3B8" FontSize="12"
+                                       IsVisible="{Binding AucuneFactureClient}"/>
+
+                            <ItemsControl ItemsSource="{Binding FacturesClient}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#F8FAFC" CornerRadius="6" Padding="10" Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <TextBlock Grid.Column="0" Text="{Binding NumeroFacture}" FontWeight="Medium" Foreground="#1E293B" FontSize="13"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding DateFacture, StringFormat={}{0:dd/MM/yyyy}}" Foreground="#64748B" FontSize="12" Margin="10,0"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding MontantTotal, StringFormat={}{0:N2} DA}" FontWeight="Medium" Foreground="#2563EB" FontSize="13"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </ScrollViewer>

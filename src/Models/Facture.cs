@@ -88,6 +88,10 @@ public class Facture : INotifyPropertyChanged
     public int BusinessId { get; set; }
     public Business Business { get; set; } = null!;
 
+    // Lien vers le client enregistré (facultatif : les informations client sont aussi figées ci-dessus).
+    public int? ClientId { get; set; }
+    public Client? Client { get; set; }
+
     // Navigation
     public ICollection<LigneFacture> Lignes { get; set; } = new List<LigneFacture>();
 

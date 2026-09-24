@@ -346,6 +346,33 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     // ID de la facture en cours d'édition (0 = nouvelle facture)
     private int _factureId;
 
+    // Client enregistré sur la facture en cours d'édition (lien fiable)
+    private int? _clientIdFacture;
+
+    // Journal d'audit de la facture en cours d'édition
+    public ObservableCollection<JournalAudit> JournalFacture { get; } = new();
+
+    [ObservableProperty]
+    private bool _afficherJournal;
+
+    private async Task ChargerJournalAsync(int factureId)
+    {
+        try
+        {
+            var entrees = await _databaseService.GetJournalAsync("Facture", factureId);
+
+            JournalFacture.Clear();
+            foreach (var entree in entrees)
+                JournalFacture.Add(entree);
+
+            AfficherJournal = JournalFacture.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            ServiceLocator.Logger.Warning("Impossible de charger le journal de la facture", ex);
+        }
+    }
+
     // Modes de paiement disponibles
     public string[] ModesPaiement { get; } = new[]
     {
@@ -413,23 +440,30 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     {
         await ChargerClientsDisponiblesAsync();
 
-        // Essayer de rattacher le client enregistré sur la facture à la liste des clients
-        if (!string.IsNullOrEmpty(ClientNom))
+        if (TousLesClients.Count == 0)
+            return;
+
+        // Priorité au lien enregistré sur la facture (fiable), sinon correspondance nom/téléphone.
+        var match = _clientIdFacture.HasValue
+            ? TousLesClients.FirstOrDefault(c => c.Id == _clientIdFacture.Value)
+            : null;
+
+        if (match == null && !string.IsNullOrEmpty(ClientNom))
         {
             // Correspondance exacte d'abord (nom + téléphone)
-            var match = TousLesClients.FirstOrDefault(c =>
+            match = TousLesClients.FirstOrDefault(c =>
                 string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(c.Telephone?.Trim(), ClientTelephone?.Trim(), StringComparison.OrdinalIgnoreCase));
 
             // Sinon, correspondance par nom uniquement
             match ??= TousLesClients.FirstOrDefault(c =>
                 string.Equals(c.Nom?.Trim(), ClientNom?.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
 
-            if (match != null)
-            {
-                // Différer au frame suivant pour laisser le ComboBox finir de mettre à jour son ItemsSource
-                Dispatcher.UIThread.Post(() => ClientSelectionne = match);
-            }
+        if (match != null)
+        {
+            // Différer au frame suivant pour laisser le ComboBox finir de mettre à jour son ItemsSource
+            Dispatcher.UIThread.Post(() => ClientSelectionne = match);
         }
     }
 
@@ -690,6 +724,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     private void Reinitialiser()
     {
         _factureId = 0;
+        _clientIdFacture = null;
         EstModeEdition = false;
         TitreFormulaire = "Nouvelle facture";
         TypeFactureIndex = 0;
@@ -773,6 +808,11 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         ClientCapitalSocial = facture.ClientCapitalSocial;
         EstPaye = facture.Statut == StatutFacture.Payee;
         NumeroFactureOrigine = facture.NumeroFactureOrigine;
+        _clientIdFacture = facture.ClientId;
+
+        // Historique des modifications (audit) pour la facture éditée.
+        if (facture.Id > 0)
+            _ = ChargerJournalAsync(facture.Id);
         
         // Load available invoices and select the matching one for Avoir
         if (facture.TypeFacture == TypeFacture.Avoir && !string.IsNullOrEmpty(facture.NumeroFactureOrigine))
@@ -832,6 +872,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             PaiementNumeroPiece = RequiertDetailsPaiement ? PaiementNumeroPiece : null,
             Statut = EstPaye ? StatutFacture.Payee : StatutFacture.EnAttente,
             NumeroFactureOrigine = NumeroFactureOrigine,
+            ClientId = ClientSelectionne?.Id,
             ClientBusinessType = (BusinessType)ClientBusinessTypeIndex,
             ClientNom = ClientNom,
             ClientAdresse = ClientAdresse,

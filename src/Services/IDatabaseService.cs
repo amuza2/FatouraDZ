@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using FatouraDZ.Models;
 
@@ -22,9 +23,11 @@ public interface IDatabaseService
     /// Factures d'une entreprise filtrées côté base de données (année, archivage, type,
     /// statut, recherche). Les lignes ne sont pas chargées : inutiles pour la liste.
     /// </summary>
-    Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche);
+    Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche, CancellationToken cancellationToken = default);
     /// <summary>Années (distinctes) pour lesquelles l'entreprise possède des factures.</summary>
     Task<List<int>> GetAnneesFacturesAsync(int businessId);
+    /// <summary>Factures rattachées à un client enregistré (lien Facture.ClientId).</summary>
+    Task<List<Facture>> GetFacturesByClientIdAsync(int clientId);
     /// <summary>Agrégats (nombre, CA, statuts) pour une entreprise et une année.</summary>
     Task<StatistiquesFactures> GetStatistiquesFacturesAsync(int businessId, int annee);
     Task<List<Facture>> GetFacturesAsync(DateTime? dateDebut, DateTime? dateFin, TypeFacture? type, StatutFacture? statut, string? recherche);
@@ -33,11 +36,17 @@ public interface IDatabaseService
     Task SaveFactureAsync(Facture facture);
     Task DeleteFactureAsync(int id);
     Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut);
+    /// <summary>Bascule l'archivage d'une facture sans toucher à ses lignes.</summary>
+    Task ArchiveFactureAsync(int id);
     Task UpdateCheminPdfAsync(int id, string cheminPdf);
     Task<Facture> DupliquerFactureAsync(int id);
+
+    // Journal d'audit (qui a fait quoi, quand)
+    Task AjouterJournalAsync(JournalAudit entree);
+    Task<List<JournalAudit>> GetJournalAsync(string entiteType, int entiteId);
     
     // Clients
-    Task<List<Client>> GetClientsByBusinessIdAsync(int businessId);
+    Task<List<Client>> GetClientsByBusinessIdAsync(int businessId, CancellationToken cancellationToken = default);
     Task<Client?> GetClientByIdAsync(int id);
     Task SaveClientAsync(Client client);
     Task DeleteClientAsync(int id);

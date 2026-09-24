@@ -53,6 +53,10 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private decimal _timbreMinimum;
 
+    // Arrondi de l'assiette « par tranche de 100 DA ou fraction de tranche ».
+    [ObservableProperty]
+    private bool _timbreArrondiTrancheCent;
+
     // Fiscal settings - Retenue
     [ObservableProperty]
     private decimal _tauxRetenueSourceDefaut;
@@ -100,6 +104,7 @@ public partial class SettingsViewModel : ViewModelBase
         TimbreTaux2 = settings.TimbreTaux2;
         TimbreTaux3 = settings.TimbreTaux3;
         TimbreMinimum = settings.TimbreMinimum;
+        TimbreArrondiTrancheCent = settings.TimbreArrondiTrancheCent;
         TauxRetenueSourceDefaut = settings.TauxRetenueSourceDefaut;
         FormatNumeroFacture = settings.FormatNumeroFacture;
         DelaiPaiementDefaut = settings.DelaiPaiementDefaut;
@@ -286,6 +291,7 @@ public partial class SettingsViewModel : ViewModelBase
             settings.TimbreTaux2 = TimbreTaux2;
             settings.TimbreTaux3 = TimbreTaux3;
             settings.TimbreMinimum = TimbreMinimum;
+            settings.TimbreArrondiTrancheCent = TimbreArrondiTrancheCent;
             settings.TauxRetenueSourceDefaut = TauxRetenueSourceDefaut;
             settings.FormatNumeroFacture = FormatNumeroFacture;
             settings.DelaiPaiementDefaut = DelaiPaiementDefaut;
@@ -314,6 +320,7 @@ public partial class SettingsViewModel : ViewModelBase
         TimbreTaux2 = 1.5m;
         TimbreTaux3 = 2m;
         TimbreMinimum = 5m;
+        TimbreArrondiTrancheCent = false;
         TauxRetenueSourceDefaut = 5m;
         FormatNumeroFacture = "FAC-{ANNEE}-{NUM}";
         DelaiPaiementDefaut = 30;

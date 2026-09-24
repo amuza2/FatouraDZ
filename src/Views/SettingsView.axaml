@@ -213,6 +213,14 @@
                                         <TextBlock Text="Taux au-delà de la tranche 2 (%)" FontWeight="Medium" FontSize="12"/>
                                         <NumericUpDown Value="{Binding TimbreTaux3}" Minimum="0" Maximum="100" Increment="0.1" FormatString="0.##"/>
                                     </StackPanel>
+
+                                    <StackPanel Spacing="4" HorizontalAlignment="Left">
+                                        <CheckBox IsChecked="{Binding TimbreArrondiTrancheCent}"
+                                                  Content="Arrondir l'assiette par tranche de 100 DA"
+                                                  FontWeight="Medium" FontSize="12"/>
+                                        <TextBlock Text="Libellé littéral du barème : « par tranche de 100 DA ou fraction de tranche ». Si activé, l'assiette est portée au palier de 100 DA supérieur avant application du taux (ex. 49 950 DA → 50 000 DA). Désactivé par défaut."
+                                                   Foreground="#64748B" FontSize="11" TextWrapping="Wrap" MaxWidth="480"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>

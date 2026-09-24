@@ -700,9 +700,10 @@ public class DatabaseServiceTests : IDisposable
     [Fact]
     public async Task InitializeDatabaseAsync_LegacyDatabase_IsBaselinedAndBackedUp()
     {
-        // Arrange : base « ancienne » = tables présentes mais aucun historique de migrations
-        // (cas des bases créées par l'ancien mécanisme EnsureCreated).
+        // Arrange : base « ancienne » = pas d'historique de migrations et pas encore la
+        // table d'audit (ajoutée par une migration postérieure).
         await _service.InitializeDatabaseAsync();
+        ExecuterSql("DROP TABLE IF EXISTS JournalAudit");
         ExecuterSql("DROP TABLE __EFMigrationsHistory");
         Assert.False(TableExiste("__EFMigrationsHistory"));
 
@@ -948,6 +949,269 @@ public class DatabaseServiceTests : IDisposable
         // Assert
         Assert.Equal(1000m, recettes);
         Assert.Equal(400m, depenses);
+    }
+
+    #endregion
+
+    #region Lien facture <-> client
+
+    [Fact]
+    public async Task GetFacturesByClientIdAsync_ReturnsOnlyLinkedInvoices()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var client = new Client
+        {
+            BusinessId = business.Id,
+            Nom = "Client lié",
+            Adresse = "Rue 1",
+            Telephone = "0550123456"
+        };
+        await _service.SaveClientAsync(client);
+
+        var liee = CreateTestFacture("LIEE", business.Id);
+        liee.ClientId = client.Id;
+        await _service.SaveFactureAsync(liee);
+
+        var nonLiee = CreateTestFacture("NONLIEE", business.Id);
+        await _service.SaveFactureAsync(nonLiee);
+
+        // Act
+        var resultat = await _service.GetFacturesByClientIdAsync(client.Id);
+
+        // Assert
+        Assert.Single(resultat);
+        Assert.Equal(liee.NumeroFacture, resultat[0].NumeroFacture);
+        Assert.Equal(client.Id, resultat[0].ClientId);
+    }
+
+    [Fact]
+    public async Task DeleteClientAsync_KeepsInvoicesAndClearsTheLink()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var client = new Client
+        {
+            BusinessId = business.Id,
+            Nom = "Client à supprimer",
+            Adresse = "Rue 1",
+            Telephone = "0550123456"
+        };
+        await _service.SaveClientAsync(client);
+
+        var facture = CreateTestFacture("CONSERVEE", business.Id);
+        facture.ClientId = client.Id;
+        await _service.SaveFactureAsync(facture);
+
+        // Act : supprimer le client ne doit PAS supprimer ses factures
+        await _service.DeleteClientAsync(client.Id);
+
+        // Assert : facture conservée, lien rompu, informations client figées intactes
+        var rechargee = await _service.GetFactureByIdAsync(facture.Id);
+        Assert.NotNull(rechargee);
+        Assert.Null(rechargee!.ClientId);
+        Assert.Equal("Client Test", rechargee.ClientNom);
+    }
+
+    #endregion
+
+    #region Journal d'audit des factures
+
+    [Fact]
+    public async Task SaveFactureAsync_Creation_LogsAuditEntry()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("AUDIT-CREATE", business.Id);
+
+        // Act
+        await _service.SaveFactureAsync(facture);
+
+        // Assert
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Single(journal);
+        Assert.Equal("Création", journal[0].Action);
+        Assert.Equal(facture.NumeroFacture, journal[0].Reference);
+        Assert.Equal("Utilisateur local", journal[0].Utilisateur);
+    }
+
+    [Fact]
+    public async Task SaveFactureAsync_AmountChange_LogsModificationWithDetails()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("AUDIT-MODIF", business.Id);
+        await _service.SaveFactureAsync(facture);
+
+        // Act : modifier le montant total
+        facture.MontantTotal = 2500;
+        await _service.SaveFactureAsync(facture);
+
+        // Assert
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Equal(2, journal.Count);
+
+        var modification = journal[0]; // le plus récent en premier
+        Assert.Equal("Modification", modification.Action);
+        Assert.Contains("Montant total", modification.Details);
+    }
+
+    [Fact]
+    public async Task SaveFactureAsync_UnchangedInvoice_DoesNotLog()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("AUDIT-NOCHANGE", business.Id);
+        await _service.SaveFactureAsync(facture);
+
+        // Act : réenregistrer sans rien changer
+        await _service.SaveFactureAsync(facture);
+
+        // Assert : une seule entrée (la création), pas de bruit
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Single(journal);
+    }
+
+    [Fact]
+    public async Task UpdateStatutFactureAsync_LogsStatusChange()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("AUDIT-STATUT", business.Id);
+        await _service.SaveFactureAsync(facture);
+
+        // Act
+        await _service.UpdateStatutFactureAsync(facture.Id, StatutFacture.Payee);
+
+        // Assert
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Equal(2, journal.Count);
+        Assert.Equal("Changement de statut", journal[0].Action);
+        Assert.Contains("Payee", journal[0].Details);
+    }
+
+    [Fact]
+    public async Task SaveFactureAsync_Archiving_LogsArchivageAction()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("AUDIT-ARCHIVE", business.Id);
+        await _service.SaveFactureAsync(facture);
+
+        // Act
+        facture.IsArchived = true;
+        await _service.SaveFactureAsync(facture);
+
+        // Assert
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Equal("Archivage", journal[0].Action);
+    }
+
+    #endregion
+
+    #region Archivage sans perte de lignes
+
+    [Fact]
+    public async Task ArchiveFactureAsync_KeepsInvoiceLinesAndLogsAudit()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        var facture = CreateTestFacture("ARCHIVE-LIGNES", business.Id);
+        await _service.SaveFactureAsync(facture);
+
+        // Act
+        await _service.ArchiveFactureAsync(facture.Id);
+
+        // Assert : archivée, lignes conservées (régression : elles étaient supprimées)
+        var rechargee = await _service.GetFactureByIdAsync(facture.Id);
+        Assert.NotNull(rechargee);
+        Assert.True(rechargee!.IsArchived);
+        Assert.Single(rechargee.Lignes);
+        Assert.Equal(facture.Lignes.First().Designation, rechargee.Lignes.First().Designation);
+
+        // Assert : action tracée dans le journal
+        var journal = await _service.GetJournalAsync("Facture", facture.Id);
+        Assert.Equal("Archivage", journal[0].Action);
+    }
+
+    #endregion
+
+    #region Annulation des recherches (CancellationToken)
+
+    [Fact]
+    public async Task GetFacturesFiltreesAsync_JetonDejaAnnule_LeveOperationCanceled()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+        await _service.SaveFactureAsync(CreateTestFacture("ANNULE-1", business.Id));
+
+        using var annulation = new CancellationTokenSource();
+        annulation.Cancel();
+
+        // Act + Assert : le jeton doit réellement atteindre la requête SQLite.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => _service.GetFacturesFiltreesAsync(
+            business.Id, DateTime.Now.Year, false, null, null, null, annulation.Token));
+    }
+
+    [Fact]
+    public async Task GetClientsByBusinessIdAsync_JetonDejaAnnule_LeveOperationCanceled()
+    {
+        // Arrange
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+
+        using var annulation = new CancellationTokenSource();
+        annulation.Cancel();
+
+        // Act + Assert
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            _service.GetClientsByBusinessIdAsync(business.Id, annulation.Token));
+    }
+
+    [Fact]
+    public async Task GetFacturesFiltreesAsync_JetonNonAnnule_RetourneLesResultats()
+    {
+        // Arrange : la surcharge avec jeton ne doit rien changer au comportement nominal.
+        await _service.InitializeDatabaseAsync();
+        var business = CreateTestBusiness();
+        await _service.SaveBusinessAsync(business);
+        await _service.SaveFactureAsync(CreateTestFacture("ANNULE-2", business.Id));
+
+        using var annulation = new CancellationTokenSource();
+
+        // Act
+        var resultat = await _service.GetFacturesFiltreesAsync(
+            business.Id, DateTime.Now.Year, false, null, null, null, annulation.Token);
+
+        // Assert
+        Assert.Single(resultat);
     }
 
     #endregion

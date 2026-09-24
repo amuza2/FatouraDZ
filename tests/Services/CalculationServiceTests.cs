@@ -117,6 +117,59 @@ public class CalculationServiceTests
         Assert.Equal(5m, result);
     }
 
+    // Option "par tranche de 100 DA ou fraction de tranche" : l'assiette est portée au
+    // palier de 100 DA supérieur avant application du taux.
+    [Theory]
+    [InlineData(350, 5)]        // assiette 400 : 1 % = 4 DA -> minimum 5 DA
+    [InlineData(1000, 10)]      // multiple de 100 : assiette inchangée, 1 % = 10 DA
+    [InlineData(1234, 13)]      // assiette 1300 : 1 % = 13 DA (au lieu de 12,34)
+    [InlineData(49950, 750)]    // assiette 50 000 : 1,5 % = 750 DA (au lieu de 749,25)
+    [InlineData(100001, 2002)]  // assiette 100 100 : 2 % = 2 002 DA (au lieu de 2 000,02)
+    public void CalculerTimbreFiscal_ArrondiParTrancheDe100DA(decimal montantTTC, decimal expected)
+    {
+        AvecArrondiTranche(true, () =>
+        {
+            Assert.Equal(expected, _service.CalculerTimbreFiscal(montantTTC));
+        });
+    }
+
+    [Fact]
+    public void CalculerTimbreFiscal_ArrondiDesactive_AssietteNonModifiee()
+    {
+        AvecArrondiTranche(false, () =>
+        {
+            Assert.Equal(12.34m, _service.CalculerTimbreFiscal(1234));
+        });
+    }
+
+    [Fact]
+    public void CalculerTimbreFiscal_ArrondiActif_MontantsSousSeuilToujoursExoneres()
+    {
+        AvecArrondiTranche(true, () =>
+        {
+            Assert.Equal(0m, _service.CalculerTimbreFiscal(250));
+            Assert.Equal(0m, _service.CalculerTimbreFiscal(300));
+        });
+    }
+
+    /// <summary>
+    /// Active/désactive l'option d'arrondi le temps du test (AppSettings est un singleton).
+    /// </summary>
+    private static void AvecArrondiTranche(bool actif, Action assertion)
+    {
+        var settings = AppSettings.Instance;
+        var valeurInitiale = settings.TimbreArrondiTrancheCent;
+        try
+        {
+            settings.TimbreArrondiTrancheCent = actif;
+            assertion();
+        }
+        finally
+        {
+            settings.TimbreArrondiTrancheCent = valeurInitiale;
+        }
+    }
+
     #endregion
 
     #region CalculerTotaux Tests

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -89,7 +90,7 @@ public partial class BusinessDetailViewModel : ViewModelBase
         Business = business;
     }
 
-    public async Task ChargerFacturesAsync()
+    public async Task ChargerFacturesAsync(CancellationToken cancellationToken = default)
     {
         if (Business == null) return;
 
@@ -119,9 +120,11 @@ public partial class BusinessDetailViewModel : ViewModelBase
             // Filtrage effectué côté base de données : on ne charge ni toutes les factures
             // ni leurs lignes, uniquement ce qui est affiché.
             var factures = await _databaseService.GetFacturesFiltreesAsync(
-                Business.Id, AnneeSelectionnee, showArchived, type, statut, Recherche);
+                Business.Id, AnneeSelectionnee, showArchived, type, statut, Recherche, cancellationToken);
 
             MettreAJourAnneesDisponibles(await _databaseService.GetAnneesFacturesAsync(Business.Id));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             Factures.Clear();
             foreach (var facture in factures)
@@ -136,6 +139,10 @@ public partial class BusinessDetailViewModel : ViewModelBase
             FacturesEnAttente = statistiques.FacturesEnAttente;
             FacturesPayees = statistiques.FacturesPayees;
         }
+        catch (OperationCanceledException)
+        {
+            // Une recherche plus récente a remplacé celle-ci : on ne touche à rien.
+        }
         catch (Exception ex)
         {
             MessageErreur = $"Erreur lors du chargement : {ex.Message}";
@@ -143,6 +150,31 @@ public partial class BusinessDetailViewModel : ViewModelBase
         finally
         {
             EstChargement = false;
+        }
+    }
+
+    private const int DelaiRechercheMs = 300;
+    private CancellationTokenSource? _annulationRecherche;
+
+    /// <summary>
+    /// Attend une courte pause avant de lancer la recherche : évite une requête à chaque
+    /// frappe et annule la recherche précédente si l'utilisateur continue de taper.
+    /// </summary>
+    private async Task RechercherFacturesAvecDelaiAsync()
+    {
+        _annulationRecherche?.Cancel();
+        _annulationRecherche?.Dispose();
+        _annulationRecherche = new CancellationTokenSource();
+        var jeton = _annulationRecherche.Token;
+
+        try
+        {
+            await Task.Delay(DelaiRechercheMs, jeton);
+            await ChargerFacturesAsync(jeton);
+        }
+        catch (OperationCanceledException)
+        {
+            // Frappe suivante : cette recherche est obsolète.
         }
     }
 
@@ -174,7 +206,8 @@ public partial class BusinessDetailViewModel : ViewModelBase
         }
     }
 
-    partial void OnRechercheChanged(string value) => _ = ChargerFacturesAsync();
+    // La recherche (frappe au clavier) est temporisée ; les autres filtres sont discrets.
+    partial void OnRechercheChanged(string value) => _ = RechercherFacturesAvecDelaiAsync();
     partial void OnTypeFactureIndexChanged(int value) => _ = ChargerFacturesAsync();
     partial void OnStatutIndexChanged(int value) => _ = ChargerFacturesAsync();
     partial void OnAnneeSelectionneeChanged(int value) => _ = ChargerFacturesAsync();
@@ -240,8 +273,9 @@ public partial class BusinessDetailViewModel : ViewModelBase
         
         try
         {
-            _pendingArchiveFacture.IsArchived = !_pendingArchiveFacture.IsArchived;
-            await _databaseService.SaveFactureAsync(_pendingArchiveFacture);
+            // Ne PAS passer par SaveFactureAsync : la facture listée ne contient pas ses lignes,
+            // ce qui les supprimerait. On bascule uniquement l'indicateur d'archivage.
+            await _databaseService.ArchiveFactureAsync(_pendingArchiveFacture.Id);
             Factures.Remove(_pendingArchiveFacture);
         }
         catch (Exception ex)

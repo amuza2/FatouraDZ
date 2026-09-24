@@ -30,6 +30,9 @@ public class AppSettings
     public decimal TimbreTaux2 { get; set; } = 1.5m;            // Taux (%) jusqu'à TimbreSeuil2
     public decimal TimbreTaux3 { get; set; } = 2m;              // Taux (%) au-delà de TimbreSeuil2
     public decimal TimbreMinimum { get; set; } = 5m;            // Minimum de perception (DZD)
+    // Libellé littéral du barème : « par tranche de 100 DA ou fraction de tranche ».
+    // Activé, l'assiette est portée au palier de 100 DA supérieur avant application du taux.
+    public bool TimbreArrondiTrancheCent { get; set; } = false;
 
     // Fiscal Settings - Retenue à la Source
     public decimal TauxRetenueSourceDefaut { get; set; } = 5m;

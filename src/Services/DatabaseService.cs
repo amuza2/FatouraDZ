@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -455,7 +456,7 @@ public class DatabaseService : IDatabaseService
             .ToListAsync();
     }
 
-    public async Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche)
+    public async Task<List<Facture>> GetFacturesFiltreesAsync(int businessId, int annee, bool archived, TypeFacture? type, StatutFacture? statut, string? recherche, CancellationToken cancellationToken = default)
     {
         await using var context = new AppDbContext();
 
@@ -485,7 +486,7 @@ public class DatabaseService : IDatabaseService
         return await query
             .OrderByDescending(f => f.DateFacture)
             .ThenByDescending(f => f.Id)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<List<int>> GetAnneesFacturesAsync(int businessId)
@@ -496,6 +497,16 @@ public class DatabaseService : IDatabaseService
             .Select(f => f.DateFacture.Year)
             .Distinct()
             .OrderByDescending(y => y)
+            .ToListAsync();
+    }
+
+    public async Task<List<Facture>> GetFacturesByClientIdAsync(int clientId)
+    {
+        await using var context = new AppDbContext();
+        return await context.Factures
+            .Where(f => f.ClientId == clientId)
+            .OrderByDescending(f => f.DateFacture)
+            .ThenByDescending(f => f.Id)
             .ToListAsync();
     }
 
@@ -541,32 +552,119 @@ public class DatabaseService : IDatabaseService
     public async Task SaveFactureAsync(Facture facture)
     {
         await using var context = new AppDbContext();
-        
+
         if (facture.Id == 0)
         {
             facture.DateCreation = DateTime.Now;
             context.Factures.Add(facture);
-        }
-        else
-        {
-            facture.DateModification = DateTime.Now;
-            var existing = await context.Factures
-                .Include(f => f.Lignes)
-                .FirstOrDefaultAsync(f => f.Id == facture.Id);
-            
-            if (existing != null)
+            await context.SaveChangesAsync();
+
+            // Journal d'audit : création de la facture.
+            context.JournalAudit.Add(new JournalAudit
             {
-                context.LignesFacture.RemoveRange(existing.Lignes);
-                context.Entry(existing).CurrentValues.SetValues(facture);
-                foreach (var ligne in facture.Lignes)
-                {
-                    ligne.FactureId = existing.Id;
-                    context.LignesFacture.Add(ligne);
-                }
-            }
+                EntiteType = TypeEntiteFacture,
+                EntiteId = facture.Id,
+                Reference = facture.NumeroFacture,
+                Action = "Création",
+                Details = $"Montant total : {facture.MontantTotal:N2} DZD"
+            });
+            await context.SaveChangesAsync();
+            return;
         }
-        
+
+        var existing = await context.Factures
+            .Include(f => f.Lignes)
+            .FirstOrDefaultAsync(f => f.Id == facture.Id);
+
+        if (existing == null)
+            return;
+
+        // Comparer AVANT l'écrasement, afin de ne tracer que ce qui a réellement changé.
+        var changements = DecrireChangementsFacture(existing, facture);
+
+        facture.DateModification = DateTime.Now;
+        context.LignesFacture.RemoveRange(existing.Lignes);
+        context.Entry(existing).CurrentValues.SetValues(facture);
+        foreach (var ligne in facture.Lignes)
+        {
+            // Les lignes sont recréées : on remet l'identifiant à zéro et on détache la navigation
+            // pour éviter tout conflit d'identité avec l'entité déjà suivie.
+            ligne.Id = 0;
+            ligne.FactureId = existing.Id;
+            ligne.Facture = null!;
+            context.LignesFacture.Add(ligne);
+        }
+
+        if (changements.Count > 0)
+        {
+            context.JournalAudit.Add(new JournalAudit
+            {
+                EntiteType = TypeEntiteFacture,
+                EntiteId = existing.Id,
+                Reference = facture.NumeroFacture,
+                Action = DeterminerActionFacture(changements),
+                Details = string.Join(" ; ", changements)
+            });
+        }
+
         await context.SaveChangesAsync();
+    }
+
+    private const string TypeEntiteFacture = "Facture";
+
+    private static List<string> DecrireChangementsFacture(Facture avant, Facture apres)
+    {
+        var changements = new List<string>();
+
+        if (avant.Statut != apres.Statut)
+            changements.Add($"Statut : {avant.Statut} -> {apres.Statut}");
+
+        if (avant.IsArchived != apres.IsArchived)
+            changements.Add(apres.IsArchived ? "Facture archivée" : "Facture restaurée");
+
+        if (avant.MontantTotal != apres.MontantTotal)
+            changements.Add($"Montant total : {avant.MontantTotal:N2} -> {apres.MontantTotal:N2} DZD");
+
+        if (avant.ModePaiement != apres.ModePaiement)
+            changements.Add($"Mode de paiement : {avant.ModePaiement} -> {apres.ModePaiement}");
+
+        if (avant.DateEcheance != apres.DateEcheance)
+            changements.Add($"Échéance : {avant.DateEcheance:dd/MM/yyyy} -> {apres.DateEcheance:dd/MM/yyyy}");
+
+        if (avant.ClientId != apres.ClientId)
+            changements.Add("Client modifié");
+
+        return changements;
+    }
+
+    private static string DeterminerActionFacture(List<string> changements)
+    {
+        if (changements.Exists(c => c == "Facture archivée"))
+            return "Archivage";
+        if (changements.Exists(c => c == "Facture restaurée"))
+            return "Restauration";
+        if (changements.Exists(c => c.StartsWith("Statut", StringComparison.Ordinal)))
+            return "Changement de statut";
+
+        return "Modification";
+    }
+
+    // Journal d'audit
+    public async Task AjouterJournalAsync(JournalAudit entree)
+    {
+        await using var context = new AppDbContext();
+        context.JournalAudit.Add(entree);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<JournalAudit>> GetJournalAsync(string entiteType, int entiteId)
+    {
+        await using var context = new AppDbContext();
+        return await context.JournalAudit
+            .Where(j => j.EntiteType == entiteType && j.EntiteId == entiteId)
+            .OrderByDescending(j => j.Date)
+            .ThenByDescending(j => j.Id)
+            .ToListAsync();
     }
 
     public async Task DeleteFactureAsync(int id)
@@ -580,14 +678,50 @@ public class DatabaseService : IDatabaseService
         }
     }
 
+    public async Task ArchiveFactureAsync(int id)
+    {
+        await using var context = new AppDbContext();
+        var facture = await context.Factures.FindAsync(id);
+        if (facture == null)
+            return;
+
+        facture.IsArchived = !facture.IsArchived;
+        facture.DateModification = DateTime.Now;
+
+        context.JournalAudit.Add(new JournalAudit
+        {
+            EntiteType = TypeEntiteFacture,
+            EntiteId = facture.Id,
+            Reference = facture.NumeroFacture,
+            Action = facture.IsArchived ? "Archivage" : "Restauration",
+            Details = facture.IsArchived ? "Facture archivée" : "Facture restaurée"
+        });
+
+        await context.SaveChangesAsync();
+    }
+
     public async Task UpdateStatutFactureAsync(int id, StatutFacture nouveauStatut)
     {
         await using var context = new AppDbContext();
         var facture = await context.Factures.FindAsync(id);
         if (facture != null)
         {
+            var ancienStatut = facture.Statut;
             facture.Statut = nouveauStatut;
             facture.DateModification = DateTime.Now;
+
+            if (ancienStatut != nouveauStatut)
+            {
+                context.JournalAudit.Add(new JournalAudit
+                {
+                    EntiteType = TypeEntiteFacture,
+                    EntiteId = facture.Id,
+                    Reference = facture.NumeroFacture,
+                    Action = "Changement de statut",
+                    Details = $"Statut : {ancienStatut} -> {nouveauStatut}"
+                });
+            }
+
             await context.SaveChangesAsync();
         }
     }
@@ -645,6 +779,7 @@ public class DatabaseService : IDatabaseService
         var copie = new Facture
         {
             BusinessId = original.BusinessId,
+            ClientId = original.ClientId,
             DateFacture = DateTime.Today,
             DateEcheance = DateTime.Today.AddDays(AppSettings.Instance.DelaiPaiementDefaut),
             TypeFacture = original.TypeFacture,
@@ -698,13 +833,13 @@ public class DatabaseService : IDatabaseService
     }
 
     // Clients
-    public async Task<List<Client>> GetClientsByBusinessIdAsync(int businessId)
+    public async Task<List<Client>> GetClientsByBusinessIdAsync(int businessId, CancellationToken cancellationToken = default)
     {
         await using var context = new AppDbContext();
         return await context.Clients
             .Where(c => c.BusinessId == businessId)
             .OrderBy(c => c.Nom)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<Client?> GetClientByIdAsync(int id)

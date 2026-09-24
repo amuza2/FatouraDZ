@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -143,38 +144,115 @@ public partial class ClientListViewModel : ViewModelBase
 
     partial void OnRechercheChanged(string value)
     {
-        _ = FiltrerClientsAsync();
+        _ = RechercherClientsAvecDelaiAsync();
     }
 
-    private async Task FiltrerClientsAsync()
+    private const int DelaiRechercheMs = 300;
+    private CancellationTokenSource? _annulationRecherche;
+
+    /// <summary>
+    /// Attend une courte pause avant de filtrer : évite une requête à chaque frappe et
+    /// annule la recherche précédente si l'utilisateur continue de taper.
+    /// </summary>
+    private async Task RechercherClientsAvecDelaiAsync()
+    {
+        _annulationRecherche?.Cancel();
+        _annulationRecherche?.Dispose();
+        _annulationRecherche = new CancellationTokenSource();
+        var jeton = _annulationRecherche.Token;
+
+        try
+        {
+            await Task.Delay(DelaiRechercheMs, jeton);
+            await FiltrerClientsAsync(jeton);
+        }
+        catch (OperationCanceledException)
+        {
+            // Frappe suivante : cette recherche est obsolète.
+        }
+    }
+
+    private async Task FiltrerClientsAsync(CancellationToken cancellationToken = default)
     {
         if (_business == null) return;
 
-        var clients = await _databaseService.GetClientsByBusinessIdAsync(_business.Id);
-        
-        if (!string.IsNullOrWhiteSpace(Recherche))
+        try
         {
-            var searchLower = Recherche.ToLower();
-            clients = clients.Where(c => 
-                c.Nom.ToLower().Contains(searchLower) ||
-                (c.Email?.ToLower().Contains(searchLower) ?? false) ||
-                c.Telephone.Contains(searchLower)
-            ).ToList();
-        }
+            var clients = await _databaseService.GetClientsByBusinessIdAsync(_business.Id, cancellationToken);
 
-        Clients.Clear();
-        foreach (var client in clients)
+            if (!string.IsNullOrWhiteSpace(Recherche))
+            {
+                var searchLower = Recherche.ToLower();
+                clients = clients.Where(c =>
+                    c.Nom.ToLower().Contains(searchLower) ||
+                    (c.Email?.ToLower().Contains(searchLower) ?? false) ||
+                    c.Telephone.Contains(searchLower)
+                ).ToList();
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            Clients.Clear();
+            foreach (var client in clients)
+            {
+                Clients.Add(client);
+            }
+        }
+        catch (OperationCanceledException)
         {
-            Clients.Add(client);
+            // Résultat obsolète : ignoré.
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur lors du filtrage des clients : {ex.Message}";
         }
     }
 
     [RelayCommand]
-    private void VoirDetails(Client client)
+    private async Task VoirDetailsAsync(Client client)
     {
         ClientDetail = client;
         AfficherDetails = true;
         AfficherFormulaire = false;
+
+        await ChargerFacturesClientAsync(client.Id);
+    }
+
+    // Historique des factures rattachées au client affiché
+    public ObservableCollection<Facture> FacturesClient { get; } = new();
+
+    [ObservableProperty]
+    private int _nombreFacturesClient;
+
+    public bool AucuneFactureClient => NombreFacturesClient == 0;
+
+    partial void OnNombreFacturesClientChanged(int value)
+    {
+        OnPropertyChanged(nameof(AucuneFactureClient));
+    }
+
+    [ObservableProperty]
+    private decimal _totalFactureClient;
+
+    private async Task ChargerFacturesClientAsync(int clientId)
+    {
+        try
+        {
+            var factures = await _databaseService.GetFacturesByClientIdAsync(clientId);
+
+            FacturesClient.Clear();
+            foreach (var facture in factures)
+                FacturesClient.Add(facture);
+
+            NombreFacturesClient = factures.Count;
+            TotalFactureClient = factures
+                .Where(f => f.Statut != StatutFacture.Annulee)
+                .Sum(f => f.MontantTotal);
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Erreur lors du chargement de l'historique client : {ex.Message}";
+        }
     }
 
     [RelayCommand]
@@ -182,6 +260,9 @@ public partial class ClientListViewModel : ViewModelBase
     {
         AfficherDetails = false;
         ClientDetail = null;
+        FacturesClient.Clear();
+        NombreFacturesClient = 0;
+        TotalFactureClient = 0;
     }
 
     [RelayCommand]
