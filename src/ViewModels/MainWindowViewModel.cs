@@ -46,7 +46,9 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AfficherListeEntreprises()
+    private void AfficherListeEntreprises() => NaviguerAvecGarde(AfficherListeEntreprisesImmediat);
+
+    private void AfficherListeEntreprisesImmediat()
     {
         PageActuelle = "Entreprises";
         CurrentBusiness = null;
@@ -75,24 +77,34 @@ public partial class MainWindowViewModel : ViewModelBase
     private void AfficherClients()
     {
         if (CurrentBusiness == null) return;
-        PageActuelle = "Clients";
-        var vm = new ClientListViewModel();
-        vm.SetBusiness(CurrentBusiness);
-        vm.BackRequested += () => AfficherDetailEntreprise(CurrentBusiness);
-        _ = vm.ChargerClientsAsync();
-        ContenuActuel = vm;
+
+        var business = CurrentBusiness;
+        NaviguerAvecGarde(() =>
+        {
+            PageActuelle = "Clients";
+            var vm = new ClientListViewModel();
+            vm.SetBusiness(business);
+            vm.BackRequested += () => AfficherDetailEntreprise(business);
+            _ = vm.ChargerClientsAsync();
+            ContenuActuel = vm;
+        });
     }
 
     [RelayCommand]
     private void AfficherComptabilite()
     {
         if (CurrentBusiness == null) return;
-        PageActuelle = "Comptabilité";
-        var vm = new ComptabiliteViewModel();
-        vm.SetBusinessId(CurrentBusiness.Id);
-        vm.BackRequested += () => AfficherDetailEntreprise(CurrentBusiness);
-        _ = vm.ChargerDonneesAsync();
-        ContenuActuel = vm;
+
+        var business = CurrentBusiness;
+        NaviguerAvecGarde(() =>
+        {
+            PageActuelle = "Comptabilité";
+            var vm = new ComptabiliteViewModel();
+            vm.SetBusinessId(business.Id);
+            vm.BackRequested += () => AfficherDetailEntreprise(business);
+            _ = vm.ChargerDonneesAsync();
+            ContenuActuel = vm;
+        });
     }
 
     [RelayCommand]
@@ -102,7 +114,10 @@ public partial class MainWindowViewModel : ViewModelBase
         AfficherFormulaireEntreprise(CurrentBusiness);
     }
 
-    private void AfficherDetailEntreprise(Business business)
+    private void AfficherDetailEntreprise(Business business) =>
+        NaviguerAvecGarde(() => AfficherDetailEntrepriseImmediat(business));
+
+    private void AfficherDetailEntrepriseImmediat(Business business)
     {
         CurrentBusiness = business;
         PageActuelle = business.Nom;
@@ -117,7 +132,10 @@ public partial class MainWindowViewModel : ViewModelBase
         ContenuActuel = vm;
     }
 
-    private void AfficherFormulaireEntreprise()
+    private void AfficherFormulaireEntreprise() =>
+        NaviguerAvecGarde(AfficherFormulaireEntrepriseImmediat);
+
+    private void AfficherFormulaireEntrepriseImmediat()
     {
         PageActuelle = "Nouvelle entreprise";
         var vm = new BusinessFormViewModel();
@@ -130,7 +148,10 @@ public partial class MainWindowViewModel : ViewModelBase
         ContenuActuel = vm;
     }
 
-    private void AfficherFormulaireEntreprise(Business business)
+    private void AfficherFormulaireEntreprise(Business business) =>
+        NaviguerAvecGarde(() => AfficherFormulaireEntrepriseImmediat(business));
+
+    private void AfficherFormulaireEntrepriseImmediat(Business business)
     {
         PageActuelle = $"Modifier {business.Nom}";
         var vm = new BusinessFormViewModel();
@@ -149,11 +170,15 @@ public partial class MainWindowViewModel : ViewModelBase
         ContenuActuel = vm;
     }
 
-    private void AfficherNouvelleFacture(Business business)
+    private void AfficherNouvelleFacture(Business business) =>
+        NaviguerAvecGarde(() => AfficherNouvelleFactureImmediat(business));
+
+    private void AfficherNouvelleFactureImmediat(Business business)
     {
         PageActuelle = "Nouvelle facture";
         var vm = new NouvelleFactureViewModel();
         vm.SetBusiness(business);
+        vm.DemanderConfirmation += DemanderConfirmationAsync;
         _ = vm.InitialiserAsync();
         vm.FactureSauvegardee += () =>
         {
@@ -163,15 +188,20 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             DemanderPrevisualisation?.Invoke(facture, business);
         };
-        vm.AnnulerDemande += () => AfficherDetailEntreprise(business);
+        // Le formulaire a déjà demandé confirmation avant d'émettre AnnulerDemande.
+        vm.AnnulerDemande += () => AfficherDetailEntrepriseImmediat(business);
         ContenuActuel = vm;
     }
 
-    private void AfficherEditionFacture(Facture facture, Business business, bool estDuplication)
+    private void AfficherEditionFacture(Facture facture, Business business, bool estDuplication) =>
+        NaviguerAvecGarde(() => AfficherEditionFactureImmediat(facture, business, estDuplication));
+
+    private void AfficherEditionFactureImmediat(Facture facture, Business business, bool estDuplication)
     {
         PageActuelle = estDuplication ? "Dupliquer facture" : "Modifier facture";
         var vm = new NouvelleFactureViewModel();
         vm.SetBusiness(business);
+        vm.DemanderConfirmation += DemanderConfirmationAsync;
         vm.ChargerFacture(facture, estDuplication);
         
         if (estDuplication)
@@ -191,19 +221,24 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             DemanderPrevisualisation?.Invoke(f, business);
         };
-        vm.AnnulerDemande += () => AfficherDetailEntreprise(business);
+        // Le formulaire a déjà demandé confirmation avant d'émettre AnnulerDemande.
+        vm.AnnulerDemande += () => AfficherDetailEntrepriseImmediat(business);
         ContenuActuel = vm;
     }
 
     [RelayCommand]
-    private void AfficherAPropos()
+    private void AfficherAPropos() => NaviguerAvecGarde(AfficherAProposImmediat);
+
+    private void AfficherAProposImmediat()
     {
         PageActuelle = "À propos";
         ContenuActuel = new AProposViewModel();
     }
 
     [RelayCommand]
-    private void AfficherAide()
+    private void AfficherAide() => NaviguerAvecGarde(AfficherAideImmediat);
+
+    private void AfficherAideImmediat()
     {
         PageActuelle = "Aide";
         var vm = new SettingsViewModel();
@@ -231,7 +266,9 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AfficherParametres()
+    private void AfficherParametres() => NaviguerAvecGarde(AfficherParametresImmediat);
+
+    private void AfficherParametresImmediat()
     {
         PageActuelle = "Paramètres";
         var vm = new SettingsViewModel();
@@ -264,6 +301,38 @@ public partial class MainWindowViewModel : ViewModelBase
         return DemanderConfirmationDialog != null 
             ? await DemanderConfirmationDialog.Invoke(titre, message) 
             : true;
+    }
+
+    /// <summary>
+    /// Vrai si le contenu affiché est un formulaire de facture contenant des saisies non enregistrées.
+    /// </summary>
+    public bool EstFormulaireFactureModifie => ContenuActuel is NouvelleFactureViewModel { EstModifie: true };
+
+    /// <summary>
+    /// Demande confirmation avant d'abandonner la facture en cours de saisie.
+    /// Retourne true s'il n'y a rien à perdre ou si l'utilisateur confirme la perte.
+    /// Utilisé également par la fenêtre principale avant fermeture.
+    /// </summary>
+    public async Task<bool> ConfirmerAbandonSaisieAsync()
+    {
+        if (ContenuActuel is not NouvelleFactureViewModel facture || !facture.EstModifie)
+            return true;
+
+        return await facture.ConfirmerAbandonAsync();
+    }
+
+    /// <summary>
+    /// Exécute une navigation après vérification des modifications non enregistrées :
+    /// une saisie de facture ne doit jamais être perdue silencieusement.
+    /// </summary>
+    private void NaviguerAvecGarde(Action navigation) => _ = NaviguerAvecGardeAsync(navigation);
+
+    private async Task NaviguerAvecGardeAsync(Action navigation)
+    {
+        if (!await ConfirmerAbandonSaisieAsync())
+            return;
+
+        navigation();
     }
 
     public event Func<string, Task<Avalonia.Platform.Storage.IStorageFile?>>? DemanderSauvegardeFichier;

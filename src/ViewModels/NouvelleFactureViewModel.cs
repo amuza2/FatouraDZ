@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -413,8 +414,12 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     public event Action? AnnulerDemande;
 
     [RelayCommand]
-    private void Annuler()
+    private async Task AnnulerAsync()
     {
+        // Ne jamais perdre une saisie sans le demander.
+        if (!await ConfirmerAbandonAsync())
+            return;
+
         AnnulerDemande?.Invoke();
     }
 
@@ -428,16 +433,126 @@ public partial class NouvelleFactureViewModel : ViewModelBase
 
         // Ajouter une première ligne vide
         AjouterLigne();
+
+        // Toute modification d'un champ réévalue l'indicateur "modifications non enregistrées".
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(EstModifie))
+            {
+                OnPropertyChanged(nameof(EstModifie));
+            }
+        };
+
+        MarquerEtatReference();
     }
+
+    #region Garde des modifications non enregistrées
+
+    /// <summary>
+    /// Confirmation demandée à l'utilisateur (dialogue). Fournie par la fenêtre principale ;
+    /// sans abonné, l'abandon est autorisé (tests, aperçu de design).
+    /// </summary>
+    public event Func<string, string, Task<bool>>? DemanderConfirmation;
+
+    /// <summary>État de référence du formulaire, utilisé pour détecter les saisies non enregistrées.</summary>
+    private string _etatReference = string.Empty;
+
+    /// <summary>Vrai si le formulaire contient des saisies non enregistrées.</summary>
+    public bool EstModifie => !string.Equals(CapturerEtat(), _etatReference, StringComparison.Ordinal);
+
+    /// <summary>Prend l'état courant comme référence (chargement, réinitialisation, enregistrement).</summary>
+    private void MarquerEtatReference()
+    {
+        _etatReference = CapturerEtat();
+        OnPropertyChanged(nameof(EstModifie));
+    }
+
+    /// <summary>
+    /// Demande confirmation avant d'abandonner la saisie en cours.
+    /// Retourne true s'il n'y a rien à perdre ou si l'utilisateur confirme la perte.
+    /// </summary>
+    public async Task<bool> ConfirmerAbandonAsync()
+    {
+        if (!EstModifie || DemanderConfirmation == null)
+            return true;
+
+        return await DemanderConfirmation(
+            "Modifications non enregistrées",
+            "La facture en cours de saisie contient des modifications non enregistrées.\n\n" +
+            "Si vous continuez, cette saisie sera définitivement perdue.\n\n" +
+            "Voulez-vous continuer sans enregistrer ?");
+    }
+
+    /// <summary>
+    /// Sérialise les champs modifiables : une comparaison de chaînes suffit à détecter
+    /// un changement, sans dépendre de la comparaison d'objets ni d'un horodatage.
+    /// </summary>
+    private string CapturerEtat()
+    {
+        var sb = new StringBuilder(512);
+
+        sb.Append(TypeFactureIndex).Append('|')
+          .Append(DateFacture).Append('|')
+          .Append(DateEcheance).Append('|')
+          .Append(DateValidite).Append('|')
+          .Append(ModePaiement).Append('|')
+          .Append(PaiementReference).Append('|')
+          .Append(PaiementNumeroPiece).Append('|')
+          .Append(EstPaye).Append('|')
+          .Append(NumeroFactureOrigine).Append('|')
+          .Append(ClientSelectionne?.Id).Append('|')
+          .Append(ClientBusinessTypeIndex).Append('|')
+          .Append(ClientNom).Append('|')
+          .Append(ClientAdresse).Append('|')
+          .Append(ClientTelephone).Append('|')
+          .Append(ClientEmail).Append('|')
+          .Append(ClientFax).Append('|')
+          .Append(ClientFormeJuridique).Append('|')
+          .Append(ClientRc).Append('|')
+          .Append(ClientNis).Append('|')
+          .Append(ClientNif).Append('|')
+          .Append(ClientAi).Append('|')
+          .Append(ClientNumeroImmatriculation).Append('|')
+          .Append(ClientActivite).Append('|')
+          .Append(ClientCapitalSocial).Append('|')
+          .Append(AppliquerTimbre).Append('|')
+          .Append(AppliquerRetenueSource).Append('|')
+          .Append(TauxRetenueSource).Append('|')
+          .Append(RemiseGlobale).Append('|')
+          .Append(TypeRemiseGlobaleIndex).Append('|');
+
+        foreach (var ligne in Lignes)
+        {
+            sb.Append('#')
+              .Append(ligne.Reference).Append('|')
+              .Append(ligne.Designation).Append('|')
+              .Append(ligne.Quantite).Append('|')
+              .Append(ligne.UniteIndex).Append('|')
+              .Append(ligne.PrixUnitaire).Append('|')
+              .Append(ligne.TauxTVAIndex).Append('|')
+              .Append(ligne.Remise).Append('|')
+              .Append(ligne.TypeRemiseIndex);
+        }
+
+        return sb.ToString();
+    }
+
+    #endregion
 
     public async Task InitialiserAsync()
     {
+        // Référence prise sur le formulaire vierge : le numéro généré et la liste des
+        // clients ne comptent pas comme des saisies de l'utilisateur.
+        MarquerEtatReference();
+
         NumeroFacture = await _invoiceNumberService.GenererProchainNumeroAsync();
         await ChargerClientsDisponiblesAsync();
     }
 
     public async Task InitialiserEditionAsync()
     {
+        MarquerEtatReference();
+
         await ChargerClientsDisponiblesAsync();
 
         if (TousLesClients.Count == 0)
@@ -463,7 +578,12 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         if (match != null)
         {
             // Différer au frame suivant pour laisser le ComboBox finir de mettre à jour son ItemsSource
-            Dispatcher.UIThread.Post(() => ClientSelectionne = match);
+            Dispatcher.UIThread.Post(() =>
+            {
+                ClientSelectionne = match;
+                // La fiche client complète les champs : ce n'est pas une saisie utilisateur.
+                MarquerEtatReference();
+            });
         }
     }
 
@@ -493,8 +613,11 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             {
                 RecalculerTotaux();
             }
+
+            OnPropertyChanged(nameof(EstModifie));
         };
         Lignes.Add(nouvelleLigne);
+        OnPropertyChanged(nameof(EstModifie));
     }
 
     [RelayCommand]
@@ -708,6 +831,8 @@ public partial class NouvelleFactureViewModel : ViewModelBase
             await _databaseService.SaveFactureAsync(facture);
 
             EstSauvegarde = true;
+            // La saisie est enregistrée : elle n'est plus considérée comme non sauvegardée.
+            MarquerEtatReference();
             FactureSauvegardee?.Invoke();
         }
         catch (Exception ex)
@@ -721,8 +846,12 @@ public partial class NouvelleFactureViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Reinitialiser()
+    private async Task ReinitialiserAsync()
     {
+        // Réinitialiser efface la saisie : demander confirmation si elle n'est pas enregistrée.
+        if (!await ConfirmerAbandonAsync())
+            return;
+
         _factureId = 0;
         _clientIdFacture = null;
         EstModeEdition = false;
@@ -764,6 +893,7 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         Lignes.Clear();
         AjouterLigne();
         RecalculerTotaux();
+        MarquerEtatReference();
     }
 
     public void ChargerFacture(Facture facture, bool estDuplication = false)
@@ -838,6 +968,8 @@ public partial class NouvelleFactureViewModel : ViewModelBase
                 {
                     RecalculerTotaux();
                 }
+
+                OnPropertyChanged(nameof(EstModifie));
             };
             Lignes.Add(ligneVm);
         }
@@ -851,6 +983,9 @@ public partial class NouvelleFactureViewModel : ViewModelBase
         RecalculerTotaux();
         ErreurMessage = null;
         EstSauvegarde = false;
+
+        // L'état chargé est la référence : tant que rien n'est saisi, le formulaire est propre.
+        MarquerEtatReference();
     }
 
     private Facture CreerFacture()

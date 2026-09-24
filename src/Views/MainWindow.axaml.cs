@@ -15,6 +15,31 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    // Évite de perdre une facture en cours de saisie lors de la fermeture de la fenêtre.
+    private bool _fermetureConfirmee;
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (!_fermetureConfirmee && DataContext is MainWindowViewModel vm && vm.EstFormulaireFactureModifie)
+        {
+            // Annuler la fermeture le temps de demander l'avis de l'utilisateur.
+            e.Cancel = true;
+            _ = ConfirmerFermetureAsync(vm);
+            return;
+        }
+
+        base.OnClosing(e);
+    }
+
+    private async Task ConfirmerFermetureAsync(MainWindowViewModel vm)
+    {
+        if (await vm.ConfirmerAbandonSaisieAsync())
+        {
+            _fermetureConfirmee = true;
+            Close();
+        }
+    }
+
     protected override async void OnOpened(System.EventArgs e)
     {
         base.OnOpened(e);

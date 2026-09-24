@@ -17,7 +17,7 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Header with back button -->
         <Border Grid.Row="0" Background="#F8FAFC" Padding="30,15" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-            <Grid ColumnDefinitions="Auto,*">
+            <Grid ColumnDefinitions="Auto,*,Auto">
                 <Button Grid.Column="0" Content="← Retour" 
                         Command="{Binding AnnulerCommand}"
                         Background="Transparent"
@@ -26,6 +26,11 @@
                 <TextBlock Grid.Column="1" Text="{Binding TitreFormulaire}" 
                            FontSize="20" FontWeight="Bold" Foreground="#1E293B"
                            VerticalAlignment="Center" Margin="20,0,0,0"/>
+                <!-- Saisie en cours non enregistrée : le départ sera soumis à confirmation -->
+                <TextBlock Grid.Column="2" Text="● Modifications non enregistrées"
+                           Foreground="#F59E0B" FontWeight="Medium" FontSize="12"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding EstModifie}"/>
             </Grid>
         </Border>
         
