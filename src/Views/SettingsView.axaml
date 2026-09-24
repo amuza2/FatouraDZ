@@ -88,6 +88,35 @@
 
                         <Separator Margin="0,10" Background="#E2E8F0"/>
 
+                        <!-- Journaux et rapports de plantage -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="15">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <TextBlock Text="🗂️" FontSize="24"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Journaux et rapports" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="Le journal quotidien et les rapports de plantage, à joindre à un signalement de problème"
+                                                   Foreground="#64748B" FontSize="12" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="Emplacement :" FontWeight="Medium" FontSize="12"/>
+                                    <TextBox Text="{Binding CheminDonneesTechniques}" IsReadOnly="True"
+                                             Background="#F8FAFC" FontSize="11"/>
+                                </StackPanel>
+
+                                <Button Content="Ouvrir le dossier"
+                                        Command="{Binding OuvrirDossierDonneesCommand}"
+                                        Padding="15,10"
+                                        HorizontalAlignment="Left"
+                                        Background="#64748B"
+                                        Foreground="White"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Separator Margin="0,10" Background="#E2E8F0"/>
+
                         <!-- Database Location -->
                         <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
                             <StackPanel Spacing="15">

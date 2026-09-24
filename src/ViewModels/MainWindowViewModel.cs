@@ -74,11 +74,15 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var parametres = AppSettings.Instance;
             if (!parametres.VerifierMisesAJour)
+            {
+                ServiceLocator.Logger.Debug("Vérification des mises à jour désactivée dans les paramètres.");
                 return;
+            }
 
             if (parametres.DerniereVerificationMiseAJour is { } derniere &&
                 DateTime.Now - derniere < TimeSpan.FromHours(24))
             {
+                ServiceLocator.Logger.Debug($"Vérification des mises à jour ignorée : dernière vérification il y a {(DateTime.Now - derniere).TotalHours:F1} h.");
                 return;
             }
 

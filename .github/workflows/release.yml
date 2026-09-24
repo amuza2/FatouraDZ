@@ -299,6 +299,13 @@ jobs:
 
             En cas de plantage, l'application écrit un rapport et propose de le copier :
             joignez-le à un ticket, il contient la version, le système et la pile d'appels.
+
+            Pour un problème sans plantage, relancez avec `--verbose` puis joignez le
+            journal (**Paramètres → Données → Journaux et rapports**) :
+
+            ```sh
+            ./FatouraDZ-*-x86_64.AppImage --verbose
+            ```
           files: |
             artifacts/*.tar.gz
             artifacts/*.tar.gz.sha256

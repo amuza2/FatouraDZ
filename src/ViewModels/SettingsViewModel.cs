@@ -281,6 +281,29 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Emplacement des journaux et des rapports de plantage, affiché à l'utilisateur.</summary>
+    public string CheminDonneesTechniques => AppPaths.Abreger(AppPaths.DossierDonnees);
+
+    /// <summary>
+    /// Ouvre le dossier de données : c'est là que se trouvent les journaux et les
+    /// rapports de plantage, et c'est ce qu'on demande à un utilisateur qui signale
+    /// un problème. Sans ce bouton, le seul moyen serait de lui décrire un chemin
+    /// caché — autant dire qu'aucun rapport ne serait jamais envoyé.
+    /// </summary>
+    [RelayCommand]
+    private void OuvrirDossierDonnees()
+    {
+        try
+        {
+            Directory.CreateDirectory(AppPaths.DossierDonnees);
+            LiensExternes.Ouvrir(AppPaths.DossierDonnees);
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Impossible d'ouvrir le dossier : {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private async Task ChangerEmplacementBaseDeDonneesAsync()
     {

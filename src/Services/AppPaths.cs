@@ -34,6 +34,24 @@ public static class AppPaths
     public static string DossierRapports => Path.Combine(DossierDonnees, "crashes");
 
     /// <summary>
+    /// Remplace chaque occurrence du dossier personnel par « ~ » à l'intérieur d'un
+    /// texte. Les journaux et les rapports finissent souvent en pièce jointe
+    /// publique, et une erreur SQLite ou un chemin de sauvegarde y fait apparaître
+    /// le nom de session de l'utilisateur.
+    /// </summary>
+    public static string AbregerDansLeTexte(string texte)
+    {
+        if (string.IsNullOrEmpty(texte))
+            return texte;
+
+        var personnel = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (string.IsNullOrEmpty(personnel))
+            return texte;
+
+        return texte.Replace(personnel, "~", StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// Remplace le dossier personnel par « ~ ». Un rapport de plantage finit
     /// souvent en pièce jointe publique : il ne doit pas publier au passage le nom
     /// de la session de l'utilisateur.

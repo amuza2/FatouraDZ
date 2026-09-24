@@ -25,6 +25,11 @@ public class DatabaseService : IDatabaseService
         var cheminBase = AppSettings.Instance.DatabasePath;
         var fichierExistait = File.Exists(cheminBase);
 
+        var journal = ServiceLocator.Logger;
+        journal.Debug("Initialisation de la base : "
+            + $"fichier {(fichierExistait ? "présent" : "absent")}, "
+            + $"chemin {AppPaths.Abreger(System.IO.Path.GetDirectoryName(cheminBase) ?? string.Empty)}");
+
         await using var context = new AppDbContext();
 
         var tablesExistantes = fichierExistait && await DesTablesExistantesAsync(context);
@@ -36,6 +41,10 @@ public class DatabaseService : IDatabaseService
             var baselineNecessaire = !await HistoriqueMigrationsExisteAsync(context);
             var migrationsEnAttente = (await context.Database.GetPendingMigrationsAsync()).ToList();
 
+            journal.Debug($"Base existante : baseline nécessaire = {baselineNecessaire}, "
+                + $"migrations en attente = {migrationsEnAttente.Count}"
+                + (migrationsEnAttente.Count > 0 ? $" [{string.Join(", ", migrationsEnAttente)}]" : string.Empty));
+
             if (baselineNecessaire || migrationsEnAttente.Count > 0)
                 SauvegarderAvantMigration(cheminBase);
 
@@ -43,6 +52,10 @@ public class DatabaseService : IDatabaseService
             // de la migration initiale, sinon Migrate() tenterait de recréer les tables.
             if (baselineNecessaire)
                 await AppliquerBaselineAsync(context);
+        }
+        else
+        {
+            journal.Debug("Aucune table existante : la base sera créée par les migrations.");
         }
 
         // Applique les migrations EF Core (crée la base si nécessaire).
@@ -55,6 +68,8 @@ public class DatabaseService : IDatabaseService
         await MigrateTransactionTablesAsync(context);
 
         await EcrireVersionSchemaAsync(context, VersionSchemaActuelle);
+
+        journal.Debug($"Base prête (version de schéma {VersionSchemaActuelle}, {context.Model.GetEntityTypes().Count()} types d'entités).");
     }
 
     private static async Task<bool> DesTablesExistantesAsync(AppDbContext context)

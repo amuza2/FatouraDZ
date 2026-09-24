@@ -210,4 +210,23 @@ public class CrashReporterTests : IDisposable
     {
         Assert.Equal("/etc/hosts", AppPaths.Abreger("/etc/hosts"));
     }
+
+    [Fact]
+    public void AbregerDansLeTexte_RemplaceToutesLesOccurrences()
+    {
+        var personnel = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var texte = $"Sauvegarde : {personnel}/FatouraDZ/fatouradz.db puis {personnel}/Bureau/facture.pdf";
+
+        var abrege = AppPaths.AbregerDansLeTexte(texte);
+
+        Assert.DoesNotContain(personnel, abrege);
+        Assert.Contains("~/FatouraDZ/fatouradz.db", abrege);
+        Assert.Contains("~/Bureau/facture.pdf", abrege);
+    }
+
+    [Fact]
+    public void AbregerDansLeTexte_LaisseUnTexteSansCheminIntact()
+    {
+        Assert.Equal("Échec de l'aperçu PDF", AppPaths.AbregerDansLeTexte("Échec de l'aperçu PDF"));
+    }
 }

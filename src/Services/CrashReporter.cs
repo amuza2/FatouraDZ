@@ -132,7 +132,7 @@ public sealed class CrashReporter : ICrashReporter
         {
             // ToString() inclut la chaîne des exceptions internes et les piles :
             // c'est exactement ce qu'il faut pour diagnostiquer.
-            rapport.AppendLine(AppPaths.Abreger(exception.ToString()));
+            rapport.AppendLine(AppPaths.AbregerDansLeTexte(exception.ToString()));
         }
 
         var journal = LireFinDuJournal();
@@ -142,7 +142,7 @@ public sealed class CrashReporter : ICrashReporter
             rapport.AppendLine($"Dernières lignes du journal ({journal.Count})");
             rapport.AppendLine("-----------------------------");
             foreach (var ligne in journal)
-                rapport.AppendLine(ligne);
+                rapport.AppendLine(AppPaths.AbregerDansLeTexte(ligne));
         }
 
         return rapport.ToString();

@@ -57,6 +57,9 @@ public partial class PreviewFactureViewModel : ViewModelBase
             var imageBytes = await _pdfService.GenererApercuPngAsync(Facture, Business);
             using var stream = new MemoryStream(imageBytes);
             PreviewImage = new Bitmap(stream);
+
+            _logger.Debug($"Aperçu généré : {imageBytes.Length / 1024} Ko, "
+                + $"facture {Facture.NumeroFacture} ({Facture.Lignes.Count} ligne(s))");
         }
         catch (Exception ex)
         {
@@ -123,7 +126,9 @@ public partial class PreviewFactureViewModel : ViewModelBase
             {
                 var cheminPdf = file.Path.LocalPath;
                 await _pdfService.GenererPdfAsync(Facture, Business, cheminPdf);
-                
+
+                _logger.Debug($"PDF enregistré : {new FileInfo(cheminPdf).Length / 1024} Ko pour la facture {Facture.NumeroFacture}.");
+
                 // Mettre à jour le chemin PDF uniquement si la facture existe déjà en base
                 Facture.CheminPDF = cheminPdf;
                 if (Facture.Id > 0)
@@ -158,6 +163,7 @@ public partial class PreviewFactureViewModel : ViewModelBase
             var tempPath = Path.Combine(dossierTemp, $"FatouraDZ_{numeroNettoye}.pdf");
 
             await _pdfService.GenererPdfAsync(Facture, Business, tempPath);
+            _logger.Debug($"Impression : PDF temporaire {AppPaths.Abreger(tempPath)} préparé et ouvert.");
 
             // Ouvrir le PDF avec l'application par défaut (qui permet d'imprimer)
             var psi = new System.Diagnostics.ProcessStartInfo

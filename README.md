@@ -99,6 +99,31 @@ En cas de plantage, un rapport est écrit dans
 (Linux), et un dialogue propose de le copier ou d'ouvrir un ticket. Les 20
 derniers rapports sont conservés.
 
+## Journaux
+
+L'application écrit un journal quotidien dans `logs/`, à côté des rapports de
+plantage (`%LOCALAPPDATA%\FatouraDZ`, `~/.local/share/FatouraDZ`). Il ne sert pas
+à grand-chose tout seul, mais il est recopié dans chaque rapport de plantage : il
+dit ce que l'application faisait juste avant, sans quoi une pile d'appels seule
+est souvent inexploitable. Les 30 derniers jours sont conservés.
+
+Le dossier s'ouvre depuis **Paramètres → Données → Journaux et rapports**. Les
+chemins du dossier personnel y sont remplacés par `~` : un journal transmis ne
+publie pas le nom de session de l'utilisateur.
+
+### Mode verbeux
+
+En cas de problème, lancer l'application avec `--verbose` écrit le détail du
+diagnostic (versions, chemins, décisions de migration, taille des PDF générés) :
+
+```bash
+fatouradz --verbose        # ou : ./FatouraDZ-*-x86_64.AppImage --verbose
+```
+
+`--version` affiche la version et `--help` la liste des options. Sans `--verbose`,
+cette même commande n'affiche que les charges utiles : un journal livré à un
+utilisateur reste lisible.
+
 ## Licence
 
 [MIT](LICENSE)

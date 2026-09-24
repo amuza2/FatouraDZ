@@ -88,7 +88,28 @@ public class AppSettings
             settings.DatabasePath = Path.Combine(dossierTest, "fatouradz.db");
         }
 
+        _instance = settings;
+
+        // Après l'affectation : les appels suivants à Instance ne repasseront pas ici,
+        // et on veut la trace une seule fois par processus.
+        _instance.JournaliserChargement(File.Exists(SettingsFilePath), dossierTest);
+
         return settings;
+    }
+
+    /// <summary>
+    /// Trace la configuration retenue. Les chemins sont abrégés : un journal est
+    /// souvent transmis tel quel, il ne doit pas publier le nom de session.
+    /// </summary>
+    private void JournaliserChargement(bool fichierPresent, string? dossierTest)
+    {
+        ServiceLocator.Logger.Debug("Paramètres chargés : "
+            + $"fichier {(fichierPresent ? "présent" : "absent")}, "
+            + $"base {AppPaths.Abreger(DatabasePath)}, "
+            + $"TVA {TauxTVAStandard}/{TauxTVAReduit} %, "
+            + $"timbre min {TimbreMinimum} DA, "
+            + $"vérification des mises à jour = {VerifierMisesAJour}"
+            + (string.IsNullOrWhiteSpace(dossierTest) ? string.Empty : ", dossier de test actif"));
     }
 
     public void Save()
@@ -101,6 +122,8 @@ public class AppSettings
 
             var json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(SettingsFilePath, json);
+
+            ServiceLocator.Logger.Debug($"Paramètres enregistrés ({AppPaths.Abreger(SettingsFilePath)}).");
         }
         catch
         {

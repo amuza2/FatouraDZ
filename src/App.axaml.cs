@@ -35,6 +35,10 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
+
+            // Trace utile au support : sans elle, impossible de distinguer « la fenêtre
+            // ne s'est jamais ouverte » de « l'application a échoué plus tard ».
+            ServiceLocator.Logger.Debug("Interface graphique initialisée, fenêtre principale créée.");
         }
 
         base.OnFrameworkInitializationCompleted();
