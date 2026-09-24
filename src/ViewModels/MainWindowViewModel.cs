@@ -16,6 +16,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _pageActuelle = "Entreprises";
 
+    /// <summary>Version de l'exécutable installé, affichée en pied de barre latérale.</summary>
+    public string VersionApplication => AppInfo.Version;
+
     private readonly IDatabaseService _databaseService;
     
     // Current business context for dynamic sidebar
@@ -43,7 +46,87 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         await _databaseService.InitializeDatabaseAsync();
         AfficherListeEntreprises();
+
+        // Après l'affichage : une vérification de mise à jour ne doit pas retarder
+        // l'ouverture de l'application.
+        _ = VerifierMiseAJourAuDemarrageAsync();
     }
+
+    #region Mises à jour
+
+    /// <summary>Version plus récente publiée, ou null si l'application est à jour.</summary>
+    [ObservableProperty]
+    private VersionDisponible? _miseAJourDisponible;
+
+    public bool MiseAJourVisible => MiseAJourDisponible != null;
+
+    partial void OnMiseAJourDisponibleChanged(VersionDisponible? value) =>
+        OnPropertyChanged(nameof(MiseAJourVisible));
+
+    /// <summary>
+    /// Interroge GitHub au démarrage, au plus une fois par jour et seulement si
+    /// l'utilisateur l'a autorisé. Ne bloque jamais l'application : tout échec est
+    /// silencieux (il est journalisé).
+    /// </summary>
+    public async Task VerifierMiseAJourAuDemarrageAsync()
+    {
+        try
+        {
+            var parametres = AppSettings.Instance;
+            if (!parametres.VerifierMisesAJour)
+                return;
+
+            if (parametres.DerniereVerificationMiseAJour is { } derniere &&
+                DateTime.Now - derniere < TimeSpan.FromHours(24))
+            {
+                return;
+            }
+
+            var disponible = await ServiceLocator.UpdateService.VerifierAsync();
+
+            parametres.DerniereVerificationMiseAJour = DateTime.Now;
+            parametres.Save();
+
+            if (disponible != null &&
+                !string.Equals(disponible.Version, parametres.VersionMiseAJourIgnoree, StringComparison.OrdinalIgnoreCase))
+            {
+                MiseAJourDisponible = disponible;
+            }
+        }
+        catch (Exception ex)
+        {
+            ServiceLocator.Logger.Warning("Vérification des mises à jour impossible", ex);
+        }
+    }
+
+    [RelayCommand]
+    private void OuvrirPageMiseAJour()
+    {
+        LiensExternes.Ouvrir(MiseAJourDisponible?.PageHtml ?? AppInfo.PageReleases);
+    }
+
+    /// <summary>Masque le bandeau pour cette version : elle ne sera plus proposée.</summary>
+    [RelayCommand]
+    private void IgnorerCetteVersion()
+    {
+        if (MiseAJourDisponible == null)
+            return;
+
+        try
+        {
+            var parametres = AppSettings.Instance;
+            parametres.VersionMiseAJourIgnoree = MiseAJourDisponible.Version;
+            parametres.Save();
+        }
+        catch (Exception ex)
+        {
+            ServiceLocator.Logger.Warning("Impossible d'enregistrer la version ignorée", ex);
+        }
+
+        MiseAJourDisponible = null;
+    }
+
+    #endregion
 
     [RelayCommand]
     private void AfficherListeEntreprises() => NaviguerAvecGarde(AfficherListeEntreprisesImmediat);

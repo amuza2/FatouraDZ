@@ -1,0 +1,59 @@
+name: build
+
+# Intégration continue : rien n'est publié ici, on vérifie seulement que le dépôt
+# compile, que les tests passent et que les fichiers de packaging restent valides.
+# Les livrables sont produits par release.yml, sur tag.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore FatouraDZ.slnx
+
+      # -warnaserror garde la base d'analyse propre : un nouvel avertissement fait
+      # échouer la construction au lieu de s'accumuler discrètement.
+      - name: Build
+        run: dotnet build FatouraDZ.slnx -c Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test FatouraDZ.slnx -c Release --no-build --logger "console;verbosity=normal"
+
+      # Une publication cassée (ressource manquante, identifiant de runtime
+      # incorrect) n'est visible qu'ici.
+      - name: Publish (framework-dependent)
+        run: dotnet publish src/FatouraDZ.csproj -c Release -r linux-x64 --self-contained false -o publish
+
+      - name: Valider les métadonnées de packaging
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq appstream desktop-file-utils
+          desktop-file-validate packaging/fatouradz.desktop
+          appstreamcli validate --no-net packaging/io.github.amuza2.fatouradz.metainfo.xml
+
+      # Les icônes sont versionnées : modifier src/Assets/invoice.png sans
+      # relancer scripts/gen-icons.sh laisserait la release avec l'ancienne
+      # icône. Mieux vaut le voir ici qu'après avoir publié un tag.
+      - name: Vérifier les icônes
+        run: ./scripts/verifier-icones.sh
+
+      # shellcheck est préinstallé sur les runners GitHub. Il tourne au niveau
+      # « warning » : les notes de style ne bloquent pas, les erreurs réelles si.
+      - name: Vérifier les scripts
+        run: shellcheck -S warning scripts/*.sh packaging/AppRun

@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Point d'entrée de l'AppImage.
+#
+# appimagetool exécute ce script ; le binaire publié est dans usr/bin, à côté des
+# fichiers d'intégration au bureau (usr/share).
+#
+set -eu
+
+HERE="$(dirname "$(readlink -f "$0")")"
+
+# Un publish .NET « single file » avec bibliothèques natives extrait son contenu
+# au premier lancement, par défaut dans ~/.net. On fixe l'emplacement dans le
+# cache utilisateur pour que l'AppImage reste autonome et n'écrive pas dans le
+# dossier personnel de façon inattendue.
+: "${DOTNET_BUNDLE_EXTRACT_BASE_DIR:=${XDG_CACHE_HOME:-$HOME/.cache}/fatouradz/dotnet}"
+export DOTNET_BUNDLE_EXTRACT_BASE_DIR
+
+exec "$HERE/usr/bin/fatouradz" "$@"

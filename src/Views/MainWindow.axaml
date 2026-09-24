@@ -7,7 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="FatouraDZ.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/fatouradz.ico"
         Title="FatouraDZ - Application de Facturation"
         WindowState="Maximized"
         MinWidth="900" MinHeight="600">
@@ -92,10 +92,10 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Version at bottom -->
+                <!-- Version réelle de l'exécutable (voir Services/AppInfo.cs) -->
                 <StackPanel Grid.Row="2" Margin="12,0,12,16">
                     <Separator Margin="0,0,0,12" Background="{StaticResource BorderBrush}"/>
-                    <TextBlock Text="Version 1.0.0" 
+                    <TextBlock Text="{Binding VersionApplication, StringFormat='Version {0}'}"
                                FontSize="11" 
                                Foreground="{StaticResource TextSecondaryBrush}"
                                HorizontalAlignment="Center"/>
@@ -105,7 +105,28 @@
 
         <!-- Contenu principal -->
         <Border Grid.Column="1" Background="{StaticResource BackgroundBrush}">
-            <ContentControl Content="{Binding ContenuActuel}">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Mise à jour disponible (voir Services/UpdateService.cs) :
+                     l'application prévient, l'utilisateur télécharge. -->
+                <Border Grid.Row="0" Background="#ECFDF5" BorderBrush="#10B981" BorderThickness="0,0,0,1"
+                        Padding="15,10"
+                        IsVisible="{Binding MiseAJourVisible}">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <TextBlock Grid.Column="0" Text="⬆️" FontSize="18"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="#065F46"
+                                   Text="{Binding MiseAJourDisponible.Version, StringFormat='La version {0} de FatouraDZ est disponible.'}"/>
+                        <Button Grid.Column="2" Content="Télécharger" Classes="primary"
+                                Padding="15,6" Margin="10,0,0,0"
+                                Command="{Binding OuvrirPageMiseAJourCommand}"/>
+                        <Button Grid.Column="3" Content="Ignorer cette version"
+                                Background="Transparent" Foreground="#065F46" Padding="10,6"
+                                Command="{Binding IgnorerCetteVersionCommand}"/>
+                    </Grid>
+                </Border>
+
+                <ContentControl Grid.Row="1" Content="{Binding ContenuActuel}">
                 <ContentControl.DataTemplates>
                     <DataTemplate DataType="vm:BusinessListViewModel">
                         <views:BusinessListView/>
@@ -129,7 +150,8 @@
                         <views:ClientListView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
-            </ContentControl>
+                </ContentControl>
+            </Grid>
         </Border>
     </Grid>
 

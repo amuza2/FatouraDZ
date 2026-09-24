@@ -50,6 +50,12 @@ public static class ServiceLocator
         services.AddSingleton<INumberToWordsService, NumberToWordsService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAppLogger, FileLogger>();
+        services.AddSingleton<ICrashReporter, CrashReporter>();
+        // Un seul hôte interrogé (api.github.com) : un HttpClient unique suffit et
+        // évite l'épuisement de sockets des clients créés à la demande.
+        services.AddSingleton<System.Net.Http.HttpClient>(_ => GitHubReleaseClient.CreerHttpClient());
+        services.AddSingleton<IReleaseGitHubClient, GitHubReleaseClient>();
+        services.AddSingleton<IUpdateService, UpdateService>();
         services.AddSingleton<IInvoiceNumberService, InvoiceNumberService>();
         services.AddSingleton<IPdfService, PdfService>();
         services.AddSingleton<IExcelService, ExcelService>();
@@ -70,6 +76,10 @@ public static class ServiceLocator
     public static IExcelService ExcelService => Provider.GetRequiredService<IExcelService>();
 
     public static IValidationService ValidationService => Provider.GetRequiredService<IValidationService>();
+
+    public static ICrashReporter CrashReporter => Provider.GetRequiredService<ICrashReporter>();
+
+    public static IUpdateService UpdateService => Provider.GetRequiredService<IUpdateService>();
 
     public static IAppLogger Logger => Provider.GetRequiredService<IAppLogger>();
 }

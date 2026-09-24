@@ -1,0 +1,312 @@
+name: release
+
+# Construit les livrables et les attache à une release GitHub.
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# Le tag est le seul moyen de produire une release : les scripts prennent la
+# version depuis le tag, donc une release ne peut pas annoncer une version qui
+# n'a jamais été taguée.
+on:
+  push:
+    tags: [ 'v*' ]
+  # Permet de reconstruire un tag depuis l'onglet Actions si un job a dû être relancé.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag existant à construire et publier
+        required: true
+        type: string
+
+permissions:
+  contents: write   # nécessaire pour créer la release et y déposer les artefacts
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  linux:
+    name: Artefacts Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          # build-release.sh lit le tag le plus proche pour nommer les artefacts et
+          # signaler une révision non publiée : cela demande l'historique des tags.
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Déterminer la version
+        run: |
+          set -eu
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          [ -n "$VERSION" ] || { echo "::error::version vide"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Version : $VERSION"
+
+      - name: Tests
+        run: |
+          dotnet restore FatouraDZ.slnx
+          dotnet build FatouraDZ.slnx -c Release --no-restore -warnaserror
+          dotnet test FatouraDZ.slnx -c Release --no-build
+
+      # Les métadonnées de packaging/ sont ce que voit une distribution : échouer
+      # ici coûte bien moins cher qu'échouer après un publish de dix minutes.
+      - name: Valider les métadonnées de packaging
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq appstream desktop-file-utils
+          desktop-file-validate packaging/fatouradz.desktop
+          appstreamcli validate --no-net packaging/io.github.amuza2.fatouradz.metainfo.xml
+
+      - name: Vérifier les scripts
+        run: shellcheck -S warning scripts/*.sh packaging/AppRun
+
+      - name: Construire les artefacts Linux
+        run: |
+          ./scripts/build-release.sh \
+            --no-windows \
+            --archs "linux-x64 linux-arm64" \
+            --version "$VERSION"
+
+      # Une publication qui produit un fichier qui plante au démarrage est le
+      # mode de défaillance qu'aucun test unitaire ne voit. Le dossier de données
+      # est redirigé pour que le test n'écrive rien dans le profil du runner, et
+      # l'application doit aller jusqu'à écrire son journal.
+      - name: Vérifier que les artefacts démarrent
+        run: |
+          set -eu
+          sudo apt-get install -y -qq xvfb libx11-6 libice6 libsm6 libxrandr2 \
+            libxi6 libxcursor1 libxext6 libgl1 libegl1 libfontconfig1
+          export FATOURADZ_TEST_DB_DIR="$(mktemp -d)"
+
+          APPIMAGE="$(ls artifacts/*.AppImage | head -n1)"
+          BINAIRE="$(ls artifacts/FatouraDZ-*-linux-x64/fatouradz | head -n1)"
+
+          xvfb-run -a timeout 30 "$APPIMAGE" --appimage-extract-and-run > /tmp/appimage.log 2>&1 || true
+          xvfb-run -a timeout 30 "$BINAIRE" > /tmp/binaire.log 2>&1 || true
+
+          echo "--- AppImage ---"; cat /tmp/appimage.log
+          echo "--- binaire ---"; cat /tmp/binaire.log
+
+          if grep -qiE 'unhandled exception|System\.(DllNotFound|TypeLoad|MissingMethod)' \
+               /tmp/appimage.log /tmp/binaire.log; then
+            echo "::error::l'artefact publié a levé une exception au démarrage"
+            exit 1
+          fi
+
+          # Preuve que l'application a démarré : elle écrit son journal dès
+          # l'initialisation de la base.
+          if ! ls "$FATOURADZ_TEST_DB_DIR"/logs/fatouradz-*.log >/dev/null 2>&1; then
+            echo "::error::aucun journal écrit — l'application n'a pas démarré"
+            exit 1
+          fi
+
+      - name: Publier les artefacts Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            artifacts/*.tar.gz
+            artifacts/*.tar.gz.sha256
+            artifacts/*.AppImage
+            artifacts/*.AppImage.sha256
+            artifacts/*.deb
+            artifacts/*.deb.sha256
+          if-no-files-found: error
+
+  windows:
+    name: Artefacts Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Déterminer la version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.inputs.tag }}"
+          if (-not $tag) { $tag = "${{ github.ref_name }}" }
+          $version = $tag -replace '^v', ''
+          if (-not $version) { throw "version vide" }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "Version : $version"
+
+      # Le dossier publié sert à la fois au ZIP portable et à l'installateur.
+      - name: Publier portable (win-x64)
+        shell: pwsh
+        run: |
+          $stage = "artifacts/FatouraDZ-$env:VERSION-win-x64"
+          dotnet publish src/FatouraDZ.csproj -c Release -r win-x64 --self-contained true `
+            -o $stage `
+            -p:Version=$env:VERSION `
+            -p:DebugType=none `
+            -p:PublishTrimmed=false `
+            -p:PublishReadyToRun=false `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true
+          if (-not (Test-Path "$stage/FatouraDZ.exe")) { throw "FatouraDZ.exe absent du publish" }
+
+          Copy-Item LICENSE "$stage/LICENSE"
+          Copy-Item README.md "$stage/README.md"
+          Copy-Item packaging/windows/LISEZ-MOI.txt "$stage/LISEZ-MOI.txt"
+
+      - name: Publier portable (win-arm64)
+        shell: pwsh
+        run: |
+          $stage = "artifacts/FatouraDZ-$env:VERSION-win-arm64"
+          dotnet publish src/FatouraDZ.csproj -c Release -r win-arm64 --self-contained true `
+            -o $stage `
+            -p:Version=$env:VERSION `
+            -p:DebugType=none `
+            -p:PublishTrimmed=false `
+            -p:PublishReadyToRun=false `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true
+          if (-not (Test-Path "$stage/FatouraDZ.exe")) { throw "FatouraDZ.exe absent du publish" }
+
+          Copy-Item LICENSE "$stage/LICENSE"
+          Copy-Item README.md "$stage/README.md"
+          Copy-Item packaging/windows/LISEZ-MOI.txt "$stage/LISEZ-MOI.txt"
+
+      - name: Vérifier l'icône de l'exécutable
+        shell: pwsh
+        run: |
+          foreach ($rid in @("win-x64", "win-arm64")) {
+            python scripts/verifier-icone-exe.py src/Assets/fatouradz.ico "artifacts/FatouraDZ-$env:VERSION-$rid/FatouraDZ.exe"
+            if ($LASTEXITCODE -ne 0) { throw "l'exécutable $rid n'embarque pas l'icône" }
+          }
+
+      - name: Créer les archives portables et leurs empreintes
+        shell: pwsh
+        run: |
+          foreach ($rid in @("win-x64", "win-arm64")) {
+            $stage = "artifacts/FatouraDZ-$env:VERSION-$rid"
+            Compress-Archive -Path "$stage/*" -DestinationPath "$stage.zip" -Force
+            $hash = (Get-FileHash "$stage.zip" -Algorithm SHA256).Hash.ToLower()
+            "$hash  FatouraDZ-$env:VERSION-$rid.zip" | Out-File -Encoding ascii "$stage.zip.sha256"
+          }
+
+      - name: Installer Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Construire l'installateur Windows
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe introuvable : $iscc" }
+
+          $source = (Resolve-Path "artifacts/FatouraDZ-$env:VERSION-win-x64").Path
+          $output = (Resolve-Path "artifacts").Path
+
+          & $iscc "/DAppVersion=$env:VERSION" "/DSourceDir=$source" "/DOutputDir=$output" `
+            "packaging/windows/FatouraDZ.iss"
+
+          $setup = "artifacts/FatouraDZ-$env:VERSION-windows-x64-setup.exe"
+          if (-not (Test-Path $setup)) { throw "installateur non produit : $setup" }
+
+          $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
+          "$hash  FatouraDZ-$env:VERSION-windows-x64-setup.exe" | Out-File -Encoding ascii "$setup.sha256"
+
+      - name: Publier les artefacts Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            artifacts/*.zip
+            artifacts/*.zip.sha256
+            artifacts/*setup.exe
+            artifacts/*setup.exe.sha256
+          if-no-files-found: error
+
+  release:
+    name: Release GitHub
+    needs: [ linux, windows ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Lister les artefacts
+        run: ls -lh artifacts
+
+      - name: Créer la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## Installation
+
+            ### Linux — AppImage (aucun runtime .NET requis)
+
+            ```sh
+            chmod +x FatouraDZ-*-x86_64.AppImage
+            ./FatouraDZ-*-x86_64.AppImage
+            ```
+
+            ### Linux — archive à installer pour l'utilisateur courant
+
+            Ajoute le lanceur au menu d'applications et l'icône au thème :
+
+            ```sh
+            tar -xzf FatouraDZ-*-linux-x64.tar.gz
+            cd FatouraDZ-*-linux-x64
+            ./install.sh                      # --prefix /usr/local pour une installation système
+            ```
+
+            ### Linux — paquet Debian
+
+            ```sh
+            sudo apt install ./FatouraDZ-*-amd64.deb
+            ```
+
+            ### Windows
+
+            `FatouraDZ-*-windows-x64-setup.exe` installe l'application (menu Démarrer,
+            désinstallation propre). L'archive `...-win-x64.zip` est la version portable :
+            décompressez et lancez `FatouraDZ.exe`.
+
+            ## Vos données
+
+            Elles restent sur votre poste : `%LOCALAPPDATA%\FatouraDZ` sous Windows,
+            `~/.local/share/FatouraDZ` sous Linux (`settings.json` permet de choisir un
+            autre emplacement pour la base). Une désinstallation ne les supprime jamais —
+            pensez à faire une sauvegarde depuis **Paramètres → Gestion des données**.
+
+            Chaque artefact a un fichier `.sha256` à côté de lui.
+
+            ## Signaler un problème
+
+            En cas de plantage, l'application écrit un rapport et propose de le copier :
+            joignez-le à un ticket, il contient la version, le système et la pile d'appels.
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.tar.gz.sha256
+            artifacts/*.AppImage
+            artifacts/*.AppImage.sha256
+            artifacts/*.deb
+            artifacts/*.deb.sha256
+            artifacts/*.zip
+            artifacts/*.zip.sha256
+            artifacts/*setup.exe
+            artifacts/*setup.exe.sha256

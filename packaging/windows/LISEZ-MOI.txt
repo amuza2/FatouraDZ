@@ -1,0 +1,38 @@
+FatouraDZ — version portable pour Windows
+=========================================
+
+Aucune installation n'est nécessaire : l'application embarque le runtime .NET.
+
+  1. Décompressez cette archive où vous voulez (par exemple C:\Program Files\FatouraDZ
+     ou une clé USB).
+  2. Lancez FatouraDZ.exe.
+
+Un raccourci sur le Bureau est pratique : clic droit sur FatouraDZ.exe > Envoyer vers >
+Bureau (créer un raccourci).
+
+Si vous préférez un vrai installateur (menu Démarrer, désinstallation propre),
+téléchargez plutôt FatouraDZ-<version>-windows-x64-setup.exe depuis la même release.
+
+
+Où sont mes données ?
+---------------------
+
+%LOCALAPPDATA%\FatouraDZ
+    fatouradz.db     la base de données (entreprises, clients, factures)
+    settings.json    les paramètres (TVA, timbre, format de numérotation…)
+    logs\            journaux quotidiens
+    crashes\         rapports de plantage, si l'application en a produit un
+
+Ces fichiers ne sont PAS supprimés par une désinstallation ou par la suppression
+de ce dossier : sauvegardez-les avant toute opération risquée. Le menu
+Paramètres permet d'exporter la base de données en un fichier .db.
+
+L'application n'envoie rien sur Internet, sauf la vérification quotidienne des
+mises à jour (interroge l'API GitHub, aucune donnée personnelle transmise).
+Elle se désactive dans Paramètres > À propos.
+
+
+Conditions d'utilisation
+------------------------
+
+Licence MIT — voir LICENSE dans ce dossier.

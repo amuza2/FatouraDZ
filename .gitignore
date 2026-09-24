@@ -38,5 +38,9 @@ bld/
 
 # SQLite database
 *.db
+
+# Sorties de construction des livrables (voir scripts/build-release.sh)
+artifacts/
+publish/
 *.db-shm
 *.db-wal

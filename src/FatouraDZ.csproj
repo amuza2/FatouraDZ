@@ -5,7 +5,48 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+
+    <!--
+      Identité de l'application : reprise par l'écran « À propos », l'icône du
+      .exe et les métadonnées de packaging.
+
+      Une release écrase Version avec -p:Version=<tag> (scripts/build-release.sh),
+      donc l'assembly, l'écran « À propos » et le nom de l'artefact annoncent
+      toujours la même version. La valeur ci-dessous n'est utilisée que pour un
+      build local.
+    -->
+    <Version>0.1.0</Version>
+    <Product>FatouraDZ</Product>
+    <AssemblyTitle>FatouraDZ</AssemblyTitle>
+    <Description>Application de facturation pour les entreprises algériennes</Description>
+    <Company>amuza2</Company>
+    <Authors>amuza2</Authors>
+    <Copyright>© 2026 amuza2</Copyright>
+    <RepositoryUrl>https://github.com/amuza2/FatouraDZ</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <!-- Icône embarquée dans l'exécutable (Windows). Les sources sont dans
+         packaging/icons/ ; scripts/gen-icons.sh régénère ce fichier. -->
+    <ApplicationIcon>Assets\fatouradz.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!--
+    Microsoft.EntityFrameworkCore.Design n'est utile que pour générer les migrations
+    (`dotnet ef`). Le paquet dépose son hôte de compilation MSBuild dans la sortie
+    publiée (BuildHost-netcore/, BuildHost-net472/) : l'application ne l'utilise
+    jamais, et le laisser dans les artefacts livre à l'utilisateur des dossiers
+    incompréhensibles à côté de l'exécutable.
+
+    La suppression ne concerne que la publication : la sortie de compilation reste
+    intacte, donc `dotnet ef migrations add` continue de fonctionner.
+  -->
+  <Target Name="RetirerOutillageDesignDeLaPublication" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Remove="@(ResolvedFileToPublish)"
+        Condition="$([System.String]::Copy('%(ResolvedFileToPublish.RelativePath)').StartsWith('BuildHost-'))" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <Folder Include="Models\" />

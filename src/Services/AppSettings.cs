@@ -6,13 +6,11 @@ namespace FatouraDZ.Services;
 
 public class AppSettings
 {
-    private static readonly string SettingsFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "FatouraDZ", "settings.json");
+    // Passent par AppPaths : les tests écrivent ainsi dans un dossier temporaire,
+    // jamais dans les paramètres réels de l'utilisateur.
+    private static string SettingsFilePath => Path.Combine(AppPaths.DossierDonnees, "settings.json");
 
-    private static readonly string DefaultDbPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "FatouraDZ", "fatouradz.db");
+    private static string DefaultDbPath => Path.Combine(AppPaths.DossierDonnees, "fatouradz.db");
 
     public string DatabasePath { get; set; } = DefaultDbPath;
 
@@ -40,6 +38,17 @@ public class AppSettings
     // Invoice Settings
     public string FormatNumeroFacture { get; set; } = "FAC-{ANNEE}-{NUM}";
     public int DelaiPaiementDefaut { get; set; } = 30; // Days
+
+    // Mises à jour
+    // La vérification interroge l'API GitHub : elle ne transmet aucune donnée
+    // personnelle, mais elle a besoin du réseau. Désactivable.
+    public bool VerifierMisesAJour { get; set; } = true;
+
+    /// <summary>Dernière vérification réussie : évite d'interroger GitHub à chaque démarrage.</summary>
+    public DateTime? DerniereVerificationMiseAJour { get; set; }
+
+    /// <summary>Version que l'utilisateur ne souhaite plus se voir proposer.</summary>
+    public string? VersionMiseAJourIgnoree { get; set; }
 
     private static AppSettings? _instance;
     public static AppSettings Instance => _instance ??= Load();

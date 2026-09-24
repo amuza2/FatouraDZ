@@ -75,10 +75,75 @@ public partial class SettingsViewModel : ViewModelBase
     public string CheminParDefaut => AppSettings.GetDefaultDatabasePath();
 
     // App info
-    public string Version => "1.0.0";
+    public string Version => AppInfo.Version;
     public string Developpeur => "FatouraDZ Team";
     public string Description => "Application de facturation multi-entreprises conforme à la réglementation algérienne.";
     public string Contact => "info@dzdevelopers.com";
+
+    // Mises à jour
+    [ObservableProperty]
+    private bool _verifierMisesAJour;
+
+    [ObservableProperty]
+    private string? _messageMiseAJour;
+
+    [ObservableProperty]
+    private bool _verificationMiseAJourEnCours;
+
+    /// <summary>
+    /// Interrogation lancée par l'utilisateur : on peut donc ouvrir la page de
+    /// téléchargement quand une version existe (rien n'est fait en arrière-plan).
+    /// </summary>
+    [RelayCommand]
+    private async Task VerifierMisesAJourAsync()
+    {
+        if (VerificationMiseAJourEnCours)
+            return;
+
+        VerificationMiseAJourEnCours = true;
+        MessageMiseAJour = "Vérification en cours…";
+
+        try
+        {
+            var disponible = await ServiceLocator.UpdateService.VerifierAsync();
+
+            if (disponible == null)
+            {
+                MessageMiseAJour = $"FatouraDZ {AppInfo.Version} est à jour.";
+                return;
+            }
+
+            MessageMiseAJour = $"La version {disponible.Version} est disponible.";
+            if (LiensExternes.Ouvrir(disponible.PageHtml))
+                MessageMiseAJour += " La page de téléchargement s'est ouverte dans votre navigateur.";
+        }
+        catch (Exception ex)
+        {
+            MessageMiseAJour = $"Vérification impossible : {ex.Message}";
+        }
+        finally
+        {
+            VerificationMiseAJourEnCours = false;
+        }
+    }
+
+    /// <summary>Persiste immédiatement le choix : c'est une préférence, pas un champ de formulaire.</summary>
+    partial void OnVerifierMisesAJourChanged(bool value)
+    {
+        try
+        {
+            var parametres = AppSettings.Instance;
+            if (parametres.VerifierMisesAJour == value)
+                return;
+
+            parametres.VerifierMisesAJour = value;
+            parametres.Save();
+        }
+        catch (Exception ex)
+        {
+            MessageErreur = $"Impossible d'enregistrer la préférence : {ex.Message}";
+        }
+    }
 
     public event Action? BackRequested;
     public event Func<string, string, Task<IStorageFile?>>? DemanderExportFichier;
@@ -108,6 +173,7 @@ public partial class SettingsViewModel : ViewModelBase
         TauxRetenueSourceDefaut = settings.TauxRetenueSourceDefaut;
         FormatNumeroFacture = settings.FormatNumeroFacture;
         DelaiPaiementDefaut = settings.DelaiPaiementDefaut;
+        VerifierMisesAJour = settings.VerifierMisesAJour;
     }
 
     [RelayCommand]

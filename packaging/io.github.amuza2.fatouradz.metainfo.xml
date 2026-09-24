@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Métadonnées AppStream : c'est ce que voient les centres de logiciels et les
+  distributions. Le fichier doit rester valide (voir la vérification dans
+  .github/workflows/release.yml : appstreamcli validate).
+
+  Le contenu de <releases> est mis à jour par le script de release.
+-->
+<component type="desktop-application">
+  <id>io.github.amuza2.fatouradz</id>
+
+  <name>FatouraDZ</name>
+  <summary>Facturation pour les entreprises algériennes</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <description>
+    <p>
+      FatouraDZ est une application de bureau qui permet aux entreprises algériennes
+      (auto-entrepreneurs, forfait, sociétés) de créer, gérer et exporter leurs factures.
+    </p>
+    <p>Elle gère notamment :</p>
+    <ul>
+      <li>plusieurs entreprises, chacune avec ses propres clients et sa numérotation</li>
+      <li>factures, factures d'avoir et proformas, avec remises par ligne et globale</li>
+      <li>TVA à 19 % et 9 %, droit de timbre selon le barème progressif en vigueur, retenue à la source</li>
+      <li>export PDF et Excel, avec aperçu intégré</li>
+      <li>journal de comptabilité, archivage et journal d'audit des modifications</li>
+    </ul>
+    <p>
+      Les données restent sur le poste, dans une base SQLite locale : aucune facture n'est
+      transmise à un service externe.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">fatouradz.desktop</launchable>
+
+  <url type="homepage">https://github.com/amuza2/FatouraDZ</url>
+  <url type="bugtracker">https://github.com/amuza2/FatouraDZ/issues</url>
+
+  <developer id="io.github.amuza2">
+    <name>amuza2</name>
+  </developer>
+
+  <categories>
+    <category>Office</category>
+    <category>Finance</category>
+  </categories>
+
+  <content_rating type="oars-1.1"/>
+
+  <requires>
+    <display_length compare="ge">900</display_length>
+  </requires>
+
+  <releases>
+    <release version="0.1.0" date="2026-09-24">
+      <description>
+        <p>Première version publiée : entreprises, clients, factures, PDF/Excel, comptabilité.</p>
+      </description>
+    </release>
+  </releases>
+</component>

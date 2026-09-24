@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=FatouraDZ
+GenericName=Facturation
+GenericName[fr]=Facturation
+Comment=Application de facturation pour les entreprises algériennes
+Comment[fr]=Application de facturation pour les entreprises algériennes
+Exec=fatouradz %U
+Icon=fatouradz
+Terminal=false
+Categories=Office;Finance;
+Keywords=facture;facturation;devis;invoice;TVA;timbre;Algérie;
+Keywords[fr]=facture;facturation;devis;TVA;timbre;Algérie;
+StartupNotify=true
+StartupWMClass=FatouraDZ

@@ -339,6 +339,26 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- Mises à jour -->
+                        <Border Background="White" CornerRadius="8" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Mises à jour" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="FatouraDZ vérifie au plus une fois par jour si une nouvelle version est publiée sur GitHub. Aucune donnée personnelle n'est transmise, et l'installation reste un téléchargement explicite."
+                                           Foreground="#64748B" FontSize="12" TextWrapping="Wrap"/>
+                                <CheckBox Content="Vérifier automatiquement au démarrage"
+                                          IsChecked="{Binding VerifierMisesAJour}"
+                                          FontSize="12"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Button Content="Vérifier maintenant"
+                                            Command="{Binding VerifierMisesAJourCommand}"
+                                            Padding="15,8"/>
+                                    <TextBlock Text="{Binding MessageMiseAJour}"
+                                               VerticalAlignment="Center"
+                                               Foreground="#64748B" FontSize="12" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                         <!-- Copyright -->
                         <TextBlock Text="© 2026 FatouraDZ. Tous droits réservés." 
                                    FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center"/>

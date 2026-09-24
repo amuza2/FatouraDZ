@@ -2,9 +2,12 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using FatouraDZ.Services;
 using FatouraDZ.ViewModels;
 using FatouraDZ.Views;
 
@@ -21,9 +24,9 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Journaliser les exceptions non gérées survenues sur le thread UI.
-            Dispatcher.UIThread.UnhandledException += (_, e) =>
-                Services.ServiceLocator.Logger.Error("Exception UI non gérée", e.Exception);
+            // Une exception sur le fil d'interface : rapport écrit, affiché, puis
+            // fermeture propre (voir OnUnhandledUiException).
+            Dispatcher.UIThread.UnhandledException += OnUnhandledUiException;
 
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
@@ -35,6 +38,40 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void OnUnhandledUiException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        var rapport = ServiceLocator.CrashReporter.Enregistrer(e.Exception, "Exception UI non gérée");
+
+        // L'application est désormais dans un état inconnu : on ne l'arrête pas
+        // brutalement (l'utilisateur doit pouvoir copier le rapport) mais on ne
+        // la laisse pas non plus continuer à écrire dans une base peut-être
+        // incohérente. L'utilisateur ferme le dialogue, puis l'application se ferme.
+        e.Handled = true;
+        _ = AfficherRapportEtFermerAsync(rapport, e.Exception);
+    }
+
+    private async Task AfficherRapportEtFermerAsync(RapportCrash? rapport, Exception exception)
+    {
+        try
+        {
+            var fenetre = new CrashWindow(rapport, "Exception UI non gérée", CrashReporter.Resume(exception));
+            var principale = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
+            if (principale != null)
+                await fenetre.ShowDialog(principale);
+            else
+                fenetre.Show();
+        }
+        catch
+        {
+            // Le dialogue est un confort : son échec ne doit pas empêcher la fermeture.
+        }
+        finally
+        {
+            (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+        }
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

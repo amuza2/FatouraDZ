@@ -17,15 +17,9 @@ public sealed class FileLogger : IAppLogger
 
     public FileLogger()
     {
-        // Pendant les tests, les journaux vont aussi dans le dossier temporaire.
-        var dossierTest = Environment.GetEnvironmentVariable(AppSettings.TestDatabaseDirVariable);
-
-        _dossierLogs = !string.IsNullOrWhiteSpace(dossierTest)
-            ? Path.Combine(dossierTest, "logs")
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "FatouraDZ",
-                "logs");
+        // Pendant les tests, les journaux vont aussi dans le dossier temporaire
+        // (voir AppPaths, qui redirige tout le dossier de données).
+        _dossierLogs = AppPaths.DossierLogs;
     }
 
     public void Info(string message) => Ecrire("INFO", message, null);
